@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/02-data-layer.md:1
@@ -66,15 +66,15 @@ msgstr "**多引擎支持**：可配置爲 file（csv/hdf/fth）或 db（mysql �
 
 #: ../../source/design/02-data-layer.md:17
 msgid ""
-"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 "
-"DataSource。"
+"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 DataSource。"
 msgstr ""
-"**不主動拉數**：DataSource 只負責讀寫本地已存在的數據；從網絡拉取與更新由用戶或定時任務調用數據接口完成，再寫入 "
-"DataSource。"
+"**不主動拉數**：DataSource 只負責讀寫本地已存在的數據；從網絡拉取與更新由用戶或定時任務調用數據接口完成，再寫入 DataSource。"
 
 #: ../../source/design/02-data-layer.md:19
-msgid "因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
-msgstr "因此，數據層設計把“拉取”和“存儲”分開：拉取得到的數據經清洗後寫入 DataSource，策略與回測只消費 DataSource 中已有的數據。"
+msgid ""
+"因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
+msgstr ""
+"因此，數據層設計把“拉取”和“存儲”分開：拉取得到的數據經清洗後寫入 DataSource，策略與回測只消費 DataSource 中已有的數據。"
 
 #: ../../source/design/02-data-layer.md:21
 msgid "3. 数据表"
@@ -91,12 +91,12 @@ msgstr ""
 #: ../../source/design/02-data-layer.md:24
 msgid ""
 "**表结构与 DataType 的对应关系**：一种“可被策略引用的信息”往往对应某张表的某列（或若干列经计算得到）。DataType 的 "
-"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id**"
-" 声明需求，无需关心具体表名或列名。"
+"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id** "
+"声明需求，无需关心具体表名或列名。"
 msgstr ""
 "**表結構與 DataType 的對應關係**：一種“可被策略引用的資訊”往往對應某張表的某列（或若干列經計算得到）。DataType 的 "
-"**name**（及 freq、asset_type）與數據表/列的映射在系統內維護，策略只需通過 DataType 或 **dtype_id**"
-" 聲明需求，無需關心具體表名或列名。"
+"**name**（及 freq、asset_type）與數據表/列的映射在系統內維護，策略只需通過 DataType 或 **dtype_id** "
+"聲明需求，無需關心具體表名或列名。"
 
 #: ../../source/design/02-data-layer.md:26
 msgid "4. DataType：从“表里的数据”到“策略可引用的信息”"
@@ -107,74 +107,76 @@ msgid ""
 "用户日常写**字符串信息 ID**；`DataType(...)` 对象多为专家/内置策略层。内部字段 "
 "`acquisition_type`（直读、复权、事件等）是提取算法，**不是**用户分类。"
 msgstr ""
+"使用者日常寫**字符串資訊 ID**；`DataType(...)` 物件多爲專家/內置策略層。內部字段 "
+"`acquisition_type`（直讀、復權、事件等）是提取演演算法，**不是**使用者分類。"
 
 #: ../../source/design/02-data-layer.md:30
 msgid "4.1 三种消费形状（kind）"
-msgstr ""
+msgstr "4.1 三種消費形狀（kind）"
 
 #: ../../source/design/02-data-layer.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/design/02-data-layer.md
 msgid "形状"
-msgstr ""
+msgstr "形狀"
 
 #: ../../source/design/02-data-layer.md
 msgid "例子"
-msgstr ""
+msgstr "例子"
 
 #: ../../source/design/02-data-layer.md
 msgid "公开入口"
-msgstr ""
+msgstr "公開入口"
 
 #: ../../source/design/02-data-layer.md
 msgid "`history`"
-msgstr ""
+msgstr "`history`"
 
 #: ../../source/design/02-data-layer.md
 msgid "时间 × 标的"
-msgstr ""
+msgstr "時間 × 標的"
 
 #: ../../source/design/02-data-layer.md
 msgid "`close`、`pe`、停牌标记"
-msgstr ""
+msgstr "`close`、`pe`、停牌標記"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_history_data` / `get_kline`"
-msgstr ""
+msgstr "`get_history_data` / `get_kline`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`reference`"
-msgstr ""
+msgstr "`reference`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅时间"
-msgstr ""
+msgstr "僅時間"
 
 #: ../../source/design/02-data-layer.md
 msgid "`cn_gdp`、`north_money`；以及把单标的行情抽成基准的 `close-000300.SH`"
-msgstr ""
+msgstr "`cn_gdp`、`north_money`；以及把單標的行情抽成基準的 `close-000300.SH`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_reference_data`"
-msgstr ""
+msgstr "`get_reference_data`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`static`"
-msgstr ""
+msgstr "`static`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅标的"
-msgstr ""
+msgstr "僅標的"
 
 #: ../../source/design/02-data-layer.md
 msgid "`industry`、`list_date`"
-msgstr ""
+msgstr "`industry`、`list_date`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_static_data`"
-msgstr ""
+msgstr "`get_static_data`"
 
 #: ../../source/design/02-data-layer.md:38
 msgid ""
@@ -182,61 +184,59 @@ msgid ""
 "`usable_in` 标明推荐入口；`usable_in=none` 表示已登记但暂无一等用法（例如无法编入数值 HistoryPanel "
 "的文本列）。"
 msgstr ""
+"`close-000300.SH` 是 Reference 的**一種造法**（策略裏把某標的當市場基準），不是宏觀資料的唯一來源。目錄用 "
+"`usable_in` 標明推薦入口；`usable_in=none` 表示已登記但暫無一等用法（例如無法編入數值 HistoryPanel "
+"的文本列）。"
 
 #: ../../source/design/02-data-layer.md:40
-#, fuzzy
 msgid "4.2 name、freq、asset_type 与 dtype_id"
-msgstr "4.1 name、freq、asset_type 與 dtype_id"
+msgstr "4.2 name、freq、asset_type 與 dtype_id"
 
 #: ../../source/design/02-data-layer.md:42
-#, fuzzy
 msgid ""
 "**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息；可带参数（如 `close|b`）或 "
 "unsymbolizer（如 `close-000300.SH`）。"
-msgstr "**name**：數據類型名稱（如 close、open、total_mv、pe），對應某類可用的資訊。"
+msgstr ""
+"**name**：資料類型名稱（如 close、open、total_mv、pe），對應某類可用的資訊；可帶參數（如 `close|b`）或 "
+"unsymbolizer（如 `close-000300.SH`）。"
 
 #: ../../source/design/02-data-layer.md:43
 msgid "**freq**：数据频率（如 d/w/m/q）；Static 常为 `None`（与频率无关）。"
-msgstr ""
+msgstr "**freq**：資料頻率（如 d/w/m/q）；Static 常爲 `None`（與頻率無關）。"
 
 #: ../../source/design/02-data-layer.md:44
-#, fuzzy
 msgid "**asset_type**：适用的资产类型（如 E、IDX、None、Any）。"
-msgstr "**asset_type**：適用的資產類型（如 E、IDX、ANY），用於區分股票、指數等。"
+msgstr "**asset_type**：適用的資產類型（如 E、IDX、None、Any）。"
 
 #: ../../source/design/02-data-layer.md:45
-#, fuzzy
 msgid ""
 "**完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 "
 "`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
-"**dtype_id**：由上述三者生成，規則爲 `name_assettype_freq`，例如 "
-"`close_E_d`、`total_mv_E_q`。策略在 `get_data(dtype_id)` 時使用該 id。"
+"**完整 dtype_id**：由上述三者生成，規則爲 `{wide_name}_{asset_type}_{freq}`（從右側拆），例如 "
+"`close_E_d`。策略 `get_data` 查找鍵爲完整 id；研究側可用寬名，歧義時改完整 id。"
 
 #: ../../source/design/02-data-layer.md:47
-#, fuzzy
 msgid "4.3 内置 DataType 与数据表/列的映射"
-msgstr "4.2 內置 DataType 與數據表/列的映射"
+msgstr "4.3 內置 DataType 與資料表/列的映射"
 
 #: ../../source/design/02-data-layer.md:49
-#, fuzzy
 msgid ""
 "系统内置大量 "
-"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息"
-" ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
+"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
+"ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
-"系統內置大量 DataType，分別映射到不同數據表的列或衍生列。具體表名、列名及獲取方式見《下載並管理金融歷史數據》與 API "
-"文檔中的數據類型與數據表說明；本系列僅強調：**策略只通過 "
-"DataType（dtype_id）引用數據，不直接依賴表結構**，這樣表結構演進時只需調整映射關係，而不必改策略代碼。"
+"系統內置大量 "
+"DataType，分別映射到不同資料表的列或衍生列。具體表名、列名見《下載並管理金融歷史資料》與按業務分冊的清單；本系列僅強調：**策略與分析通過資訊 "
+"ID 引用資料，不直接依賴表結構**，表結構演進時只需調整映射關係。"
 
 #: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
 msgstr "5. 小結：爲什麼策略只接觸 DataType 而不直接讀表"
 
 #: ../../source/design/02-data-layer.md:53
-#, fuzzy
 msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
-msgstr "**一致性**：回測與實盤都通過同一套“聲明 DataType + 引擎按窗口注入”的路徑取數，避免兩套邏輯。"
+msgstr "**一致性**：回測與實盤都通過同一套“聲明資訊 ID + 引擎按窗口注入”的路徑取數，避免兩套邏輯。"
 
 #: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
@@ -247,21 +247,20 @@ msgid ""
 "**接口统一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 "
 "`get_static_data`，**不**进入 `get_data` 时间窗。"
 msgstr ""
+"**介面統一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 "
+"`get_static_data`，**不**進入 `get_data` 時間窗。"
 
 #: ../../source/design/02-data-layer.md:57
 msgid "更多用法见 manage_data「DataType」概念章与 API 参考。"
-msgstr ""
+msgstr "更多用法見 manage_data「DataType」概念章與 API 參考。"
 
 #~ msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
 #~ msgstr "**freq**：數據頻率（如 d/w/m/q），與數據表的時間粒度或重採樣方式相關。"
 
 #~ msgid ""
-#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与"
-#~ " DataType 一一对应，便于维护与扩展。"
+#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。"
 #~ msgstr ""
-#~ "**接口統一**：所有策略都用 `get_data(dtype_id)` 取數，dtype_id 與"
-#~ " DataType 一一對應，便於維護與擴展。"
+#~ "**接口統一**：所有策略都用 `get_data(dtype_id)` 取數，dtype_id 與 DataType 一一對應，便於維護與擴展。"
 
 #~ msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
 #~ msgstr "更多數據配置與 API 用法見《下載並管理金融歷史數據》與 API 參考。"
-

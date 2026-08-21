@@ -369,7 +369,6 @@ msgid "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
 msgstr "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
 
 #: ../../source/api/api_reference.rst:51
-#, fuzzy
 msgid ""
 "XtQuant/MiniQMT 契约 v1（英文）：``live_trading/4a-xtquant-broker-adapter-"
 "contract-v1.md``"
@@ -841,7 +840,6 @@ msgstr ""
 "eigenen Berechtigungen aktivieren)"
 
 #: ../../source/api/api_reference.rst
-#, fuzzy
 msgid "akshare  - 通过AKShare获取实时价格(部分表已实现，详见数据通道文档)"
 msgstr ""
 "tushare – Erhalten Sie Echtzeitpreise mit tushare (Sie müssen Ihre "

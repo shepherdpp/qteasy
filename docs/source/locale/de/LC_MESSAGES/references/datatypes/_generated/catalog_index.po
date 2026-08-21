@@ -3,113 +3,114 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: de\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md:5
 msgid "内置 DataType 分册索引"
-msgstr ""
+msgstr "Integrierter DataType-Volumenindex"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md:7
 msgid "生成时间：2026-08-20 10:10 UTC；合计 **1322** 条内置数据类型，按业务类别分册。"
 msgstr ""
+"Generierungszeit: 20.08.2026 10:10 UTC; insgesamt **1322** integrierte "
+"Datentypen, unterteilt in Volumes nach Geschäftskategorien."
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "业务类别"
-msgstr ""
+msgstr "Kategorie „Unternehmen“."
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "条数"
-msgstr ""
+msgstr "Anzahl der Artikel"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "分册"
-msgstr ""
+msgstr "Volumen"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "行情与复权"
-msgstr ""
+msgstr "Zitate und Wiederherstellung"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "358"
-msgstr ""
+msgstr "358"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[quotes.md](quotes.md)"
-msgstr ""
+msgstr "[quotes.md](quotes.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "估值与财务"
-msgstr ""
+msgstr "Bewertung und Finanzen"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "558"
-msgstr ""
+msgstr "558"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[valuation.md](valuation.md)"
-msgstr ""
+msgstr "[valuation.md](valuation.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "宏观、利率与资金"
-msgstr ""
+msgstr "Makro, Zinssätze und Fonds"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "157"
-msgstr ""
+msgstr "157"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[macro.md](macro.md)"
-msgstr ""
+msgstr "[macro.md](macro.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "交易行为与事件"
-msgstr ""
+msgstr "Handelsaktionen und -ereignisse"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "132"
-msgstr ""
+msgstr "132"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[events.md](events.md)"
-msgstr ""
+msgstr "[events.md](events.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "指数成分与权重"
-msgstr ""
+msgstr "Indexkomponenten und Gewichte"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[composition.md](composition.md)"
-msgstr ""
+msgstr "[composition.md](composition.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "静态证券信息"
-msgstr ""
+msgstr "Statische Wertpapierinformationen"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "116"
-msgstr ""
+msgstr "116"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "[static.md](static.md)"
-msgstr ""
+msgstr "[static.md](static.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md:18
 #, python-format
@@ -117,4 +118,6 @@ msgid ""
 "概念与用法见 [DataType 概念章](../../../manage_data/02.%20datatypes.md)；清单入口见 "
 "[datatypes 索引](../index.md)。"
 msgstr ""
-
+"Informationen zu Konzepten und Verwendung finden Sie im [DataType "
+"Konzeptkapitel](../../../manage_data/02.%20datatypes.md); Den Listeneintrag "
+"finden Sie unter [Datentypindex](../index.md)."

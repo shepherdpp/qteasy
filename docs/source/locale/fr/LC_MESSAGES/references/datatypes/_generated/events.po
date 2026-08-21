@@ -3,1227 +3,1372 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/_generated/events.md:6
 msgid "交易行为与事件"
-msgstr ""
+msgstr "Actions et événements commerciaux"
 
 #: ../../source/references/datatypes/_generated/events.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **132** 条。"
 msgstr ""
+"Ce volume est généré par `docs/scripts/generate_datatype_catalog.py` à "
+"partir de `qteasy.datatypes.get_dtype_map()` par **catégorie d'activité**, "
+"avec un total de **132** articles."
 
 #: ../../source/references/datatypes/_generated/events.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"Veuillez ne pas le modifier à la main ; veuillez réexécuter le script de "
+"génération après avoir mis à jour le type intégré. Pour connaître la "
+"signification des colonnes et les lectures recommandées, voir [Entrée de "
+"liste](../index.md). `acquisition_type` / `table_name` sont uniquement "
+"destinés à une recharge de comparaison."
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "name"
-msgstr ""
+msgstr "name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "freq"
-msgstr ""
+msgstr "freq"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "asset_type"
-msgstr ""
+msgstr "asset_type"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "description"
-msgstr ""
+msgstr "description"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "usable_in"
-msgstr ""
+msgstr "usable_in"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "acquisition_type"
-msgstr ""
+msgstr "acquisition_type"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "table_name"
-msgstr ""
+msgstr "table_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "base_date"
-msgstr ""
+msgstr "base_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "d"
-msgstr ""
+msgstr "d"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-基准日"
-msgstr ""
+msgstr "Date de base de mise en œuvre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "history"
-msgstr ""
+msgstr "history"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "none"
-msgstr ""
+msgstr "none"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "selected_events"
-msgstr ""
+msgstr "selected_events"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "dividend"
-msgstr ""
+msgstr "dividend"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "base_share"
-msgstr ""
+msgstr "base_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-基准股本（万）"
-msgstr ""
+msgstr "Mise en œuvre - Capital de base (10 000)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "history_panel,strategy"
-msgstr ""
+msgstr "history_panel,strategy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_amount"
-msgstr ""
+msgstr "block_trade_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交金额"
-msgstr ""
+msgstr "Transaction de bloc - Montant de la transaction"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_signal"
-msgstr ""
+msgstr "event_signal"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade"
-msgstr ""
+msgstr "block_trade"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_buyer"
-msgstr ""
+msgstr "block_trade_buyer"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 买方营业部"
-msgstr ""
+msgstr "Transactions groupées - Service des ventes des acheteurs"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_price"
-msgstr ""
+msgstr "block_trade_price"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交价"
-msgstr ""
+msgstr "Transaction de bloc - Prix de transaction"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_seller"
-msgstr ""
+msgstr "block_trade_seller"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 卖方营业部"
-msgstr ""
+msgstr "Transactions groupées - Service des ventes du vendeur"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_vol"
-msgstr ""
+msgstr "block_trade_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交量（万股）"
-msgstr ""
+msgstr "Négociation de blocs - Volume (10 000 actions)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy"
-msgstr ""
+msgstr "buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买入额（元）"
 msgstr ""
+"Détails des institutions des listes Dragon et Tigre - Montant de l'achat "
+"(yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_inst"
-msgstr ""
+msgstr "top_inst"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_elg_amount"
-msgstr ""
+msgstr "buy_elg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单买入金额（万元）"
 msgstr ""
+"Flux de fonds d'actions individuelles - Montant d'achat de commandes très "
+"importantes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "direct"
-msgstr ""
+msgstr "direct"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "money_flow"
-msgstr ""
+msgstr "money_flow"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_elg_vol"
-msgstr ""
+msgstr "buy_elg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单买入量（手）"
 msgstr ""
+"Flux de fonds d'actions individuelles - Volume d'achat d'ordres très "
+"important (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_lg_amount"
-msgstr ""
+msgstr "buy_lg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单买入金额（万元）"
 msgstr ""
+"Flux de fonds des actions individuelles - Montant des achats de commandes "
+"importantes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_lg_vol"
-msgstr ""
+msgstr "buy_lg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单买入量（手）"
 msgstr ""
+"Flux de fonds d'actions individuelles - volume d'achat de commandes "
+"importantes (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_md_amount"
-msgstr ""
+msgstr "buy_md_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单买入金额（万元）"
 msgstr ""
+"Flux de fonds des actions individuelles - Montant de l'achat à mi-ordre (10 "
+"000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_md_vol"
-msgstr ""
+msgstr "buy_md_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单买入量（手）"
 msgstr ""
+"Flux de fonds des actions individuelles - Volume d'achat d'ordres moyen "
+"(lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_rate"
-msgstr ""
+msgstr "buy_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买入占总成交比例"
 msgstr ""
+"Détails des institutions des listes Dragon et Tiger - Proportion des achats "
+"par rapport au total des transactions"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_sm_amount"
-msgstr ""
+msgstr "buy_sm_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单买入金额（万元）"
 msgstr ""
+"Flux de fonds d'actions individuelles - montant des achats de petites "
+"commandes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_sm_vol"
-msgstr ""
+msgstr "buy_sm_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单买入量（手）"
 msgstr ""
+"Flux de fonds d'actions individuelles - volume d'achat de petites commandes "
+"(lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div"
-msgstr ""
+msgstr "cash_div"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股分红（税后）"
-msgstr ""
+msgstr "Mise en œuvre - Dividende par action (après impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_approved"
-msgstr ""
+msgstr "cash_div_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股分红（税后）"
 msgstr ""
+"Approuvé par l'assemblée générale des actionnaires - dividende par action "
+"(après impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_planned"
-msgstr ""
+msgstr "cash_div_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股分红（税后）"
-msgstr ""
+msgstr "Plan - Dividende par action (après impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax"
-msgstr ""
+msgstr "cash_div_tax"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股分红（税前）"
-msgstr ""
+msgstr "Mise en œuvre - Dividende par action (avant impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax_approved"
-msgstr ""
+msgstr "cash_div_tax_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股分红（税前）"
 msgstr ""
+"Approbation par l'assemblée générale - dividende par action (avant impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax_planned"
-msgstr ""
+msgstr "cash_div_tax_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股分红（税前）"
-msgstr ""
+msgstr "Plan - Dividende par action (avant impôts)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "change_reason"
-msgstr ""
+msgstr "change_reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "业绩变动原因"
-msgstr ""
+msgstr "Raisons des changements de performances"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "forecast"
-msgstr ""
+msgstr "forecast"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cur_name"
-msgstr ""
+msgstr "cur_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股票 - 当前最新证券名称"
-msgstr ""
+msgstr "Actions - Derniers noms de titres actuels"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_status"
-msgstr ""
+msgstr "event_status"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_names"
-msgstr ""
+msgstr "stock_names"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "down_limit"
-msgstr ""
+msgstr "down_limit"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "跌停板 - 跌停价"
-msgstr ""
+msgstr "Limite inférieure - Prix limite inférieure"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_limit"
-msgstr ""
+msgstr "stock_limit"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "ex_date"
-msgstr ""
+msgstr "ex_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-除权除息日"
-msgstr ""
+msgstr "Mise en œuvre - date ex-droits et ex-dividende"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "exalter"
-msgstr ""
+msgstr "exalter"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 营业部名称"
 msgstr ""
+"Détails de l'organisation de la liste Dragon et Tigre - Nom du service "
+"commercial"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "first_ann_date"
-msgstr ""
+msgstr "first_ann_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "首次公告日"
-msgstr ""
+msgstr "date de la première annonce"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_amount"
-msgstr ""
+msgstr "hk_top10_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 累计成交额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud – Volume cumulé des "
+"transactions (Yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_stock"
-msgstr ""
+msgstr "hk_top10_stock"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_close"
-msgstr ""
+msgstr "hk_top10_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 收盘价"
-msgstr ""
+msgstr "Hong Kong Stock Connect Top 10 des transactions - Cours de clôture"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_net_amount"
-msgstr ""
+msgstr "hk_top10_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 净买入金额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud - Montant net de l'achat "
+"(Yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_p_change"
-msgstr ""
+msgstr "hk_top10_p_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 涨跌幅"
 msgstr ""
+"Les 10 principales transactions de Hong Kong Stock Connect - Modifications"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_rank"
-msgstr ""
+msgstr "hk_top10_rank"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 排名"
-msgstr ""
+msgstr "Top 10 des transactions commerciales vers le sud – Classement"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_amount"
-msgstr ""
+msgstr "hk_top10_sh_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 沪市成交额（元）"
 msgstr ""
+"Top 10 des transactions vers le sud - Volume des transactions à la Bourse de"
+" Shanghai (en yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_buy"
-msgstr ""
+msgstr "hk_top10_sh_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市净买入金额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud – Montant net des achats de"
+" la Bourse de Shenzhen (Yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_net_amount"
-msgstr ""
+msgstr "hk_top10_sh_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 沪市净买入额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud – Montant net des achats à "
+"la Bourse de Shanghai (Yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_sell"
-msgstr ""
+msgstr "hk_top10_sh_sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sz_amount"
-msgstr ""
+msgstr "hk_top10_sz_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市成交金额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud - Montant de la transaction"
+" à la Bourse de Shenzhen (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sz_net_amount"
-msgstr ""
+msgstr "hk_top10_sz_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市净买入额（元）"
 msgstr ""
+"Top 10 des transactions commerciales vers le sud - Montant net de l'achat à "
+"la Bourse de Shenzhen (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "imp_ann_date"
-msgstr ""
+msgstr "imp_ann_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-实施公告日"
-msgstr ""
+msgstr "Date d’annonce de mise en œuvre-mise en œuvre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "is_HS_top10"
-msgstr ""
+msgstr "is_HS_top10"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜"
 msgstr ""
+"Les dix actions les plus négociées de Shanghai-Shenzhen-Hong Kong Stock "
+"Connect figurent sur la liste"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hs_top10_stock"
-msgstr ""
+msgstr "hs_top10_stock"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "is_suspended"
-msgstr ""
+msgstr "is_suspended"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "停复牌类型：S-停牌，R-复牌"
 msgstr ""
+"Types de suspension et de reprise du trading : suspension du trading S, "
+"reprise du trading R"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_suspend"
-msgstr ""
+msgstr "stock_suspend"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "is_trade_day|%"
-msgstr ""
+msgstr "is_trade_day|%"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "None"
-msgstr ""
+msgstr "None"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "是否交易日-市场代码：%"
-msgstr ""
+msgstr "Que ce soit le jour de bourse - code de marché : %"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "reference"
-msgstr ""
+msgstr "reference"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "reference_api,strategy"
-msgstr ""
+msgstr "reference_api,strategy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "selection"
-msgstr ""
+msgstr "selection"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "trade_calendar"
-msgstr ""
+msgstr "trade_calendar"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "last_parent_net"
-msgstr ""
+msgstr "last_parent_net"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "上年同期归属母公司净利润"
 msgstr ""
+"Bénéfice net attribuable à la société mère pour la même période de l'année "
+"dernière"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "manager_title"
-msgstr ""
+msgstr "manager_title"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 岗位"
-msgstr ""
+msgstr "Informations sur la direction de l'entreprise - Poste"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_multi_stat"
-msgstr ""
+msgstr "event_multi_stat"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_managers"
-msgstr ""
+msgstr "stk_managers"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_birth_year"
-msgstr ""
+msgstr "managers_birth_year"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 出生年份"
-msgstr ""
+msgstr "Gestionnaire de fonds - Année de naissance"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "fund_manager"
-msgstr ""
+msgstr "fund_manager"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_birthday"
-msgstr ""
+msgstr "managers_birthday"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 出生年月"
-msgstr ""
+msgstr "Informations sur les dirigeants de l'entreprise - date de naissance"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_edu"
-msgstr ""
+msgstr "managers_edu"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 学历"
-msgstr ""
+msgstr "Informations sur la direction de l'entreprise – Diplômes d'études"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 学历"
-msgstr ""
+msgstr "Gestionnaire de fonds - Diplômes d'études"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_gender"
-msgstr ""
+msgstr "managers_gender"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 性别"
-msgstr ""
+msgstr "Informations sur la direction de l’entreprise – Genre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 性别"
-msgstr ""
+msgstr "Gestionnaire de fonds - Genre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_lev"
-msgstr ""
+msgstr "managers_lev"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 岗位类别"
-msgstr ""
+msgstr "Informations sur les dirigeants de l'entreprise - catégorie d'emploi"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_name"
-msgstr ""
+msgstr "managers_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 高管姓名"
-msgstr ""
+msgstr "Informations sur les dirigeants de l'entreprise - nom du dirigeant"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理姓名"
-msgstr ""
+msgstr "Nom du gestionnaire du fonds"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_national"
-msgstr ""
+msgstr "managers_national"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 国籍"
-msgstr ""
+msgstr "Informations sur la direction de l’entreprise – Nationalité"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_resume"
-msgstr ""
+msgstr "managers_resume"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 个人简历"
-msgstr ""
+msgstr "Informations sur les dirigeants de l'entreprise - CV"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 简历"
-msgstr ""
+msgstr "Gestionnaire de fonds - CV"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqchl"
-msgstr ""
+msgstr "margin_detail_rqchl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券偿还量(股)"
 msgstr ""
+"Détail des opérations de trading sur marge et de prêt de titres - Montant du"
+" remboursement du prêt de titres (actions)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail"
-msgstr ""
+msgstr "margin_detail"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqmcl"
-msgstr ""
+msgstr "margin_detail_rqmcl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券卖出量(股,份,手)"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - volume de"
+" prêt et de vente de titres (actions, actions, lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqye"
-msgstr ""
+msgstr "margin_detail_rqye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券余额(元)"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - Solde des"
+" prêts de titres (yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqyl"
-msgstr ""
+msgstr "margin_detail_rqyl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券余量（股）"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - marge des"
+" prêts et emprunts de titres (actions)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzche"
-msgstr ""
+msgstr "margin_detail_rzche"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资偿还额(元)"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - Montant "
+"du remboursement du financement (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzmre"
-msgstr ""
+msgstr "margin_detail_rzmre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资买入额(元)"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - Montant "
+"de l'achat sur marge (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzrqye"
-msgstr ""
+msgstr "margin_detail_rzrqye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资融券余额(元)"
 msgstr ""
+"Détails des transactions sur marge et des prêts de titres - Solde des "
+"transactions sur marge et des prêts de titres (yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzye"
-msgstr ""
+msgstr "margin_detail_rzye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资余额(元)"
 msgstr ""
+"Détails des opérations de trading sur marge et de prêt de titres - Solde de "
+"financement (yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "nationality"
-msgstr ""
+msgstr "nationality"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 国籍"
-msgstr ""
+msgstr "Gestionnaire de fonds - Nationalité"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_buy"
-msgstr ""
+msgstr "net_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 净成交额（元）"
 msgstr ""
+"Détails des institutions figurant sur la liste Dragon et Tigre - Volume net "
+"des transactions (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_mf_amount"
-msgstr ""
+msgstr "net_mf_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 净流入额（万元）"
-msgstr ""
+msgstr "Flux de fonds des actions individuelles - entrée nette (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_mf_vol"
-msgstr ""
+msgstr "net_mf_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 净流入量（手）"
 msgstr ""
+"Direction des flux de fonds des actions individuelles - entrée nette (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_profit_max"
-msgstr ""
+msgstr "net_profit_max"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润上限(万元)"
-msgstr ""
+msgstr "Limite supérieure du bénéfice net prévu (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_profit_min"
-msgstr ""
+msgstr "net_profit_min"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润下限(万元)"
-msgstr ""
+msgstr "Limite inférieure du bénéfice net prévu (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "p_change_max"
-msgstr ""
+msgstr "p_change_max"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润变动幅度上限(%)"
-msgstr ""
+msgstr "Limite supérieure de variation du bénéfice net prévu (%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "p_change_min"
-msgstr ""
+msgstr "p_change_min"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润变动幅度下限(%)"
 msgstr ""
+"Limite inférieure de la fourchette de variation du bénéfice net prévu (%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "pay_date"
-msgstr ""
+msgstr "pay_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-派息日"
-msgstr ""
+msgstr "Mise en œuvre - Date de versement du dividende"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "pre_trade_day|%"
-msgstr ""
+msgstr "pre_trade_day|%"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "上一交易日"
-msgstr ""
+msgstr "dernier jour de bourse"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "reason"
-msgstr ""
+msgstr "reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 上榜理由"
 msgstr ""
+"Détails des institutions figurant sur la Liste Dragon et Tigre - Raisons "
+"d'être sur la liste"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "record_date"
-msgstr ""
+msgstr "record_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-股权登记日"
-msgstr ""
+msgstr "Date d’inscription au capital de mise en œuvre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell"
-msgstr ""
+msgstr "sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 卖出额（元）"
 msgstr ""
+"Détails des institutions des listes Dragon et Tigre - Montant des ventes "
+"(Yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_elg_amount"
-msgstr ""
+msgstr "sell_elg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单卖出金额（万元）"
 msgstr ""
+"Flux de fonds des actions individuelles - montant des ventes de commandes "
+"très importantes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_elg_vol"
-msgstr ""
+msgstr "sell_elg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单卖出量（手）"
 msgstr ""
+"Flux de fonds des actions individuelles - Volume de vente d'ordres très "
+"importants (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_lg_amount"
-msgstr ""
+msgstr "sell_lg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单卖出金额（万元）"
 msgstr ""
+"Flux de fonds des actions individuelles - Montant des ventes de commandes "
+"importantes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_lg_vol"
-msgstr ""
+msgstr "sell_lg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单卖出量（手）"
 msgstr ""
+"Flux de fonds d'actions individuelles - volume de vente de commandes "
+"importantes (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_md_amount"
-msgstr ""
+msgstr "sell_md_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单卖出金额（万元）"
 msgstr ""
+"Flux de fonds d'actions individuelles - Montant des ventes d'une commande "
+"moyenne (10 000 RMB)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_md_vol"
-msgstr ""
+msgstr "sell_md_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单卖出量（手）"
 msgstr ""
+"Flux de fonds des actions individuelles - Volume de ventes d'ordres moyens "
+"(lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_rate"
-msgstr ""
+msgstr "sell_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 卖出占总成交比例"
 msgstr ""
+"Détails des institutions figurant sur la liste Dragon et Tigre - Proportion "
+"des ventes par rapport au total des transactions"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_sm_amount"
-msgstr ""
+msgstr "sell_sm_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单卖出金额（万元）"
 msgstr ""
+"Flux de fonds d'actions individuelles - Montant de la vente de petites "
+"commandes (10 000 yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_sm_vol"
-msgstr ""
+msgstr "sell_sm_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单卖出量（手）"
 msgstr ""
+"Flux de fonds d'actions individuelles - volume de vente de petites commandes"
+" (lots)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "side"
-msgstr ""
+msgstr "side"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名"
 msgstr ""
+"Détails institutionnels de Dragon and Tiger List - Type de trading 0 : Top 5"
+" avec le plus grand montant d'achat, 1 : Top 5 avec le plus grand montant de"
+" vente"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate"
-msgstr ""
+msgstr "stk_bo_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股送股比例"
-msgstr ""
+msgstr "Mise en œuvre-Ratio d’attribution gratuite par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate_approved"
-msgstr ""
+msgstr "stk_bo_rate_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股送股比例"
 msgstr ""
+"Approbation de l'assemblée générale - ratio d'attribution gratuite d'actions"
+" par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate_planned"
-msgstr ""
+msgstr "stk_bo_rate_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股送股比例"
-msgstr ""
+msgstr "Plan - Ratio d'attribution gratuite d'actions par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate"
-msgstr ""
+msgstr "stk_co_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股转增比例"
-msgstr ""
+msgstr "Taux de conversion mise en œuvre-part"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate_approved"
-msgstr ""
+msgstr "stk_co_rate_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股转增比例"
 msgstr ""
+"Approbation à l'assemblée générale des actionnaires - ratio de conversion "
+"par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate_planned"
-msgstr ""
+msgstr "stk_co_rate_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股转增比例"
-msgstr ""
+msgstr "Taux de conversion des actions"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div"
-msgstr ""
+msgstr "stk_div"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股送转"
-msgstr ""
+msgstr "Mise en œuvre-transfert par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div_approved"
-msgstr ""
+msgstr "stk_div_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股送转"
 msgstr ""
+"Approbation à l'assemblée générale des actionnaires-transfert par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div_planned"
-msgstr ""
+msgstr "stk_div_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股送转"
-msgstr ""
+msgstr "Plan-transfert par action"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_after_ratio"
-msgstr ""
+msgstr "stock_holder_trade_after_ratio"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动后占流通比例（%）"
 msgstr ""
+"Opérations actionnaires - Proportion de circulation après variation (%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade"
-msgstr ""
+msgstr "stock_holder_trade"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_after_share"
-msgstr ""
+msgstr "stock_holder_trade_after_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动后持股"
-msgstr ""
+msgstr "Opérations entre actionnaires - Participations après modifications"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_avg_price"
-msgstr ""
+msgstr "stock_holder_trade_avg_price"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 平均价格"
-msgstr ""
+msgstr "Opérations des actionnaires - Prix moyen"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_begin_date"
-msgstr ""
+msgstr "stock_holder_trade_begin_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 增减持开始日期"
 msgstr ""
+"Opérations entre actionnaires - Date de début de l'augmentation ou de la "
+"diminution des participations"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_change_ratio"
-msgstr ""
+msgstr "stock_holder_trade_change_ratio"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 占流通比例（%）"
-msgstr ""
+msgstr "Opérations actionnaires - Proportion de circulation (%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_change_vol"
-msgstr ""
+msgstr "stock_holder_trade_change_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动数量"
-msgstr ""
+msgstr "Transactions des actionnaires - Quantité de changement"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_close_date"
-msgstr ""
+msgstr "stock_holder_trade_close_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 增减持结束日期"
 msgstr ""
+"Transactions des actionnaires - Date de fin des augmentations et des "
+"diminutions"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_in_de"
-msgstr ""
+msgstr "stock_holder_trade_in_de"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 类型IN增持DE减持"
-msgstr ""
+msgstr "Transactions des actionnaires - Type IN Augmentation DE Diminution"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_name"
-msgstr ""
+msgstr "stock_holder_trade_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 股东名称"
-msgstr ""
+msgstr "Transactions avec les actionnaires - Nom de l'actionnaire"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_total_share"
-msgstr ""
+msgstr "stock_holder_trade_total_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 持股总数"
-msgstr ""
+msgstr "Opérations entre actionnaires - Total des participations"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_type"
-msgstr ""
+msgstr "stock_holder_trade_type"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 股东类型G高管P个人C公司"
 msgstr ""
+"Transaction entre actionnaires - Type d'actionnaire G Dirigeant P Individu C"
+" Société"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "summary"
-msgstr ""
+msgstr "summary"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "业绩预告摘要"
-msgstr ""
+msgstr "Résumé des prévisions de bénéfices"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "suspend_timing"
-msgstr ""
+msgstr "suspend_timing"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "日内停牌时间段"
-msgstr ""
+msgstr "Période de suspension des échanges intrajournaliers"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_amount"
-msgstr ""
+msgstr "top10_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 成交金额（元）"
 msgstr ""
+"Les dix actions les plus négociées du Shanghai-Shenzhen-Hong Kong Stock "
+"Connect figurent sur la liste - Valeur de la transaction (yuan)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_buy"
-msgstr ""
+msgstr "top10_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 买入金额（元）"
 msgstr ""
+"Les dix actions les plus négociées du Shanghai-Shenzhen-Hong Kong Stock "
+"Connect figurent sur la liste - montant de l'achat (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_change"
-msgstr ""
+msgstr "top10_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 涨跌额"
 msgstr ""
+"Les dix actions les plus négociées sur Shanghai-Shenzhen-Hong Kong Stock "
+"Connect figurent sur la liste - changements de prix"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_close"
-msgstr ""
+msgstr "top10_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 收盘价"
 msgstr ""
+"Les dix principales actions négociées sur Shanghai-Shenzhen-Hong Kong Stock "
+"Connect - Cours de clôture"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_net_amount"
-msgstr ""
+msgstr "top10_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 净成交金额（元）"
 msgstr ""
+"Les dix actions les plus négociées du Shanghai-Shenzhen-Hong Kong Stock "
+"Connect figurent sur la liste - montant net des transactions (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_rank"
-msgstr ""
+msgstr "top10_rank"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 资金排名"
 msgstr ""
+"Les dix actions les plus négociées du Shanghai-Shenzhen-Hong Kong Stock "
+"Connect - Classement du financement"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_sell"
-msgstr ""
+msgstr "top10_sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 卖出金额（元）"
 msgstr ""
+"Dix actions les plus négociées sur Shanghai-Shenzhen-Hong Kong Stock Connect"
+" - montant des ventes (yuans)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_amount"
-msgstr ""
+msgstr "top_list_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 总成交额"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tiger – Volume total des "
+"transactions"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list"
-msgstr ""
+msgstr "top_list"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_amount_rate"
-msgstr ""
+msgstr "top_list_amount_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜成交额占比"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tiger - Proportion du volume "
+"de transaction de la liste Dragon et Tiger"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_close"
-msgstr ""
+msgstr "top_list_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 收盘价"
 msgstr ""
+"Détails de la transaction sur la liste Dragon Tiger - Cours de clôture"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_float_values"
-msgstr ""
+msgstr "top_list_float_values"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 当日流通市值"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tigre – Valeur marchande de "
+"la circulation actuelle"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_amount"
-msgstr ""
+msgstr "top_list_l_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细- 龙虎榜成交额"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tiger - Volume des "
+"transactions de la liste Dragon et Tiger"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_buy"
-msgstr ""
+msgstr "top_list_l_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜买入额"
 msgstr ""
+"Détails de la transaction sur la liste Dragon et Tigre - Montant d'achat sur"
+" la liste Dragon et Tigre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_sell"
-msgstr ""
+msgstr "top_list_l_sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜卖出额"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tigre - Montant des ventes de"
+" la liste Dragon et Tigre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_net_amount"
-msgstr ""
+msgstr "top_list_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜净买入额"
 msgstr ""
+"Détails de la transaction sur la liste Dragon et Tigre - Montant net de "
+"l'achat sur la liste Dragon et Tigre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_net_rate"
-msgstr ""
+msgstr "top_list_net_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜净买额占比"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tigre - Proportion d'achat "
+"nette de la liste Dragon et Tigre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_pct_change"
-msgstr ""
+msgstr "top_list_pct_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 涨跌幅"
 msgstr ""
+"Détails des transactions de la liste Dragon et Tigre – Augmentation et "
+"déclin"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_reason"
-msgstr ""
+msgstr "top_list_reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 上榜理由"
 msgstr ""
+"Détails de la transaction sur la liste Dragon et Tigre – Raisons de "
+"l'inscription"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_turnover_rate"
-msgstr ""
+msgstr "top_list_turnover_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 换手率"
 msgstr ""
+"Détails des transactions sur les listes Dragon et Tiger – Taux de rotation"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "trade_cal"
-msgstr ""
+msgstr "trade_cal"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "交易日历"
-msgstr ""
+msgstr "calendrier commercial"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "up_limit"
-msgstr ""
+msgstr "up_limit"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "涨停板 - 涨停价"
-msgstr ""
-
+msgstr "tableau des limites quotidiennes - prix limite quotidien"

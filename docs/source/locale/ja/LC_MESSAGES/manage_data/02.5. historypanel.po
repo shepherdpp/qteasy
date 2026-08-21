@@ -357,7 +357,6 @@ msgstr ""
 "API](../api/HistoryPanel.rst) の動作の説明を読むことをお勧めします。"
 
 #: ../../source/manage_data/02.5. historypanel.md:121
-#, fuzzy
 msgid ""
 "更完整的因子式示例（收益、波动率、`apply_ta`、时序变换、统计聚合等）可与教程 **[使用 HistoryPanel "
 "操作和分析历史数据](../tutorials/2.5-historypanel-data-analysis.md)** 对照阅读。"

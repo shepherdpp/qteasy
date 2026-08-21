@@ -3,1007 +3,1045 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: de\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/_generated/static.md:6
 msgid "静态证券信息"
-msgstr ""
+msgstr "Statische Wertpapierinformationen"
 
 #: ../../source/references/datatypes/_generated/static.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **116** 条。"
 msgstr ""
+"Dieses Volumen wird von `docs/scripts/generate_datatype_catalog.py` aus "
+"`qteasy.datatypes.get_dtype_map()` nach **Geschäftskategorie** generiert, "
+"mit insgesamt **116** Artikeln."
 
 #: ../../source/references/datatypes/_generated/static.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"Bitte ändern Sie es nicht manuell; Bitte führen Sie das Generierungsskript "
+"erneut aus, nachdem Sie den integrierten Typ aktualisiert haben. "
+"Informationen zu Spaltenbedeutungen und empfohlenen Lektüren finden Sie "
+"unter [Listeneintrag](../index.md). `acquisition_type` / `table_name` dienen"
+" nur zur Vergleichsnachfüllung."
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "name"
-msgstr ""
+msgstr "name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "freq"
-msgstr ""
+msgstr "freq"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "asset_type"
-msgstr ""
+msgstr "asset_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "description"
-msgstr ""
+msgstr "description"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "usable_in"
-msgstr ""
+msgstr "usable_in"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "acquisition_type"
-msgstr ""
+msgstr "acquisition_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "table_name"
-msgstr ""
+msgstr "table_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "area"
-msgstr ""
+msgstr "area"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "None"
-msgstr ""
+msgstr "None"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 地域"
-msgstr ""
+msgstr "Grundlegende Bestandsinformationen - Region"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "static"
-msgstr ""
+msgstr "static"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "static_api,universe"
-msgstr ""
+msgstr "static_api,universe"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "basics"
-msgstr ""
+msgstr "basics"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_basic"
-msgstr ""
+msgstr "stock_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ballot"
-msgstr ""
+msgstr "ballot"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d"
-msgstr ""
+msgstr "d"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 中签率"
-msgstr ""
+msgstr "Informationen zur neuen Börsennotierung – Gewinnquote"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "new_share"
-msgstr ""
+msgstr "new_share"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "base_date"
-msgstr ""
+msgstr "base_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "IDX"
-msgstr ""
+msgstr "IDX"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基期"
-msgstr ""
+msgstr "Index-Grundinformationen – Basiszeitraum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_basic"
-msgstr ""
+msgstr "index_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "base_point"
-msgstr ""
+msgstr "base_point"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基点"
-msgstr ""
+msgstr "Index-Basisinformationen – Basispunkte"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "benchmark"
-msgstr ""
+msgstr "benchmark"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 业绩比较基准"
 msgstr ""
+"Grundlegende Informationen zum Fonds – Performance-Vergleichsbenchmark"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_basic"
-msgstr ""
+msgstr "fund_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "business_scope"
-msgstr ""
+msgstr "business_scope"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 经营范围"
-msgstr ""
+msgstr "Unternehmensinformationen – Geschäftsumfang"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_company"
-msgstr ""
+msgstr "stock_company"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "c_fee"
-msgstr ""
+msgstr "c_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管费"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Depotgebühren"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "call_put"
-msgstr ""
+msgstr "call_put"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "OPT"
-msgstr ""
+msgstr "OPT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 期权类型"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Optionstypen"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_basic"
-msgstr ""
+msgstr "opt_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "category"
-msgstr ""
+msgstr "category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数类别"
-msgstr ""
+msgstr "Index-Grundinformationen – Indexkategorie"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "chairman"
-msgstr ""
+msgstr "chairman"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 法人代表"
-msgstr ""
+msgstr "Unternehmensinformationen – gesetzlicher Vertreter"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "city"
-msgstr ""
+msgstr "city"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在城市"
-msgstr ""
+msgstr "Firmeninformationen – Stadt"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "cnspell"
-msgstr ""
+msgstr "cnspell"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 拼音缩写"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Pinyin-Abkürzung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "curr_type"
-msgstr ""
+msgstr "curr_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易货币"
-msgstr ""
+msgstr "Aktiengrundlagen – Handelswährungen"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "custodian"
-msgstr ""
+msgstr "custodian"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管人"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Depotbank"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d_mode_desc"
-msgstr ""
+msgstr "d_mode_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "FT"
-msgstr ""
+msgstr "FT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割方式说明"
 msgstr ""
+"Grundlegende Informationen zu Futures – Beschreibung der Liefermethode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "future_basic"
-msgstr ""
+msgstr "future_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d_month"
-msgstr ""
+msgstr "d_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割月份"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures - Liefermonat"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "delist_date"
-msgstr ""
+msgstr "delist_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 退市日期"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Delisting-Datum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 退市日期"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Delisting-Datum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最后交易日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – Letzter Handelstag"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后交易日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Letzter Handelstag"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "desc"
-msgstr ""
+msgstr "desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 描述"
-msgstr ""
+msgstr "Index Basisinformationen – Beschreibung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "due_date"
-msgstr ""
+msgstr "due_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 到期日期"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Fälligkeitsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "duration_year"
-msgstr ""
+msgstr "duration_year"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续期"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Laufzeit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "email"
-msgstr ""
+msgstr "email"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 电子邮件"
-msgstr ""
+msgstr "Unternehmensinformationen – E-Mail"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "employees"
-msgstr ""
+msgstr "employees"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 员工人数"
-msgstr ""
+msgstr "Unternehmensinformationen - Anzahl der Mitarbeiter"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "enname"
-msgstr ""
+msgstr "enname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 英文全称"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – vollständiger englischer Name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exchange"
-msgstr ""
+msgstr "exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易所代码"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Börsencode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易市场"
-msgstr ""
+msgstr "Grundlegende Informationen zum Futures-Handelsmarkt"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 交易市场"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen - Handelsmarkt"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_price"
-msgstr ""
+msgstr "exercise_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权价格"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Ausübungspreis"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_type"
-msgstr ""
+msgstr "exercise_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权方式"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Ausübungsmethoden"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_date"
-msgstr ""
+msgstr "exp_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 终止日期"
-msgstr ""
+msgstr "Index-Grundinformationen – Ablaufdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_return"
-msgstr ""
+msgstr "exp_return"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 预期收益率"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – erwartete Rendite"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "found_date"
-msgstr ""
+msgstr "found_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 成立日期"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Gründungsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fullname"
-msgstr ""
+msgstr "fullname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票全称"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – vollständiger Aktienname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_name"
-msgstr ""
+msgstr "fund_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 简称"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Abkürzung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_type"
-msgstr ""
+msgstr "fund_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资类型"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Anlagetyp"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "funds"
-msgstr ""
+msgstr "funds"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 募集资金（亿元）"
 msgstr ""
+"Informationen zur Notierung neuer Aktien – Mittelbeschaffung (100 Millionen "
+"Yuan)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fut_code"
-msgstr ""
+msgstr "fut_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约产品代码"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – Produktcode des Kontrakts"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_type"
-msgstr ""
+msgstr "index_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数风格"
-msgstr ""
+msgstr "Grundlegende Informationen zum Index – Indexstil"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "industry"
-msgstr ""
+msgstr "industry"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 所属行业"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen - Branche"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_pe"
-msgstr ""
+msgstr "initial_pe"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行市盈率"
 msgstr ""
+"Informationen zur Notierung neuer Aktien – Kurs-Gewinn-Verhältnis der "
+"Emission"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_price"
-msgstr ""
+msgstr "initial_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行价格"
-msgstr ""
+msgstr "Informationen zur Notierung neuer Aktien – Ausgabepreis"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "introduction"
-msgstr ""
+msgstr "introduction"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司介绍"
-msgstr ""
+msgstr "Unternehmensinformationen – Unternehmensvorstellung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "invest_type"
-msgstr ""
+msgstr "invest_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资风格"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Anlagestil"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "IPO_amount"
-msgstr ""
+msgstr "IPO_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行总量（万股）"
 msgstr ""
+"Informationen zur Notierung neuer Aktien – Gesamtzahl der ausgegebenen "
+"Aktien (10.000 Aktien)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ipo_date"
-msgstr ""
+msgstr "ipo_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行日期"
-msgstr ""
+msgstr "IPO-Informationen – Online-Ausgabedatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "is_hs"
-msgstr ""
+msgstr "is_hs"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 是否沪深港通标的"
 msgstr ""
+"Grundlegende Aktieninformationen – ob sie dem Shanghai-Shenzhen-Hong Kong "
+"Stock Connect unterliegen"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_amount"
-msgstr ""
+msgstr "issue_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行份额(亿)"
-msgstr ""
+msgstr "Grundinformationen des Fonds – ausgegebene Anteile (100 Millionen)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_date"
-msgstr ""
+msgstr "issue_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行日期"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Ausgabedatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上市日期"
-msgstr ""
+msgstr "IPO-Informationen – Börsennotierungsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_ddate"
-msgstr ""
+msgstr "last_ddate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最后交割日"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – letzter Liefertag"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后交割日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen - letzter Liefertermin"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_edate"
-msgstr ""
+msgstr "last_edate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后行权日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – letzter Ausübungstermin"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "limit_amount"
-msgstr ""
+msgstr "limit_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 个人申购上限（万股）"
 msgstr ""
+"Informationen zur Notierung neuer Aktien – Einzelzeichnungslimit (10.000 "
+"Aktien)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_date"
-msgstr ""
+msgstr "list_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市日期"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Datum der Notierung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 上市时间"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Zeitpunkt der Notierung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 上市日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – Listungsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 发布日期"
-msgstr ""
+msgstr "Index-Grundinformationen – Erscheinungsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 开始交易日期"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Startdatum des Handels"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_price"
-msgstr ""
+msgstr "list_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 挂牌基准价"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Basispreis der Auflistung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_status"
-msgstr ""
+msgstr "list_status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市状态 L上市 D退市 P暂停上市"
 msgstr ""
+"Grundlegende Aktieninformationen – Notierungsstatus L Gelistet D Nicht "
+"gelistet P Von der Notierung ausgeschlossen"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "m_fee"
-msgstr ""
+msgstr "m_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理费"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Verwaltungsgebühr"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "main_business"
-msgstr ""
+msgstr "main_business"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 主要业务及产品"
-msgstr ""
+msgstr "Unternehmensinformationen – Hauptgeschäfte und Produkte"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "management"
-msgstr ""
+msgstr "management"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理人"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Manager"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "manager"
-msgstr ""
+msgstr "manager"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 总经理"
-msgstr ""
+msgstr "Unternehmensinformationen – Geschäftsführer"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market"
-msgstr ""
+msgstr "market"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 市场类型"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Markttyp"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - E场内O场外"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds - E On-site O Off-site"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 市场"
-msgstr ""
+msgstr "Index Basisinformationen – Markt"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market_amount"
-msgstr ""
+msgstr "market_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行总量（万股）"
 msgstr ""
+"Informationen zur Notierung neuer Aktien – Gesamte Online-Emission (10.000 "
+"Aktien)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "maturity_date"
-msgstr ""
+msgstr "maturity_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 到期日"
-msgstr ""
+msgstr "Optionsgrundlagen – Ablaufdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_amount"
-msgstr ""
+msgstr "min_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 起点金额(万元)"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Startbetrag (10.000 Yuan)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_price_chg"
-msgstr ""
+msgstr "min_price_chg"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最小价格波幅"
-msgstr ""
+msgstr "Optionsgrundlagen – Minimale Preisvolatilität"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "multiplier"
-msgstr ""
+msgstr "multiplier"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约乘数(只适用于国债期货、指数期货)"
 msgstr ""
+"Grundlegende Informationen zu Futures – Kontraktmultiplikator (gilt nur für "
+"Treasury-Bond-Futures und Index-Futures)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 中文简称"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – chinesische Abkürzung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约名称"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Vertragsname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "office"
-msgstr ""
+msgstr "office"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 办公室"
-msgstr ""
+msgstr "Unternehmensinformationen – Büro"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_code"
-msgstr ""
+msgstr "opt_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 标的合约代码"
 msgstr ""
+"Grundlegende Informationen zu Optionen – zugrunde liegender Vertragscode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_type"
-msgstr ""
+msgstr "opt_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约类型"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen – Vertragsarten"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "p_value"
-msgstr ""
+msgstr "p_value"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 面值"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Nennwert"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "per_unit"
-msgstr ""
+msgstr "per_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易单位(每手)"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures - Handelseinheit (pro Lot)"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约单位"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen - Vertragseinheit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "province"
-msgstr ""
+msgstr "province"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在省份"
-msgstr ""
+msgstr "Firmeninformationen – Provinz"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "publisher"
-msgstr ""
+msgstr "publisher"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 发布方"
-msgstr ""
+msgstr "Index-Grundinformationen – Herausgeber"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "purc_startdate"
-msgstr ""
+msgstr "purc_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常申购起始日"
 msgstr ""
+"Grundlegende Informationen zum Fonds – Tägliches Startdatum der Zeichnung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit"
-msgstr ""
+msgstr "quote_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 报价单位"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures - Notierungseinheit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 报价单位"
-msgstr ""
+msgstr "Grundlegende Informationen zu Optionen - Angebotseinheit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit_desc"
-msgstr ""
+msgstr "quote_unit_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最小报价单位说明"
 msgstr ""
+"Grundlegende Informationen zu Futures – Beschreibung der "
+"Mindestnotierungseinheit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "redm_startdate"
-msgstr ""
+msgstr "redm_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常赎回起始日"
 msgstr ""
+"Grundlegende Informationen zum Fonds – Tägliches Startdatum der Rücknahme"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "reg_capital"
-msgstr ""
+msgstr "reg_capital"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册资本"
-msgstr ""
+msgstr "Unternehmensinformationen – eingetragenes Kapital"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "s_month"
-msgstr ""
+msgstr "s_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 结算月"
-msgstr ""
+msgstr "Optionsgrundlagen – Abrechnungsmonat"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "secretary"
-msgstr ""
+msgstr "secretary"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 董秘"
-msgstr ""
+msgstr "Unternehmensinformationen – Sekretär des Vorstands"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "setup_date"
-msgstr ""
+msgstr "setup_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册日期"
-msgstr ""
+msgstr "Unternehmensinformationen – Datum der Registrierung"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "status"
-msgstr ""
+msgstr "status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续状态D摘牌 I发行 L已上市"
 msgstr ""
+"Grundlegende Informationen zum Fonds - Bestandsstatus D Delisted I Issued L "
+"Listed"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_name"
-msgstr ""
+msgstr "stock_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票名称"
-msgstr ""
+msgstr "Grundlegende Aktieninformationen – Aktienname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_symbol"
-msgstr ""
+msgstr "stock_symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票代码"
-msgstr ""
+msgstr "Grundlegende Bestandsinformationen – Bestandscode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw|%"
-msgstr ""
+msgstr "sw|%"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类筛选 - %"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierungsscreening - %"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "selection"
-msgstr ""
+msgstr "selection"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_basic"
-msgstr ""
+msgstr "sw_industry_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_code"
-msgstr ""
+msgstr "sw_industry_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 行业代码"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Branchencode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_name"
-msgstr ""
+msgstr "sw_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 名称"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level"
-msgstr ""
+msgstr "sw_level"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 级别"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Ebene"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level|%"
-msgstr ""
+msgstr "sw_level|%"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_parent_code"
-msgstr ""
+msgstr "sw_parent_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 上级行业代码"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Überlegener Branchencode"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_published"
-msgstr ""
+msgstr "sw_published"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 是否发布"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Ob veröffentlicht werden soll"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_source"
-msgstr ""
+msgstr "sw_source"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 分类版本"
-msgstr ""
+msgstr "Shenwan-Branchenklassifizierung – Klassifizierungsversion"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "symbol"
-msgstr ""
+msgstr "symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易标识"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – Handelsidentifikation"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_category"
-msgstr ""
+msgstr "ths_category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票同花顺行业分类"
-msgstr ""
+msgstr "Klassifizierung der Stock Flush-Branche"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_weight"
-msgstr ""
+msgstr "ths_index_weight"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_count"
-msgstr ""
+msgstr "ths_industry_count"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 股票数量"
 msgstr ""
+"Grundlegende Informationen zur Flush-Branchenklassifizierung – Anzahl der "
+"Aktien"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_basic"
-msgstr ""
+msgstr "ths_index_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_date"
-msgstr ""
+msgstr "ths_industry_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 发布日期"
 msgstr ""
+"Grundlegende Informationen zur Flush-Branchenklassifizierung – "
+"Erscheinungsdatum"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_exchange"
-msgstr ""
+msgstr "ths_industry_exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 交易所"
 msgstr ""
+"Grundlegende Informationen zur Flush Industry Classification - Exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_name"
-msgstr ""
+msgstr "ths_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 行业名称"
 msgstr ""
+"Grundlegende Informationen zur Flush-Branchenklassifizierung – Branchenname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_time_desc"
-msgstr ""
+msgstr "trade_time_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易时间说明"
 msgstr ""
+"Grundlegende Informationen zu Futures – Beschreibung der Handelszeiten"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_unit"
-msgstr ""
+msgstr "trade_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易计量单位"
-msgstr ""
+msgstr "Grundlegende Informationen zu Futures – Handelsmaßeinheit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trustee"
-msgstr ""
+msgstr "trustee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 受托人"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Treuhänder"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "type"
-msgstr ""
+msgstr "type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 基金类型"
-msgstr ""
+msgstr "Grundlegende Informationen zum Fonds – Fondstyp"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "website"
-msgstr ""
+msgstr "website"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司主页"
-msgstr ""
+msgstr "Unternehmensinformationen - Unternehmenshomepage"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "weight_rule"
-msgstr ""
+msgstr "weight_rule"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 加权方式"
-msgstr ""
-
+msgstr "Index-Grundinformationen – Gewichtungsmethode"

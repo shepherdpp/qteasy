@@ -106,7 +106,6 @@ msgid "创建日期: 2019, July, 16"
 msgstr "Creado: 16 de julio de 2019"
 
 #: ../../source/index.rst:25
-#, fuzzy
 msgid "最新版本: `2.6.4` — :doc:`发布历史 <RELEASE_HISTORY>`"
 msgstr "Última versión: `2.5.1` — :doc:`Release History <RELEASE_HISTORY>`"
 

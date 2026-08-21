@@ -8,18 +8,17 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: ja\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:1
-#, fuzzy
 msgid "HistoryPanel 操作和分析历史数据"
 msgstr "HistoryPanel を使用して履歴データを操作および分析します"
 
@@ -89,18 +88,17 @@ msgstr "ローソク足のパターンをいくつか特定します。"
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:21
 msgid "使用 ``where`` 生成与数据同形的 **bool 掩码**，为后续带 ``mask=`` 的研究接口做准备；"
 msgstr ""
-"``where`` to generate a **bool mask** with the same shape as the data, in"
-" preparation for subsequent research APIs that take ``mask=`` を使用します。"
+"``where`` to generate a **bool mask** with the same shape as the data, in "
+"preparation for subsequent research APIs that take ``mask=`` を使用します。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:22
 msgid ""
 "使用 **列属性**（如 ``hp.close``）、**比较运算**（返回 ``numpy`` 布尔数组，可与 ``where`` 衔接）以及 "
 "**``hp.loc``**（仅沿时间轴筛选，等价 ``hp[:, :, key]``）。"
 msgstr ""
-"**列属性** (例: ``hp.close``), **comparison operators** (returning a "
-"``numpy`` boolean array that can be chained with ``where``), and "
-"**``hp.loc``** (filters only along the time axis, equivalent to ``hp[:, "
-":, key]``)。"
+"**列属性** (例: ``hp.close``), **comparison operators** (returning a ``numpy`` "
+"boolean array that can be chained with ``where``), and **``hp.loc``** "
+"(filters only along the time axis, equivalent to ``hp[:, :, key]``)。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:23
 msgid "通过对数据的筛选实现简单的“回测”分析；"
@@ -111,14 +109,14 @@ msgid ""
 "**注**：`HistoryPanel`并不支持**完整回测**功能（包含费用计算、交割、MOQ、信号类型控制以及详细交易报告等元素），完整的回测仍须交给"
 " `qteasy` 提供的 `Operator` 对象和 `Backtester` 来实现，详见 [从 HistoryPanel 研究到 "
 "Strategy / Operator](#从-historypanel-研究到-strategy--"
-"operator迁移路径)。容器结构与基本切片若尚不熟悉，请先阅读 [HistoryPanel 数据面板基础操作](2.4"
-"-historypanel-basics.md)。"
+"operator迁移路径)。容器结构与基本切片若尚不熟悉，请先阅读 [HistoryPanel 数据面板基础操作](2.4-historypanel-"
+"basics.md)。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:27
 msgid ""
-"更完整的 API 说明可参考 [HistoryPanel API 参考](../api/HistoryPanel.rst)（含「列属性访问、比较与"
-" ``loc``」与 ``where`` 专节）。"
+"更完整的 API 说明可参考 [HistoryPanel API 参考](../api/HistoryPanel.rst)（含「列属性访问、比较与 "
+"``loc``」与 ``where`` 专节）。"
 msgstr ""
 "より完全な API の説明については、[HistoryPanel API リファレンス](../api/HistoryPanel.rst) "
 "(「列属性のアクセス、比較、および ``loc``” and on ``where``」に関する専用セクションを含む) を参照してください。"
@@ -129,14 +127,14 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:34
 msgid ""
-"若您已经完成了 [获取并管理金融数据](2.0-get-data.md) 的学习，并下载了**最小数据集**，可按本节 checklist "
-"跑通「取数 → 出图 → 简单因子 → 与基准粗对比」——建议您在深入阅读下文之前，先掌握这些基础用法。"
+"若您已经完成了 [获取并管理金融数据](2.0-get-data.md) 的学习，并下载了**最小数据集**，可按本节 checklist 跑通「取数 "
+"→ 出图 → 简单因子 → 与基准粗对比」——建议您在深入阅读下文之前，先掌握这些基础用法。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:36
 msgid ""
-"**前置条件**：已配置好 `tushare_token`，且已下载 [最小数据集清单](2.0-get-"
-"data.md#最小数据集清单供-25-使用) 中的表（至少含 `index_daily` 或 `stock_daily`）。"
+"**前置条件**：已配置好 `tushare_token`，且已下载 [最小数据集清单](2.0-get-data.md#最小数据集清单供-25-使用)"
+" 中的表（至少含 `index_daily` 或 `stock_daily`）。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:38
@@ -153,11 +151,13 @@ msgid "**技术指标**：用 `research_preset` 一键自动计算K线分析中�
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:42
-msgid "**横向对比**：用 `returns` 自动计算股票的多种收益率指标，并通过横向对比方法 `zscore` / `rank` 进行因子横向对比排名"
+msgid ""
+"**横向对比**：用 `returns` 自动计算股票的多种收益率指标，并通过横向对比方法 `zscore` / `rank` 进行因子横向对比排名"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:43
-msgid "**投资组合**：使用 `portfolio(..., benchmark=...)` 创建**研究向**的投资组合并粗略计算投资组合收益回报"
+msgid ""
+"**投资组合**：使用 `portfolio(..., benchmark=...)` 创建**研究向**的投资组合并粗略计算投资组合收益回报"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:44
@@ -209,9 +209,9 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:100
 msgid ""
-"当我们已经在数据源中下载了股票的价格数据以后，就可以通过 `qt.get_kline()` 或 `qt.get_history_data()` "
-"获取 `HistoryPanel`了。二者都只接受 **History** 形状；若要把沪深 300 "
-"收盘价当作**基准序列**（Reference），请用 `qt.get_reference_data('close-000300.SH', "
+"当我们已经在数据源中下载了股票的价格数据以后，就可以通过 `qt.get_kline()` 或 `qt.get_history_data()` 获取 "
+"`HistoryPanel`了。二者都只接受 **History** 形状；若要把沪深 300 收盘价当作**基准序列**（Reference），请用 "
+"`qt.get_reference_data('close-000300.SH', "
 "...)`，不要把它当成面板里多出来的一只「普通标的维」来理解（面板里当然也可以同时放入 `000300.SH` 做对比——那是 History "
 "多标的，与 Reference 入口是两回事）。"
 msgstr ""
@@ -231,7 +231,8 @@ msgid "打印hp可以直观地看到它的数据结构:"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:120
-msgid "它包含沪深300和平安银行两支股票，每支股票又包含一张数据表，每张表包含开盘/最高/最低/收盘/交易量等五列和二十多行数据（每个交易日一行）："
+msgid ""
+"它包含沪深300和平安银行两支股票，每支股票又包含一张数据表，每张表包含开盘/最高/最低/收盘/交易量等五列和二十多行数据（每个交易日一行）："
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:147
@@ -252,9 +253,10 @@ msgstr ""
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:151
 #, fuzzy
 msgid ""
-"**`hp.htypes`** 一个 `List`，`HistoryPanel` 中所有的数据类型名称，通常包含 `['open', "
-"'high', 'low', 'close', 'vol']` 等。"
-msgstr "デフォルトでは、`hp.htypes` には `['open', 'high', 'low', 'close', 'vol']` などが含まれます。"
+"**`hp.htypes`** 一个 `List`，`HistoryPanel` 中所有的数据类型名称，通常包含 `['open', 'high', "
+"'low', 'close', 'vol']` 等。"
+msgstr ""
+"デフォルトでは、`hp.htypes` には `['open', 'high', 'low', 'close', 'vol']` などが含まれます。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:165
 msgid "时序变换与缺失处理（shift / diff / pct_change / dropna）"
@@ -279,14 +281,14 @@ msgstr "**注記**："
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:173
 msgid ""
-"`shift` / `diff` / `pct_change` 均沿 **hdates**（时间轴）作用，返回**新**面板；正 "
-"`periods` 表示向后看历史（与 pandas 一致）；`periods` 须为非零整数。"
+"`shift` / `diff` / `pct_change` 均沿 **hdates**（时间轴）作用，返回**新**面板；正 `periods` "
+"表示向后看历史（与 pandas 一致）；`periods` 须为非零整数。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:174
 msgid ""
-"`pct_change` 是**任意列**的通用百分比变化，不调用 "
-"`_resolve_price_htype`；价格语义、复权根名解析请用下一节的 `returns`。"
+"`pct_change` 是**任意列**的通用百分比变化，不调用 `_resolve_price_htype`；价格语义、复权根名解析请用下一节的 "
+"`returns`。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:175
@@ -408,8 +410,7 @@ msgstr "典型的な使用法は次のとおりです。"
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:339
 #, fuzzy
 msgid ""
-"将 `ret` 或 `vol` 当作**因子值矩阵**（时间 × 股票），用于目视筛选、截面打分或与 §5 的 `rank`/`zscore` "
-"联用；"
+"将 `ret` 或 `vol` 当作**因子值矩阵**（时间 × 股票），用于目视筛选、截面打分或与 §5 的 `rank`/`zscore` 联用；"
 msgstr "`ret` または `vol` を因子値行列 (時間 × 株式) として扱います。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:340
@@ -441,8 +442,8 @@ msgstr "`hp.kline.sma(...)` は、`sma_20` などの列を `htypes` に追加し
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:350
 #, fuzzy
 msgid ""
-"`hp.kline.macd(...)` MACD指标：会追加 "
-"`macd_xxx`、`macd_signal_xxx`、`macd_hist_xxx` 三列；"
+"`hp.kline.macd(...)` MACD指标：会追加 `macd_xxx`、`macd_signal_xxx`、`macd_hist_xxx`"
+" 三列；"
 msgstr ""
 "`hp.kline.macd(...)` は、`macd_xxx`、`macd_signal_xxx`、`macd_hist_xxx` の 3 "
 "つの列を追加します。"
@@ -458,7 +459,7 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:353
 msgid "`hp.kline.kdj(...)` KDJ指标"
-msgstr ""
+msgstr "`hp.kline.kdj(...)` KDJ指标"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:355
 msgid "例如："
@@ -492,8 +493,7 @@ msgstr ""
 #, fuzzy
 msgid "提示：当新列名与已有列名冲突时，`kline.*` 会抛出 `ValueError`，避免静默覆盖。"
 msgstr ""
-"ヒント: 新しい列名が既存の列名と競合する場合、サイレント上書きを避けるために、`kline.*` は英語の `ValueError` "
-"を生成します。"
+"ヒント: 新しい列名が既存の列名と競合する場合、サイレント上書きを避けるために、`kline.*` は英語の `ValueError` を生成します。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:387
 #, fuzzy
@@ -543,8 +543,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:429
 msgid ""
-"**注意**：默认 `inplace=False`，`assign` 返回**新的** `HistoryPanel`，不会修改原对象；与 §3.1"
-" 的 `kline(inplace=True)` 语义不同，使用时请留意。"
+"**注意**：默认 `inplace=False`，`assign` 返回**新的** `HistoryPanel`，不会修改原对象；与 §3.1 的 "
+"`kline(inplace=True)` 语义不同，使用时请留意。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:431
@@ -557,7 +557,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:446
 #, fuzzy
-msgid "关键字参数名称即新列名；值可以是接收当前 `HistoryPanel` 的函数（参数 `p`），也可以是可广播到 `(M, L)` 的数组或标量；"
+msgid ""
+"关键字参数名称即新列名；值可以是接收当前 `HistoryPanel` 的函数（参数 `p`），也可以是可广播到 `(M, L)` 的数组或标量；"
 msgstr ""
 "`assign` のキーワード引数名​​は新しい列名 (htype) です。値は、現在の `HistoryPanel` "
 "を受け取る呼び出し可能関数、または `(M,L)` にブロードキャストできる配列/スカラーにすることができます。"
@@ -574,8 +575,8 @@ msgstr ""
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:462
 #, fuzzy
 msgid ""
-"**提示**：与 `hp['col'] = ...` 一样，`assign` 对已有列名采用「覆盖」语义；在空面板上调用 `assign` 会抛出"
-" `ValueError`。简单列名算术亦可使用 `expr`，见上文 [时序变换与缺失处理](#时序变换与缺失处理shift--diff--"
+"**提示**：与 `hp['col'] = ...` 一样，`assign` 对已有列名采用「覆盖」语义；在空面板上调用 `assign` 会抛出 "
+"`ValueError`。简单列名算术亦可使用 `expr`，见上文 [时序变换与缺失处理](#时序变换与缺失处理shift--diff--"
 "pct_change--dropna) 中的 `expr` 小节。"
 msgstr ""
 "ヒント: `hp['col'] = ...` と同様、`assign` は既存の列名に「上書き」セマンティクスを使用します。空のパネルで "
@@ -605,8 +606,8 @@ msgid ""
 "提供了这两类最基础变换（仅做数值变换，**不做**回归推断或显著性检验）。下面的代码仍基于 §2 中的 `hp`（2023 年沪深 300 + "
 "平安银行）："
 msgstr ""
-"`HistoryPanel.rank()` と `HistoryPanel.zscore()` は、これら 2 "
-"つのタイプの最も基本的な変換を提供します (変換のみ、回帰推論なし)。"
+"`HistoryPanel.rank()` と `HistoryPanel.zscore()` は、これら 2 つのタイプの最も基本的な変換を提供します"
+" (変換のみ、回帰推論なし)。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:486
 #, fuzzy
@@ -624,8 +625,7 @@ msgstr "5.5 アライメントとリサンプリング (align_to / resample): �
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:490
 msgid ""
-"当您手里有两块 "
-"`HistoryPanel`（例如价格面板与基本面面板），想做逐元素运算（相除、相减）时，需要特别注意：`HistoryPanel` "
+"当您手里有两块 `HistoryPanel`（例如价格面板与基本面面板），想做逐元素运算（相除、相减）时，需要特别注意：`HistoryPanel` "
 "**不会**在运算符里自动对齐两块面板的 `shares` 与 `hdates`。若直接对 `.values` 做 NumPy "
 "运算，可能出现「看起来能算、但其实错行」的 silent bug。"
 msgstr ""
@@ -639,8 +639,8 @@ msgstr "したがって、**最初に位置合わせしてから計算**とい�
 #, fuzzy
 msgid "当您需要把日线变成周线/月线等更低频数据时，可使用 `resample()`，并**显式**指定每一列的聚合规则（避免语义不明）："
 msgstr ""
-"=日次データを週次/月次などの低頻度データに変換する必要がある場合は、`resample()` "
-"を使用し、**明示的に**各列の集計ルールを指定できます (意味が不明瞭になるのを避けるため)。"
+"=日次データを週次/月次などの低頻度データに変換する必要がある場合は、`resample()` を使用し、**明示的に**各列の集計ルールを指定できます"
+" (意味が不明瞭になるのを避けるため)。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:515
 #, fuzzy
@@ -649,8 +649,7 @@ msgid ""
 "`'last'` / `'mean'` 等聚合方式并写进 `agg`。"
 msgstr ""
 "注: `resample()` では、すべての `htypes` をカバーするには `agg` が必要です。 OHLCV "
-"ではないカスタム要素列の場合は、集計方法を自分で決定し (例: `'last'` / `'mean'`)、それを `agg` "
-"に含める必要があります。"
+"ではないカスタム要素列の場合は、集計方法を自分で決定し (例: `'last'` / `'mean'`)、それを `agg` に含める必要があります。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:517
 #, fuzzy
@@ -686,8 +685,8 @@ msgstr ""
 #, fuzzy
 msgid "当 `layout='overlay'` 时默认 **primary-only** 显示高亮。"
 msgstr ""
-"`layout='overlay'` の場合、ハイライトはデフォルトで **プライマリのみ** として表示されます (既存の Plotly "
-"ハイライト セマンティクスと一致します)。"
+"`layout='overlay'` の場合、ハイライトはデフォルトで **プライマリのみ** として表示されます (既存の Plotly ハイライト "
+"セマンティクスと一致します)。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:539
 #, fuzzy
@@ -724,8 +723,8 @@ msgid ""
 "如果您已经熟悉 `qteasy.tafuncs` 或 ta-lib，`HistoryPanel.apply_ta()` "
 "提供了**统一入口**：指定指标名与参数后，会在 `hp` 中的**全部股票**上广播计算，并把结果追加为新列，避免手写循环。"
 msgstr ""
-"`qteasy.tafuncs` または ta-lib にすでに慣れている場合は、統合ラッパーとして "
-"`HistoryPanel.apply_ta()` を使用できます。"
+"`qteasy.tafuncs` または ta-lib にすでに慣れている場合は、統合ラッパーとして `HistoryPanel.apply_ta()`"
+" を使用できます。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:551
 msgid "**注意**：`apply_ta` 返回新的 `HistoryPanel`（当 `as_panel=True` 时），不会修改原面板。"
@@ -748,8 +747,8 @@ msgstr "ローソク足のパターンをいくつか特定します。"
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:570
 msgid ""
 "对于包含完整 OHLC 的面板，还可以用 `HistoryPanel.candle_pattern()` 调用 ta-lib "
-"的蜡烛形态识别函数，快速得到「某形态是否出现」的信号矩阵。这在事件型因子研究（见 [教程 2.8](2.8-historypanel-"
-"advanced-event-kline-pattern.md)）中非常常用。"
+"的蜡烛形态识别函数，快速得到「某形态是否出现」的信号矩阵。这在事件型因子研究（见 [教程 2.8](2.8-historypanel-advanced-"
+"event-kline-pattern.md)）中非常常用。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:572
@@ -794,15 +793,15 @@ msgstr ""
 "パネルの軸順序``values`` is **(number of assets M, time length L, number of "
 "indicator columns N)**, consistent with ``hp.shape``. "
 "``hp.where(condition)`` returns a **same-shape** ``numpy.ndarray``, "
-"``dtype=bool``, and does not modify ``hp``. `⟦C ODE12⟧`, ``normalize``, "
-"and ``portfolio`` already support ``mask=hp.where(...)`` (or a ``bool`` "
-"array with the same broadcasting rules as ``where``)。研究指向のセマンティクスとエッジ ケース"
-" (パス ブレーク、無効な基準日、ポートフォリオとベンチマークの関係など) については、API docstring を参照してください。"
+"``dtype=bool``, and does not modify ``hp``. `⟦C ODE12⟧`, ``normalize``, and "
+"``portfolio`` already support ``mask=hp.where(...)`` (or a ``bool`` array "
+"with the same broadcasting rules as ``where``)。研究指向のセマンティクスとエッジ ケース (パス "
+"ブレーク、無効な基準日、ポートフォリオとベンチマークの関係など) については、API docstring を参照してください。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:596
 msgid ""
-"**注意**：研究向语义与边界（路径断开、基准日无效、组合与 benchmark 关系等）以 API docstring 为准；``where``"
-" 只负责把条件广播成标准掩码。"
+"**注意**：研究向语义与边界（路径断开、基准日无效、组合与 benchmark 关系等）以 API docstring 为准；``where`` "
+"只负责把条件广播成标准掩码。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:598
@@ -811,15 +810,15 @@ msgstr "**値の完全な表と比較** (``hp.values > threshold`` に相当):"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:608
 msgid ""
-"**按时间维打标**（例如某一列索引为「事件日」，沿所有 htype 复制；以下为示意，需保证 ``cond_ml`` 形状为 ``(M, "
-"L)``）："
+"**按时间维打标**（例如某一列索引为「事件日」，沿所有 htype 复制；以下为示意，需保证 ``cond_ml`` 形状为 ``(M, L)``）："
 msgstr ""
 "**時間次元に沿ったラベル付け** (たとえば、特定の列のインデックスが「イベント日」の場合、すべての htype "
 "にわたってそれを複製します。以下は例示です。``cond_ml`` has shape ``(M, L)`` であることを確認してください):"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:618
 msgid "**按收盘价列构造条件**（``callable`` 接收当前 ``HistoryPanel``）："
-msgstr "**終値列に基づいて条件を構築します** (``callable`` receives the current ``HistoryPanel``):"
+msgstr ""
+"**終値列に基づいて条件を構築します** (``callable`` receives the current ``HistoryPanel``):"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:625
 msgid "**复合条件与缺失值**："
@@ -827,10 +826,10 @@ msgstr "**複合条件と欠損値**:"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:632
 msgid ""
-"**说明**：形状恰好为 ``(M, L)`` 的二维条件表示「每个 (标的, 日) 对所有指标列共用同一布尔值」，库内会先扩展为 ``(M, "
-"L, 1)`` 再广播到 ``(M, L, N)``。一维 ``(M,)`` 或 ``(M, 1)`` 表示仅随标的变化，会展开为 ``(M, "
-"1, 1)`` 再广播。更完整的参数与异常说明见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 中"
-" ``where`` 一节。"
+"**说明**：形状恰好为 ``(M, L)`` 的二维条件表示「每个 (标的, 日) 对所有指标列共用同一布尔值」，库内会先扩展为 ``(M, L, "
+"1)`` 再广播到 ``(M, L, N)``。一维 ``(M,)`` 或 ``(M, 1)`` 表示仅随标的变化，会展开为 ``(M, 1, 1)``"
+" 再广播。更完整的参数与异常说明见 [HistoryPanel API 参考](../api/HistoryPanel.rst) 中 ``where``"
+" 一节。"
 msgstr ""
 "**注意**: 正確な形状を持つ 2D "
 "条件`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧`"
@@ -858,8 +857,8 @@ msgstr "8.2 ポートフォリオの集計 (`portfolio`)"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:648
 msgid ""
-"沿**标的维**对指定列做等权或加权平均，返回新 ``HistoryPanel``。``mask=`` 与 ``where`` "
-"使用相同广播规则。指定 ``benchmark`` 时，基准标的不参与组合行聚合，仅用于附加基准曲线或超额列（与 §0 相同）："
+"沿**标的维**对指定列做等权或加权平均，返回新 ``HistoryPanel``。``mask=`` 与 ``where`` 使用相同广播规则。指定 "
+"``benchmark`` 时，基准标的不参与组合行聚合，仅用于附加基准曲线或超额列（与 §0 相同）："
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:657
@@ -873,16 +872,15 @@ msgid ""
 "的复权列名等须用方括号。赋值请统一 ``hp['col'] = ...``。"
 msgstr ""
 "**列属性 (読み取り専用)**: 列名が有効な Python 識別子の場合、``hp.close``, equivalent to "
-"``hp['close']``; adjusted-price column names containing ``|`` and the "
-"like must use brackets. For assignment, consistently use ``hp['col'] = "
-"...`` を使用できます。"
+"``hp['close']``; adjusted-price column names containing ``|`` and the like "
+"must use brackets. For assignment, consistently use ``hp['col'] = ...`` "
+"を使用できます。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:660
 msgid ""
-"**比较**：``hp.close > hp.open``、``hp > 0`` 等得到 "
-"**``numpy.ndarray``（bool）**，不是子 ``HistoryPanel``；全形掩码可写 "
-"``hp.where(hp.close > 15)``。两侧均为面板时须 ``shares``、``hdates`` 一致；两列比较时多为两个 "
-"**单列** 子面板。"
+"**比较**：``hp.close > hp.open``、``hp > 0`` 等得到 **``numpy.ndarray``（bool）**，不是子"
+" ``HistoryPanel``；全形掩码可写 ``hp.where(hp.close > 15)``。两侧均为面板时须 "
+"``shares``、``hdates`` 一致；两列比较时多为两个 **单列** 子面板。"
 msgstr ""
 "**比較**: "
 "のような表現`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧`一致する必要があります。"
@@ -890,10 +888,10 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:661
 msgid ""
-"**``loc``**：``hp.loc[s]`` 等价 ``hp[:, :, s]``，只沿 **时间（hdates）** "
-"轴筛选；**不要**把 ``where`` 得到的 ``(M, L, N)`` 掩码传给 ``loc``，格点条件仍用 ``where`` + "
-"后续 ``mask=``。"
-msgstr "**`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧⟦コード13⟧⟦コード14⟧`。"
+"**``loc``**：``hp.loc[s]`` 等价 ``hp[:, :, s]``，只沿 **时间（hdates）** 轴筛选；**不要**把 "
+"``where`` 得到的 ``(M, L, N)`` 掩码传给 ``loc``，格点条件仍用 ``where`` + 后续 ``mask=``。"
+msgstr ""
+"**`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧⟦コード13⟧⟦コード14⟧`。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:663
 msgid ""
@@ -911,9 +909,8 @@ msgstr "9. HistoryPanel 研究から戦略へ / Operator: 移行パス"
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:675
 msgid ""
 "读到这里，您已经能在 `HistoryPanel` "
-"上完成取数、算因子、做粗组合与出图。若研究结论需要**严肃评价**或**实盘准备**，下一步应把同一套经济含义写进策略的 "
-"`realize()`，交给 `Operator` + "
-"`Backtester`——它们才包含交割、手续费、滑点、信号类型（PT/PS/VS）等完整账户语义。"
+"上完成取数、算因子、做粗组合与出图。若研究结论需要**严肃评价**或**实盘准备**，下一步应把同一套经济含义写进策略的 `realize()`，交给 "
+"`Operator` + `Backtester`——它们才包含交割、手续费、滑点、信号类型（PT/PS/VS）等完整账户语义。"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:677
@@ -965,17 +962,16 @@ msgstr "**注記**："
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:751
 #, fuzzy
 msgid ""
-"`Operator` 默认组内可使用 PT 类目标仓位信号；`FactorSorter` 与 PT 的搭配以 [教程 3](3-start-"
-"first-strategy.md) 及回测文档为准。"
+"`Operator` 默认组内可使用 PT 类目标仓位信号；`FactorSorter` 与 PT 的搭配以 [教程 3](3-start-first-"
+"strategy.md) 及回测文档为准。"
 msgstr ""
-"デフォルトでは、`Operator` はグループ内で PT クラスのターゲット位置信号の使用を許可します。 `FactorSorter` と PT"
-" をどのように組み合わせるかは、プロジェクトの戦略ドキュメントに従う必要があります。"
+"デフォルトでは、`Operator` はグループ内で PT クラスのターゲット位置信号の使用を許可します。 `FactorSorter` と PT "
+"をどのように組み合わせるかは、プロジェクトの戦略ドキュメントに従う必要があります。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:752
 #, fuzzy
 msgid ""
-"HP 上用全样本算的 rank/zscore，与回测中「每步仅见历史窗口」的因子可能略有数值差异，属预期现象；应以策略内 `get_data` "
-"为准。"
+"HP 上用全样本算的 rank/zscore，与回测中「每步仅见历史窗口」的因子可能略有数值差异，属预期现象；应以策略内 `get_data` 为准。"
 msgstr ""
 "完全なサンプルを使用して HP で計算されたランク/Z "
 "スコアは、「各ステップで履歴ウィンドウのみが表示される」バックテストの要素とは数値的にわずかに異なる場合があります。これは予想されることです。先読みバイアスを防ぐために、戦略内で"
@@ -1019,11 +1015,10 @@ msgstr "ローカルに毎日の `close` および `pb` (予約価格) フィー
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:789
 #, fuzzy
 msgid ""
-"**注意**：缺列或表未下载时，`get_history_data` 会报错；请先通过 [教程 2.0](2.0-get-data.md) "
-"补齐表数据。"
+"**注意**：缺列或表未下载时，`get_history_data` 会报错；请先通过 [教程 2.0](2.0-get-data.md) 补齐表数据。"
 msgstr ""
-"列が欠落している場合、またはテーブルがダウンロードされていない場合、`get_history_data` はエラーを発生させます。まず、データ "
-"ソース チュートリアルを通じてテーブル データを完成させてください。"
+"列が欠落している場合、またはテーブルがダウンロードされていない場合、`get_history_data` はエラーを発生させます。まず、データ ソース "
+"チュートリアルを通じてテーブル データを完成させてください。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:791
 #, fuzzy
@@ -1034,14 +1029,14 @@ msgstr "10.2 最初に 2 つのパネルを位置合わせしてから派生し�
 #, fuzzy
 msgid ""
 "当价格与基本面来自**不同拉取步骤**时，先用 ``align_to`` 对齐 ``shares`` 与 "
-"``hdates``，再运算。``align_to`` 要求两侧 **``htypes`` 名称与顺序完全一致**——若您分别只拉了 "
-"``close`` 与 ``pb``，需先扩成同构列（缺失侧用 ``NaN`` 占位）："
+"``hdates``，再运算。``align_to`` 要求两侧 **``htypes`` 名称与顺序完全一致**——若您分别只拉了 ``close``"
+" 与 ``pb``，需先扩成同构列（缺失侧用 ``NaN`` 占位）："
 msgstr ""
-"``align_to`` requires that **the ``htypes`` names and order match "
-"exactly** on both sides. If you only fetched the ``close`` and ``pb`` "
-"columns separately, you need to first expand them into a homogeneous set "
-"of columns (use ``NaN`` as placeholders on the missing side), then after "
-"alignment use ``assign`` を使用して、有効な値を同じ列名のセットに書き戻します。"
+"``align_to`` requires that **the ``htypes`` names and order match exactly** "
+"on both sides. If you only fetched the ``close`` and ``pb`` columns "
+"separately, you need to first expand them into a homogeneous set of columns "
+"(use ``NaN`` as placeholders on the missing side), then after alignment use "
+"``assign`` を使用して、有効な値を同じ列名のセットに書き戻します。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:829
 #, fuzzy
@@ -1050,8 +1045,8 @@ msgid ""
 "...)``，少一步手工同构。核心原则仍是 **先对齐再运算**。"
 msgstr ""
 "同じことが他の分野 (業界、時価総額など) にも当てはまります。 ``get_history_data(htypes='close, pb', "
-"...)`` のように 1 回の呼び出しでそれらをフェッチできる場合は、1 回の手動均質化ステップを避けるために **§10.1** "
-"を推奨します。 NumPy が暗黙的に行の位置をずらすことを避けるために、核となる原則は依然として **最初に位置合わせしてから計算** です。"
+"...)`` のように 1 回の呼び出しでそれらをフェッチできる場合は、1 回の手動均質化ステップを避けるために **§10.1** を推奨します。 "
+"NumPy が暗黙的に行の位置をずらすことを避けるために、核となる原則は依然として **最初に位置合わせしてから計算** です。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:833
 #, fuzzy
@@ -1065,8 +1060,8 @@ msgid ""
 "内。若您需要发表级实证，应把面板**导出为二维表**，再用 `statsmodels` 等库完成推断。"
 msgstr ""
 "`HistoryPanel` には、Newey-West や Fama-MacBeth "
-"などの組み込みの推論ワークフローがありません。出版グレードの回帰が必要な場合は、**2D "
-"テーブルにエクスポート**してから、`statsmodels` などのライブラリを使用する必要があります。"
+"などの組み込みの推論ワークフローがありません。出版グレードの回帰が必要な場合は、**2D テーブルにエクスポート**してから、`statsmodels`"
+" などのライブラリを使用する必要があります。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:837
 #, fuzzy
@@ -1123,8 +1118,8 @@ msgstr "12. まとめと次のステップ"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:897
 msgid ""
-"读完本章，您应已掌握 `HistoryPanel` 从「取数 → 因子 → 出图 → 粗组合 → 导出」的完整研究链路，并清楚它与 "
-"`Operator` 回测的边界："
+"读完本章，您应已掌握 `HistoryPanel` 从「取数 → 因子 → 出图 → 粗组合 → 导出」的完整研究链路，并清楚它与 `Operator`"
+" 回测的边界："
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:899
@@ -1140,14 +1135,15 @@ msgstr ""
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:901
 #, fuzzy
 msgid "任意一步都可切回 ``DataFrame``，与 pandas / sklearn / statsmodels 协同；"
-msgstr "どの段階でも、簡単に `DataFrame` に切り替えて、pandas / sklearn / statsmodels などと連携できます。"
+msgstr ""
+"どの段階でも、簡単に `DataFrame` に切り替えて、pandas / sklearn / statsmodels などと連携できます。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:902
 #, fuzzy
 msgid "**正式回测**须通过 ``Strategy.realize`` + ``Operator`` 完成；迁移路径见 **§9**。"
 msgstr ""
-"**正式なバックテスト**の場合は、`Strategy.realize` + `Operator` を使用します。研究指向の HP とバックテスト"
-" エンジンの間の境界と移行パスについては、**§9** を参照してください。"
+"**正式なバックテスト**の場合は、`Strategy.realize` + `Operator` を使用します。研究指向の HP とバックテスト "
+"エンジンの間の境界と移行パスについては、**§9** を参照してください。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:904
 msgid "**建议的下一步**："
@@ -1179,8 +1175,8 @@ msgstr ""
 #, fuzzy
 msgid "在 Notebook 中基于您关注的股票池构造 `HistoryPanel`，叠加多个因子（均线、波动率、估值等）并与价格对齐出图"
 msgstr ""
-"ノートブックで、独自の株式ユニバースに基づいて `HistoryPanel` を構築し、複数の要素 "
-"(移動平均、ボラティリティ、バリュエーションなど) を積み重ねて、価格に合わせてチャートをプロットしてみます。"
+"ノートブックで、独自の株式ユニバースに基づいて `HistoryPanel` を構築し、複数の要素 (移動平均、ボラティリティ、バリュエーションなど) "
+"を積み重ねて、価格に合わせてチャートをプロットしてみます。"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:912
 #, fuzzy
@@ -1206,66 +1202,51 @@ msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "`examples/data_playground_e2e.py`"
-msgstr ""
+msgstr "`examples/data_playground_e2e.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "§0 最小闭环"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
-#, fuzzy
 msgid "`examples/historypanel_basic_plot.py`"
-msgstr ""
-"完全な実行可能なスクリプトについては、プロジェクトのルート ディレクトリにある "
-"``examples/historypanel_research_to_strategy.py`` を参照してください。"
+msgstr "`examples/historypanel_basic_plot.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "§1 基础出图"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
-#, fuzzy
 msgid "`examples/historypanel_research_to_strategy.py`"
-msgstr ""
-"完全な実行可能なスクリプトについては、プロジェクトのルート ディレクトリにある "
-"``examples/historypanel_research_to_strategy.py`` を参照してください。"
+msgstr "`examples/historypanel_research_to_strategy.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "§9 迁移骨架"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
-#, fuzzy
 msgid "`examples/historypanel_multisource_research.py`"
-msgstr ""
-"実行可能な合成データのデモについては、プロジェクトのルート ディレクトリにある "
-"``examples/historypanel_multisource_research.py`` を参照してください。"
+msgstr "`examples/historypanel_multisource_research.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "§10 多源对齐"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
-#, fuzzy
 msgid "`examples/historypanel_statsmodels_export.py`"
-msgstr ""
-"合成データの例については、プロジェクトのルート ディレクトリにある "
-"``examples/historypanel_statsmodels_export.py`` を参照してください。"
+msgstr "`examples/historypanel_statsmodels_export.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "§11 导出回归"
 msgstr ""
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
-#, fuzzy
 msgid "`examples/historypanel_research_factor_workflow.py`"
-msgstr ""
-"完全な実行可能なスクリプトについては、プロジェクトのルート ディレクトリにある "
-"``examples/historypanel_research_to_strategy.py`` を参照してください。"
+msgstr "`examples/historypanel_research_factor_workflow.py`"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md
 msgid "`qteasy.research` IC / 分位"
-msgstr ""
+msgstr "`qteasy.research` IC / 分位"
 
 #: ../../source/tutorials/2.5-historypanel-data-analysis.md:925
 #, fuzzy
@@ -1282,18 +1263,15 @@ msgstr ""
 
 #~ msgid "使用 `get_history_data()` 或 `get_history_panel()` 获取价格、成交量等基础行情。"
 #~ msgstr ""
-#~ "価格や取引量などの基本的な市場データを取得するには、`get_history_data()` または "
-#~ "`get_history_panel()` を使用します。"
+#~ "価格や取引量などの基本的な市場データを取得するには、`get_history_data()` または `get_history_panel()` "
+#~ "を使用します。"
 
 #~ msgid ""
-#~ "假设我们已经下载了沪深 300 指数（`000300.SH`）近一年的日线数据，可以直接通过 "
-#~ "`qt.get_kline()` 或 `qt.get_history_data()` 获取一个 "
-#~ "`HistoryPanel`："
+#~ "假设我们已经下载了沪深 300 指数（`000300.SH`）近一年的日线数据，可以直接通过 `qt.get_kline()` 或 "
+#~ "`qt.get_history_data()` 获取一个 `HistoryPanel`："
 #~ msgstr ""
-#~ "CSI 300 Index (`000300.SH`) の過去 1 "
-#~ "年間の日次データをすでにダウンロードしていると仮定します。 `qt.get_kline()` または "
-#~ "`qt.get_history_data()` を介して `HistoryPanel` "
-#~ "を直接取得できます。"
+#~ "CSI 300 Index (`000300.SH`) の過去 1 年間の日次データをすでにダウンロードしていると仮定します。 "
+#~ "`qt.get_kline()` または `qt.get_history_data()` を介して `HistoryPanel` を直接取得できます。"
 
 #~ msgid "此时："
 #~ msgstr "この時点で："
@@ -1308,19 +1286,19 @@ msgstr ""
 #~ msgstr "3. ローソク足テクニカル指標をオーバーレイする"
 
 #~ msgid ""
-#~ "如果你希望“拿到数据后立刻得到一张像样的图”，推荐直接使用 `research_preset` "
-#~ "生成官方预设的常用列集合（预设只做显式追加，不在 `plot()` 内隐藏计算）："
+#~ "如果你希望“拿到数据后立刻得到一张像样的图”，推荐直接使用 `research_preset` 生成官方预设的常用列集合（预设只做显式追加，不在 "
+#~ "`plot()` 内隐藏计算）："
 #~ msgstr ""
 #~ "「データを入手したらすぐに見栄えの良いグラフを取得」したい場合は、`research_preset` "
-#~ "を直接使用して、一般的に使用される列の公式プリセット セットを生成することをお勧めします "
-#~ "(プリセットは明示的に追加のみを行い、`plot()` 内の計算を非表示にしません)。"
+#~ "を直接使用して、一般的に使用される列の公式プリセット セットを生成することをお勧めします (プリセットは明示的に追加のみを行い、`plot()` "
+#~ "内の計算を非表示にしません)。"
 
 #~ msgid "4. 使用 assign 一次派生多列"
 #~ msgstr "4. assign を使用して複数の列を一度に導出する"
 
 #~ msgid ""
-#~ "在实际研究中，经常需要基于已有列派生出多个新因子，例如价差、比例、缩放后的归一化值等。``HistoryPanel.assign()``"
-#~ " 提供了一次性派生多列的 DSL："
+#~ "在实际研究中，经常需要基于已有列派生出多个新因子，例如价差、比例、缩放后的归一化值等。``HistoryPanel.assign()`` "
+#~ "提供了一次性派生多列的 DSL："
 #~ msgstr ""
 #~ "実際の研究では、スプレッド、比率、スケーリング正規化値など、既存の列から複数の新しい要素を導き出す必要があることがよくあります。 "
 #~ "``HistoryPanel.assign()`` は、複数の列を一度に導出する DSL を提供します。"
@@ -1331,66 +1309,56 @@ msgstr ""
 #~ "で、元のオブジェクトを変更せずに新しいパネルを返します。元のパネル上の所定の位置で列を展開する場合は、次を使用できます。"
 
 #~ msgid ""
-#~ "当你手里有两块 `HistoryPanel`，想做逐元素运算（比如 `hp_factor / "
-#~ "hp_price`、或两面板相减）时，需要特别注意："
+#~ "当你手里有两块 `HistoryPanel`，想做逐元素运算（比如 `hp_factor / hp_price`、或两面板相减）时，需要特别注意："
 #~ msgstr ""
-#~ "したがって、2 つの `HistoryPanel` があり、要素ごとの操作 "
-#~ "(`hp_factor / hp_price` や 2 つのパネルの減算など)"
-#~ " を実行する場合は、特別な注意を払う必要があります。"
+#~ "したがって、2 つの `HistoryPanel` があり、要素ごとの操作 (`hp_factor / hp_price` や 2 "
+#~ "つのパネルの減算など) を実行する場合は、特別な注意を払う必要があります。"
 
 #~ msgid "`HistoryPanel` **不会**在运算符里自动对齐两块面板；"
 #~ msgstr "`HistoryPanel` **演算子内の 2 つのパネルを自動的に整列させることはありません**。"
 
 #~ msgid ""
-#~ "若 `shares` / `hdates` 不一致，直接拿 `.values`"
-#~ " 做 NumPy 运算很容易出现“看起来能算、但其实错行”的结果。"
+#~ "若 `shares` / `hdates` 不一致，直接拿 `.values` 做 NumPy 运算很容易出现“看起来能算、但其实错行”的结果。"
 #~ msgstr ""
-#~ "`shares` / `hdates` に一貫性がない場合、`.values` で直接"
-#~ " NumPy "
+#~ "`shares` / `hdates` に一貫性がない場合、`.values` で直接 NumPy "
 #~ "操作を実行すると、「計算しているように見えても、実際には行ごとに位置がずれている」結果が簡単に生成される可能性があります。"
 
 #~ msgid "在因子研究里，你经常会得到一个二维布尔矩阵 `mask_ml`，表示“每只股票在哪些日期满足条件”（例如事件日、信号日、可交易池）。"
 #~ msgstr ""
-#~ "ファクター調査では、多くの場合、「各銘柄が条件を満たす日付」（イベント日、シグナル日、取引可能なユニバースなど）を示す 2D"
-#~ " ブール行列 `mask_ml` を取得します。"
+#~ "ファクター調査では、多くの場合、「各銘柄が条件を満たす日付」（イベント日、シグナル日、取引可能なユニバースなど）を示す 2D ブール行列 "
+#~ "`mask_ml` を取得します。"
 
 #~ msgid "这样可以避免在循环中手动调用 `tafuncs.sma`，`HistoryPanel` 会自动对所有选定股票广播计算。"
 #~ msgstr ""
-#~ "これにより、ループ内で`tafuncs.sma` を手動で呼び出すことがなくなります。 `HistoryPanel`"
-#~ " は、選択されたすべての銘柄にわたって計算を自動的にブロードキャストします。"
+#~ "これにより、ループ内で`tafuncs.sma` を手動で呼び出すことがなくなります。 `HistoryPanel` "
+#~ "は、選択されたすべての銘柄にわたって計算を自動的にブロードキャストします。"
 
 #~ msgid "7. 识别蜡烛形态"
 #~ msgstr "7. ローソク足のパターンを特定する"
 
 #~ msgid ""
-#~ "对于 OHLC 数据，还可以通过 `HistoryPanel.candle_pattern()` "
-#~ "封装 ta-lib 的蜡烛形态识别函数，例如："
+#~ "对于 OHLC 数据，还可以通过 `HistoryPanel.candle_pattern()` 封装 ta-lib 的蜡烛形态识别函数，例如："
 #~ msgstr ""
-#~ "OHLC データの場合、`HistoryPanel.candle_pattern()` を介して "
-#~ "ta-lib のローソク足パターン認識関数をラップすることもできます。例:"
+#~ "OHLC データの場合、`HistoryPanel.candle_pattern()` を介して ta-lib "
+#~ "のローソク足パターン認識関数をラップすることもできます。例:"
 
 #~ msgid ""
-#~ "返回 **新** ``HistoryPanel``（不修改原面板），默认对解析后的 ``close``"
-#~ " 列计算；输出列名为 ``cumret_<列名>``、``norm_<列名>``（与复权列 "
-#~ "``close|b`` 并存时，仍可传 ``htypes=None``，列名仍为 "
+#~ "返回 **新** ``HistoryPanel``（不修改原面板），默认对解析后的 ``close`` 列计算；输出列名为 "
+#~ "``cumret_<列名>``、``norm_<列名>``（与复权列 ``close|b`` 并存时，仍可传 ``htypes=None``，列名仍为 "
 #~ "``cumret_close``）。可与掩码联用："
 #~ msgstr ""
 #~ "**新しい**を返します`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6 "
 #~ "⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧`）。マスクと併用可能："
 
 #~ msgid ""
-#~ "研究向：沿 **标的维** 对指定列做等权或加权平均，返回 **新** "
-#~ "``HistoryPanel``（``hdates`` 不变）。``mask=`` 与 "
-#~ "``where`` 同广播规则。无 ``groups`` 且指定 ``benchmark``"
-#~ " 时，**基准标的不参与**组合计算，仅用于 "
-#~ "``benchmark_output='tag_along'``（多一行基准曲线）或 ``'excess_only'``（输出"
-#~ " ``excess_<列名>``）。非账户回测、无交易成本。详见 API docstring。"
+#~ "研究向：沿 **标的维** 对指定列做等权或加权平均，返回 **新** ``HistoryPanel``（``hdates`` "
+#~ "不变）。``mask=`` 与 ``where`` 同广播规则。无 ``groups`` 且指定 ``benchmark`` "
+#~ "时，**基准标的不参与**组合计算，仅用于 ``benchmark_output='tag_along'``（多一行基准曲线）或 "
+#~ "``'excess_only'``（输出 ``excess_<列名>``）。非账户回测、无交易成本。详见 API docstring。"
 #~ msgstr ""
-#~ "研究指向: **資産ディメンション**に沿って指定された列の均等加重平均または加重平均を取得し、**新しい**を返します。"
-#~ " ``HistoryPanel`` (``hdates`` unchanged). "
-#~ "``mask=`` follows the same broadcasting "
-#~ "rules as ``where``. When there are "
-#~ "no "
+#~ "研究指向: **資産ディメンション**に沿って指定された列の均等加重平均または加重平均を取得し、**新しい**を返します。 "
+#~ "``HistoryPanel`` (``hdates`` unchanged). ``mask=`` follows the same "
+#~ "broadcasting rules as ``where``. When there are no "
 #~ "``groups`⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧⟦コード13⟧⟦コード14⟧⟦コード15⟧⟦コード16⟧`）。アカウントのバックテストではありません。取引コストはかかりません。詳細については、API"
 #~ " ドキュメント文字列を参照してください。"
 
@@ -1399,20 +1367,16 @@ msgstr ""
 #~ "等是**研究向**工具：便于肉眼筛因子、看粗组合线，**不包含**交割周期、手续费、滑点、信号类型（PT/PS/VS）解析等与正式回测一致的账户语义。结论若用于实盘或严肃评价，应把**同一经济含义**的规则写进策略的"
 #~ " `realize()`，交给 `Operator` + Backtester。"
 #~ msgstr ""
-#~ "`HistoryPanel` の `cum_return`、`portfolio`、`plot` などは"
-#~ " **研究指向** "
-#~ "ツールです。要因に注目したり、ポートフォリオの大まかな曲線を表示したりするのに便利ですが、決済サイクル、手数料、スリッページ、シグナル"
-#~ " タイプの解析などの正式なバックテストと一致するアカウント セマンティクスは **含まれません** "
-#~ "(PT/PS/VS)。結論をライブ取引や本格的な評価に使用する場合は、**同じ経済的意味**を持つルールをストラテジーの "
-#~ "`realize()` に書き込み、それらを `Operator` + Backtester"
-#~ " に渡す必要があります。"
+#~ "`HistoryPanel` の `cum_return`、`portfolio`、`plot` などは **研究指向** "
+#~ "ツールです。要因に注目したり、ポートフォリオの大まかな曲線を表示したりするのに便利ですが、決済サイクル、手数料、スリッページ、シグナル "
+#~ "タイプの解析などの正式なバックテストと一致するアカウント セマンティクスは **含まれません** "
+#~ "(PT/PS/VS)。結論をライブ取引や本格的な評価に使用する場合は、**同じ経済的意味**を持つルールをストラテジーの `realize()` "
+#~ "に書き込み、それらを `Operator` + Backtester に渡す必要があります。"
 
 #~ msgid "下面用**同一思想——20 期简单动量**串起两阶段（需本地已配置数据源并下载相应字段；股票代码仅为示意）。"
 #~ msgstr ""
-#~ "以下では、**同じアイデアである 20 期間の単純な勢い** を使用して 2 "
-#~ "つのステージを接続します (データ "
-#~ "ソースがローカルに構成され、対応するフィールドがダウンロードされている必要があります。ストック "
-#~ "コードは説明のみを目的としています)。"
+#~ "以下では、**同じアイデアである 20 期間の単純な勢い** を使用して 2 つのステージを接続します (データ "
+#~ "ソースがローカルに構成され、対応するフィールドがダウンロードされている必要があります。ストック コードは説明のみを目的としています)。"
 
 #~ msgid "这里你在 **三维面板** 上完成了因子列生产、截面变换与粗聚合；若结果满意，进入 9.2 把**因子定义**搬到策略里。"
 #~ msgstr ""
@@ -1420,21 +1384,18 @@ msgstr ""
 #~ "に進み、**要素定義**を戦略に移動します。"
 
 #~ msgid ""
-#~ "`HistoryPanel` 可以承载任意 `htypes` 列；**多表/多 "
-#~ "DataType** 的常见做法是：(1) 一次 `get_history_data` "
-#~ "拉多列；(2) 或分别取两块面板再 `align_to`。"
+#~ "`HistoryPanel` 可以承载任意 `htypes` 列；**多表/多 DataType** 的常见做法是：(1) 一次 "
+#~ "`get_history_data` 拉多列；(2) 或分别取两块面板再 `align_to`。"
 #~ msgstr ""
-#~ "`HistoryPanel` は任意の `htypes` 列を保持できます。 "
-#~ "**複数のテーブル/複数の DataTypes** に対する一般的なアプローチは次のとおりです。(1) "
-#~ "1 回の `get_history_data` 呼び出しで複数の列をフェッチします。 (2)"
-#~ " または 2 つのパネルを個別に取得して、`align_to` を実行します。"
+#~ "`HistoryPanel` は任意の `htypes` 列を保持できます。 **複数のテーブル/複数の DataTypes** "
+#~ "に対する一般的なアプローチは次のとおりです。(1) 1 回の `get_history_data` 呼び出しで複数の列をフェッチします。 (2) または"
+#~ " 2 つのパネルを個別に取得して、`align_to` を実行します。"
 
 #~ msgid "10.1 单次拉取多列（频率与资产类型需一致）"
 #~ msgstr "10.1 複数の列を一度に取得する (頻度と資産タイプは一貫している必要があります)"
 
 #~ msgid ""
-#~ "上述因变量仅为演示；实务中应将 **因子与前瞻收益对齐** 并处理停牌、幸存者偏差等——均在计量层完成，而非 "
-#~ "`HistoryPanel` 核心职责。"
+#~ "上述因变量仅为演示；实务中应将 **因子与前瞻收益对齐** 并处理停牌、幸存者偏差等——均在计量层完成，而非 `HistoryPanel` 核心职责。"
 #~ msgstr ""
 #~ "上記の従属変数はデモンストレーションのみを目的としています。実際には、**要因をフォワード "
 #~ "リターンと調整**し、一時停止や生存者バイアスなどを処理する必要があります。これらすべては、`HistoryPanel` "
@@ -1452,16 +1413,12 @@ msgstr ""
 #~ "线指标（`kline.*`）、技术指标桥接（`apply_ta`）、蜡烛形态识别（`candle_pattern`）、**研究掩码（`where`）**"
 #~ " 以及 **列属性 / 比较 / `loc`** 等；"
 #~ msgstr ""
-#~ "その上で、統計手法 (`describe/mean/std/min/max`)、ローリング ウィンドウ "
-#~ "(`rolling`)、リターン/ボラティリティ "
-#~ "(`returns`/`volatility`)、**横断的なランキングと標準化 "
+#~ "その上で、統計手法 (`describe/mean/std/min/max`)、ローリング ウィンドウ (`rolling`)、リターン/ボラティリティ"
+#~ " (`returns`/`volatility`)、**横断的なランキングと標準化 "
 #~ "(`rank`/`zscore`)**、**累積リターンと正規化を直接呼び出すことができます。 "
-#~ "(`cum_return`/`normalize`)**、**ポートフォリオ集計 (`portfolio`)**、ローソク足"
-#~ " (K ライン) インジケーター (`kline.*`)、テクニカル指標ブリッジング "
-#~ "(`apply_ta`)、ローソク足パターン認識 "
-#~ "(`candle_pattern`)、**リサーチマスク(`where`)**、および **列属性/比較/`loc`** "
-#~ "など。"
+#~ "(`cum_return`/`normalize`)**、**ポートフォリオ集計 (`portfolio`)**、ローソク足 (K ライン) "
+#~ "インジケーター (`kline.*`)、テクニカル指標ブリッジング (`apply_ta`)、ローソク足パターン認識 "
+#~ "(`candle_pattern`)、**リサーチマスク(`where`)**、および **列属性/比較/`loc`** など。"
 
 #~ msgid "下一步建议："
 #~ msgstr "推奨される次のステップ:"
-

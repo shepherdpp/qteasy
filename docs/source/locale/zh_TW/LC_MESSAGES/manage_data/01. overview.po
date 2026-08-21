@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/manage_data/01. overview.md:1
@@ -67,16 +67,20 @@ msgid "**数据拉取**：从多个不同的网络数据提供商拉取多种金
 msgstr "**數據拉取**：從多個不同的網絡數據提供商拉取多種金融數據，滿足不同用戶的使用習慣："
 
 #: ../../source/manage_data/01. overview.md:21
-msgid "`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
-msgstr "`qteasy`提供的數據拉取API具備強大的多線程並行下載、數據分塊下載、下載流量控制和錯誤延時重試功能，以適應不同數據供應商各種變態的流量限制，同時數據拉取API可以方便地定期自動運行完成數據批量下載任務，不用擔心錯過高頻數據。"
+msgid ""
+"`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
+msgstr ""
+"`qteasy`提供的數據拉取API具備強大的多線程並行下載、數據分塊下載、下載流量控制和錯誤延時重試功能，以適應不同數據供應商各種變態的流量限制，同時數據拉取API可以方便地定期自動運行完成數據批量下載任務，不用擔心錯過高頻數據。"
 
 #: ../../source/manage_data/01. overview.md:23
 msgid "**数据清洗和存储**：标准化定义本地数据存储，将从网络拉取的数据清洗、整理后保存到本地数据库中："
 msgstr "**數據清洗和存儲**：標準化定義本地數據存儲，將從網絡拉取的數據清洗、整理後保存到本地數據庫中："
 
 #: ../../source/manage_data/01. overview.md:25
-msgid "`qteasy`定义了一个专门用于存储金融历史数据的`DataSource`类，并以标准化的形式预定义了大量金融历史数据存储表，不管数据的来源如何，最终存储的数据始终会被清洗后以统一的格式存储在`DataSource`中，避免不同时期不同来源的数据产生偏差，确保数据高质量存储。同时提供多种存储引擎，满足不同用户的使用习惯。"
-msgstr "`qteasy`定義了一個專門用於存儲金融歷史數據的`DataSource`類，並以標準化的形式預定義了大量金融歷史數據存儲表，不管數據的來源如何，最終存儲的數據始終會被清洗後以統一的格式存儲在`DataSource`中，避免不同時期不同來源的數據產生偏差，確保數據高質量存儲。同時提供多種存儲引擎，滿足不同用戶的使用習慣。"
+msgid ""
+"`qteasy`定义了一个专门用于存储金融历史数据的`DataSource`类，并以标准化的形式预定义了大量金融历史数据存储表，不管数据的来源如何，最终存储的数据始终会被清洗后以统一的格式存储在`DataSource`中，避免不同时期不同来源的数据产生偏差，确保数据高质量存储。同时提供多种存储引擎，满足不同用户的使用习惯。"
+msgstr ""
+"`qteasy`定義了一個專門用於存儲金融歷史數據的`DataSource`類，並以標準化的形式預定義了大量金融歷史數據存儲表，不管數據的來源如何，最終存儲的數據始終會被清洗後以統一的格式存儲在`DataSource`中，避免不同時期不同來源的數據產生偏差，確保數據高質量存儲。同時提供多種存儲引擎，滿足不同用戶的使用習慣。"
 
 #: ../../source/manage_data/01. overview.md:28
 msgid "**信息提取和使用**：区分“数据“和”信息，“提供接口将集中在数据表中的真正有意义的信息提取出来，从而直接用于交易策略或数据分析："
@@ -88,6 +92,9 @@ msgid ""
 "**DataType 信息 ID**（用户日常写字符串；专家层才构造对象），并按 History / Reference / Static "
 "三种形状提供浅入口，简化策略声明与数据分析。"
 msgstr ""
+"我們知道”資料“並不等於”資訊“，光是將資料表保存在本地不代表立即就能使用其中的資訊。而`qteasy`特意將資料表中的可用“資訊”定義爲穩定的 "
+"**DataType 資訊 ID**（使用者日常寫字符串；專家層才構造物件），並按 History / Reference / Static "
+"三種形狀提供淺入口，簡化策略聲明與資料分析。"
 
 #: ../../source/manage_data/01. overview.md:32
 msgid "总体来说，`qteasy`的数据获取模块的结构可以用下面的示意图来表示："
@@ -107,20 +114,25 @@ msgid ""
 "与标准化数据表；第三层是信息提取——用 DataType ID 从本地表取出可用信息。创建交易策略、做面板分析与可视化，都以这些信息 ID "
 "与对应入口为基础。"
 msgstr ""
+"如圖所示，`qteasy`的資料功能分爲三層：第一層從網路渠道拉取資料（`DataFetching`）；第二層是本地 `DataSource` "
+"與標準化資料表；第三層是資訊提取——用 DataType ID 從本地表取出可用資訊。創建交易策略、做面板分析與可視化，都以這些資訊 ID "
+"與對應入口爲基礎。"
 
 #: ../../source/manage_data/01. overview.md:38
 msgid "建议阅读顺序（按任务）"
-msgstr ""
+msgstr "建議閱讀順序（按任務）"
 
 #: ../../source/manage_data/01. overview.md:40
 msgid "不必按文件名硬背。更实用的顺序是："
-msgstr ""
+msgstr "不必按文件名硬背。更實用的順序是："
 
 #: ../../source/manage_data/01. overview.md:42
 msgid ""
 "**要什么信息？** — 用 `find_history_data` 或 "
 "[完整清单](../references/datatypes/index.md) 找到 ID，看 `kind` / `usable_in`"
 msgstr ""
+"**要什麼資訊？** — 用 `find_history_data` 或 "
+"[完整清單](../references/datatypes/index.md) 找到 ID，看 `kind` / `usable_in`"
 
 #: ../../source/manage_data/01. overview.md:43
 #, python-format
@@ -129,60 +141,64 @@ msgid ""
 "`get_reference_data`；行业/上市日等 → `get_static_data`（详见 [DataType "
 "概念章](02.%20datatypes.md)）"
 msgstr ""
+"**用哪個入口？** — History → `get_history_data` / `get_kline`；宏觀與基準 → "
+"`get_reference_data`；行業/上市日等 → `get_static_data`（詳見 [DataType "
+"概念章](02.%20datatypes.md)）"
 
 #: ../../source/manage_data/01. overview.md:44
 msgid ""
-"**本地没有？** — 看清单中的 `table_name`，用 `refill_data_source` 补表（DataSource "
-"与数据表章节）"
+"**本地没有？** — 看清单中的 `table_name`，用 `refill_data_source` 补表（DataSource 与数据表章节）"
 msgstr ""
+"**本地沒有？** — 看清單中的 `table_name`，用 `refill_data_source` 補表（DataSource 與資料表章節）"
 
 #: ../../source/manage_data/01. overview.md:46
 msgid "章节索引（与文件名编号一致，便于查阅）："
-msgstr ""
+msgstr "章節索引（與文件名編號一致，便於查閱）："
 
 #: ../../source/manage_data/01. overview.md:48
 msgid ""
 "**2. DataType（信息 ID）**——三形状、四条工作路径、双 ID、精选类型；完整清单见 "
 "[references/datatypes](../references/datatypes/index.md)"
 msgstr ""
+"**2. DataType（資訊 ID）**——三形狀、四條工作路徑、雙 ID、精選類型；完整清單見 "
+"[references/datatypes](../references/datatypes/index.md)"
 
 #: ../../source/manage_data/01. overview.md:49
-#, fuzzy
 msgid "**2.5. HistoryPanel**——多标的、多指标、时间对齐的三维容器（只吃 History）"
-msgstr ""
-"**2.5. HistoryPanel（歷史數據面板）**——多標的、多指標、時間對齊的三維容器；與 `get_history_data` "
-"的配合及常用切片"
+msgstr "**2.5. HistoryPanel**——多標的、多指標、時間對齊的三維容器（只喫 History）"
 
 #: ../../source/manage_data/01. overview.md:50
-#, fuzzy
 msgid "**2.6. HistoryPanel 可视化**——静态图与交互图"
-msgstr "**2.6. HistoryPanel 可視化**——`HistoryPanel.plot()` 靜態圖與交互圖、佈局與可選依賴"
+msgstr "**2.6. HistoryPanel 可視化**——靜態圖與交互圖"
 
 #: ../../source/manage_data/01. overview.md:51
-#, fuzzy
 msgid "**3. 本地数据源 DataSource**——存储与基本操作"
-msgstr "**3. 本地數據源 DataSource**——DataSource 對象與基本操作"
+msgstr "**3. 本地資料源 DataSource**——存儲與基本操作"
 
 #: ../../source/manage_data/01. overview.md:52
-#, fuzzy
 msgid "**4.～9. 内置数据表**——表结构与用途（存储层，≠ DataType）"
-msgstr "**4.～9. 內置數據表**——各數據表的結構與用途"
+msgstr "**4.～9. 內置資料表**——表結構與用途（存儲層，≠ DataType）"
 
 #: ../../source/manage_data/01. overview.md:53
-#, fuzzy
 msgid "**10. 数据拉取与渠道**——从不同渠道填充数据"
-msgstr "**10. 數據拉取與渠道**——從不同渠道拉取並填充數據"
+msgstr "**10. 資料拉取與渠道**——從不同渠道填充資料"
 
 #: ../../source/manage_data/01. overview.md:55
 msgid ""
-"**实操最短路径**（偏「玩数据」而非回测）：先跟 [获取数据](../tutorials/2.0-get-data.md) 下载最小数据集，再读"
-" [HistoryPanel 基础操作](../tutorials/2.4-historypanel-basics.md) → "
+"**实操最短路径**（偏「玩数据」而非回测）：先跟 [获取数据](../tutorials/2.0-get-data.md) 下载最小数据集，再读 "
+"[HistoryPanel 基础操作](../tutorials/2.4-historypanel-basics.md) → "
 "[玩数据与因子分析](../tutorials/2.5-historypanel-data-analysis.md) 与 "
 "`examples/data_playground_e2e.py`；本 manage_data 章节作参考查阅即可。"
 msgstr ""
+"**實操最短路徑**（偏「玩資料」而非回測）：先跟 [獲取資料](../tutorials/2.0-get-data.md) 下載最小資料集，再讀 "
+"[HistoryPanel 基礎操作](../tutorials/2.4-historypanel-basics.md) → "
+"[玩資料與因子分析](../tutorials/2.5-historypanel-data-analysis.md) 與 "
+"`examples/data_playground_e2e.py`；本 manage_data 章節作參考查閱即可。"
 
-#~ msgid "我们知道”数据“并不等于”信息“，光是将数据表保存在本地不代表立即就能使用其中的信息。而`qteasy`特意将数据表中的可用“信息”以标准化的方式定义为`DataType`对象，简化数据访问过程和策略的定义过程，统一的API使得获取信息的过程变得更加直接和友好"
-#~ msgstr "我們知道”數據“並不等於”資訊“，光是將數據表保存在本地不代表立即就能使用其中的資訊。而`qteasy`特意將數據表中的可用“資訊”以標準化的方式定義爲`DataType`對象，簡化數據訪問過程和策略的定義過程，統一的API使得獲取資訊的過程變得更加直接和友好"
+#~ msgid ""
+#~ "我们知道”数据“并不等于”信息“，光是将数据表保存在本地不代表立即就能使用其中的信息。而`qteasy`特意将数据表中的可用“信息”以标准化的方式定义为`DataType`对象，简化数据访问过程和策略的定义过程，统一的API使得获取信息的过程变得更加直接和友好"
+#~ msgstr ""
+#~ "我們知道”數據“並不等於”資訊“，光是將數據表保存在本地不代表立即就能使用其中的資訊。而`qteasy`特意將數據表中的可用“資訊”以標準化的方式定義爲`DataType`對象，簡化數據訪問過程和策略的定義過程，統一的API使得獲取資訊的過程變得更加直接和友好"
 
 #~ msgid ""
 #~ "如图所示，`qteasy`的数据功能分为三层，第一层包括多种数据下载接口，用于从网络数据提供商获取数据，这个过程称为`DataFetching`。第二层是`qteasy`的核心功能之一，定义了一个本地数据库用于存储大量的数据表，并且支持多种数据引擎，这一层的核心是`DataSource`类，第三层是数据应用层，将数据表中有意义的信息提取出来定义为`DataType`对象，提取数据的过程被称为`Information"
@@ -194,14 +210,11 @@ msgstr ""
 #~ "Extraction`。而這個`DataType`對象在`qteasy`內部被廣泛使用，創建交易策略，進行數據分析、可視化等後續的一切工作，都是以DataType對象爲基礎進行的。"
 
 #~ msgid ""
-#~ "正因为金融数据在量化交易过程中的重要性，从下一章节开始，我们将按以下顺序详细介绍 qteasy "
-#~ "数据功能的所有功能模块（阅读顺序与文件名编号一致，2 → 2.5 → 2.6 →"
-#~ " 3 → … → 10）："
+#~ "正因为金融数据在量化交易过程中的重要性，从下一章节开始，我们将按以下顺序详细介绍 qteasy 数据功能的所有功能模块（阅读顺序与文件名编号一致，2 →"
+#~ " 2.5 → 2.6 → 3 → … → 10）："
 #~ msgstr ""
-#~ "正因爲金融數據在量化交易過程中的重要性，從下一章節開始，我們將按以下順序詳細介紹 qteasy "
-#~ "數據功能的所有功能模塊（閱讀順序與文件名編號一致，2 → 2.5 → 2.6 →"
-#~ " 3 → … → 10）："
+#~ "正因爲金融數據在量化交易過程中的重要性，從下一章節開始，我們將按以下順序詳細介紹 qteasy 數據功能的所有功能模塊（閱讀順序與文件名編號一致，2 →"
+#~ " 2.5 → 2.6 → 3 → … → 10）："
 
 #~ msgid "**2. DataType 对象与所有数据类型**——信息与数据的区别、DataType 对象、所有内置数据类型清单"
 #~ msgstr "**2. DataType 對象與所有數據類型**——資訊與數據的區別、DataType 對象、所有內置數據類型清單"
-

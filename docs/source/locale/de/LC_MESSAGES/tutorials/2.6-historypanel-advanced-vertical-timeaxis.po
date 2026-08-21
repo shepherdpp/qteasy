@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-23 22:30+0800\n"
-"Last-Translator: Jackie PENG (de_translate_from_en)\n"
-"Language: de\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:1
@@ -27,66 +27,76 @@ msgid ""
 "**前置**：[教程 2.0 最小数据集](2.0-get-data.md) + [教程 2.5](2.5-historypanel-data-"
 "analysis.md)（建议先完成 2.5 §0）。本地数据与 `get_kline` 用法见 2.0 / 2.5。"
 msgstr ""
+"**Voraussetzungen**: [Tutorial 2.0 Mindestdatensatz](2.0-get-data.md) + "
+"[Tutorial 2.5](2.5-historypanel-data-analysis.md) (es wird empfohlen, zuerst"
+" 2.5 §0 abzuschließen). Für lokale Daten und die Verwendung von `get_kline` "
+"siehe 2.0 / 2.5."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:5
 msgid ""
-"**关于本篇**：在**少量标的**上，沿每只股票**自己的时间轴**做持有/不持有择时，再把结果汇总成组合曲线并与基准（如沪深 "
-"300）对比——这是 `HistoryPanel` 典型的**纵向择时研究**场景。"
+"**关于本篇**：在**少量标的**上，沿每只股票**自己的时间轴**做持有/不持有择时，再把结果汇总成组合曲线并与基准（如沪深 300）对比——这是 "
+"`HistoryPanel` 典型的**纵向择时研究**场景。"
 msgstr ""
+"**Über diesen Artikel**: Führen Sie bei **einer kleinen Anzahl von Zielen** "
+"ein Hold/No-Hold-Timing entlang der **eigenen Zeitachse** jeder Aktie durch,"
+" fassen Sie dann die Ergebnisse in einer Kombinationskurve zusammen und "
+"vergleichen Sie sie mit der Benchmark (z. B. CSI 300) – dies ist ein "
+"typisches **vertikales Timing-Research**-Szenario von `HistoryPanel`."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:7
-#, fuzzy
 msgid ""
 "**研究链路**：因子阈值 → bool 条件 → ``where`` 掩码 → ``portfolio`` + benchmark → "
 "``cum_return`` / CAGR → ``plot(highlight)`` 解释。"
 msgstr ""
-"Zu diesem Zeitpunkt haben wir bereits eine vollständige "
-"Forschungsschleife für „Timing bei einem kleinen Satz von Instrumenten“ "
-"durchlaufen: Daten -> Faktor -> Bool-Bedingung -> `Where`-Maske -> "
-"`Portfolio + Benchmark` -> `cum_return + CAGR` -> "
-"`plot(highlight)`-Erklärung."
+"Zu diesem Zeitpunkt haben wir bereits eine vollständige Forschungsschleife "
+"für „Timing bei einem kleinen Satz von Instrumenten“ durchlaufen: Daten -> "
+"Faktor -> Bool-Bedingung -> `Where`-Maske -> `Portfolio + Benchmark` -> "
+"`cum_return + CAGR` -> `plot(highlight)`-Erklärung."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:9
 msgid ""
-"**注**：上述 ``portfolio`` / ``cum_return`` 均为**研究向**粗聚合，**不含**交易成本、交割、滑点、MOQ"
-" 等完整回测语义；迁移至 ``Operator`` 见 [2.5 §9](2.5-historypanel-data-"
+"**注**：上述 ``portfolio`` / ``cum_return`` 均为**研究向**粗聚合，**不含**交易成本、交割、滑点、MOQ "
+"等完整回测语义；迁移至 ``Operator`` 见 [2.5 §9](2.5-historypanel-data-"
 "analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径)。"
 msgstr ""
+"**Hinweis**: Für den oben genannten „`portfolio`` / ``cum_return`` "
+"均为**研究向**粗聚合，**不含**交易成本、交割、滑点、MOQ 等完整回测语义；迁移至 ``Operator`“ siehe [2.5 "
+"§9](2.5-historypanel-data-analysis.md#9-From-historypanel-research to-"
+"strategy--operator migration path)."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:11
-#, fuzzy
-msgid "本篇面向一个非常常见、也很「接地气」的研究场景：我们手里只有少量股票（几只到十几只），想沿每只股票自己的时间轴做出**持有/不持有**的择时决策；把这些决策汇总成一条组合曲线，再和基准（`000300.SH`）对比，得到可复用的年化摘要（CAGR）。"
+msgid ""
+"本篇面向一个非常常见、也很「接地气」的研究场景：我们手里只有少量股票（几只到十几只），想沿每只股票自己的时间轴做出**持有/不持有**的择时决策；把这些决策汇总成一条组合曲线，再和基准（`000300.SH`）对比，得到可复用的年化摘要（CAGR）。"
 msgstr ""
 "Dieses Tutorial zielt auf ein sehr häufiges und sehr praktisches "
-"Forschungsszenario ab: Wir haben nur eine kleine Anzahl von Aktien "
-"(einige bis ein Dutzend oder so) und möchten Timing-Entscheidungen zum "
-"**Halten/Nicht-Halten** entlang der eigenen Zeitachse jeder Aktie "
-"treffen; Fassen Sie diese Entscheidungen dann in einer einzigen "
-"Portfoliokurve zusammen und vergleichen Sie sie schließlich mit der "
-"Benchmark (HS300), um eine wiederverwendbare jährliche Kennzahl (CAGR) zu"
-" erhalten."
+"Forschungsszenario ab: Wir haben nur eine kleine Anzahl von Aktien (einige "
+"bis ein Dutzend oder so) und möchten Timing-Entscheidungen zum "
+"**Halten/Nicht-Halten** entlang der eigenen Zeitachse jeder Aktie treffen; "
+"Fassen Sie diese Entscheidungen dann in einer einzigen Portfoliokurve "
+"zusammen und vergleichen Sie sie schließlich mit der Benchmark (HS300), um "
+"eine wiederverwendbare jährliche Kennzahl (CAGR) zu erhalten."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:13
-#, fuzzy
 msgid ""
 "``HistoryPanel`` 在这里是**轻量因子研究容器**——强项是把「数据 → 条件 → 研究口径（mask）→ 组合聚合 → "
 "可视化解释」打通，便于快速验证规则是否值得继续深挖；**不是**交易回测引擎。"
 msgstr ""
-"Lassen Sie uns zunächst die Positionierung klarstellen: „HistoryPanel“ "
-"dient hier als **Container für die Forschung mit leichtem Faktor**. Seine"
-" Stärke besteht darin, dass es „Daten -> Bedingungen -> "
-"Forschungsdefinition (Maske) -> Portfolio-Aggregation -> visuelle "
-"Erklärung“ miteinander verbindet und es uns ermöglicht, schnell zu "
-"überprüfen, ob es sich lohnt, eine Regel näher zu untersuchen. Es handelt"
-" sich nicht um eine Trading-Backtesting-Engine: Sie verarbeitet nicht die"
-" vollständige Handelssemantik wie Transaktionskosten, Abwicklung, "
-"Slippage, Kapitalbeschränkungen, Mindesthandelsgröße usw. Das Ziel dieses"
-" Artikels ist der Aufbau einer **Forschungsschleife**, nicht einer "
-"**Handelsschleife**."
+"Lassen Sie uns zunächst die Positionierung klarstellen: „HistoryPanel“ dient"
+" hier als **Container für die Forschung mit leichtem Faktor**. Seine Stärke "
+"besteht darin, dass es „Daten -> Bedingungen -> Forschungsdefinition (Maske)"
+" -> Portfolio-Aggregation -> visuelle Erklärung“ miteinander verbindet und "
+"es uns ermöglicht, schnell zu überprüfen, ob es sich lohnt, eine Regel näher"
+" zu untersuchen. Es handelt sich nicht um eine Trading-Backtesting-Engine: "
+"Sie verarbeitet nicht die vollständige Handelssemantik wie "
+"Transaktionskosten, Abwicklung, Slippage, Kapitalbeschränkungen, "
+"Mindesthandelsgröße usw. Das Ziel dieses Artikels ist der Aufbau einer "
+"**Forschungsschleife**, nicht einer **Handelsschleife**."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:17
 msgid "数据检查——跑通纵向择时最小闭环"
 msgstr ""
+"Dateninspektion – Durchlaufen der minimalen geschlossenen Schleife des "
+"Längstimings"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:19
 #, fuzzy
@@ -102,28 +112,31 @@ msgid ""
 "当上面的代码在 Notebook 中能正常出图时，说明本地 K 线数据已就绪，您可以继续阅读下文，把「MACD 择时 → mask → "
 "组合对比」的完整链路跑通。"
 msgstr ""
+"Wenn der obige Code normal in Notebook angezeigt werden kann, bedeutet dies,"
+" dass die lokalen K-Line-Daten bereit sind. Sie können unten weiterlesen, um"
+" den vollständigen Link „MACD-Timing → Maske → Kombinationsvergleich“ zu "
+"vervollständigen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:42
 #, fuzzy
 msgid "不过，仅仅「能画出来」还远远不够。 如果我们真的要把它当成日常研究工具来用，至少会遇到下面这些问题："
 msgstr ""
-"Allerdings reicht es bei weitem nicht aus, nur „etwas planen“ zu können."
-"   Wenn wir es wirklich als tägliches Recherchetool verwenden wollen, "
-"werden wir auf mindestens die folgenden Probleme stoßen:"
+"Allerdings reicht es bei weitem nicht aus, nur „etwas planen“ zu können.   "
+"Wenn wir es wirklich als tägliches Recherchetool verwenden wollen, werden "
+"wir auf mindestens die folgenden Probleme stoßen:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:45
 msgid ""
 "**择时规则怎么落地**：我们脑子里很容易有一句“MACD>0 就持有”，但写成代码后常常会变形：列名记错、数据缺列、算出来全是 "
 "NaN、或不同股票对齐方式不一致。结果就是研究脚本一跑就报错，或者更糟——不报错但结论不可信。"
 msgstr ""
-"**So implementieren Sie die Timing-Regel**: Es ist einfach, sich eine "
-"Regel wie „Halten, wenn MACD>0“ vorzustellen, aber sobald man sie als "
-"Code schreibt, wird sie oft verzerrt: falsche Spaltennamen, fehlende "
-"Spalten, alles kommt im NaN-Format heraus oder verschiedene Aktien sind "
-"inkonsistent ausgerichtet. Das Ergebnis ist, dass das Rechercheskript "
-"einen Fehler ausgibt, sobald Sie es ausführen – oder schlimmer noch, es "
-"macht keinen Fehler, aber die Schlussfolgerungen sind nicht "
-"vertrauenswürdig."
+"**So implementieren Sie die Timing-Regel**: Es ist einfach, sich eine Regel "
+"wie „Halten, wenn MACD>0“ vorzustellen, aber sobald man sie als Code "
+"schreibt, wird sie oft verzerrt: falsche Spaltennamen, fehlende Spalten, "
+"alles kommt im NaN-Format heraus oder verschiedene Aktien sind inkonsistent "
+"ausgerichtet. Das Ergebnis ist, dass das Rechercheskript einen Fehler "
+"ausgibt, sobald Sie es ausführen – oder schlimmer noch, es macht keinen "
+"Fehler, aber die Schlussfolgerungen sind nicht vertrauenswürdig."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:46
 #, fuzzy
@@ -132,46 +145,45 @@ msgid ""
 "是三维的（股票×时间×字段）。如果形状对不齐，您会出现“以为在筛选股票，其实在筛选字段”的隐性 bug；而这种 bug "
 "往往不会立刻报错，只会让收益曲线看起来“有点怪”。"
 msgstr ""
-"**So richten Sie Maskenformen aus**: Die Bedingung ist im Wesentlichen 2D"
-" (Bestand × Zeit), aber „HistoryPanel“ ist 3D (Bestand × Zeit × Feld). "
-"Wenn die Formen nicht übereinstimmen, kann es zu einem subtilen Fehler "
-"kommen, bei dem man denkt, dass man Aktien filtert, in Wirklichkeit aber "
-"Felder filtert. Und diese Art von Fehler löst oft nicht sofort einen "
-"Fehler aus, sondern lässt die Eigenkapitalkurve nur „ein bisschen "
-"daneben“ aussehen."
+"**So richten Sie Maskenformen aus**: Die Bedingung ist im Wesentlichen 2D "
+"(Bestand × Zeit), aber „HistoryPanel“ ist 3D (Bestand × Zeit × Feld). Wenn "
+"die Formen nicht übereinstimmen, kann es zu einem subtilen Fehler kommen, "
+"bei dem man denkt, dass man Aktien filtert, in Wirklichkeit aber Felder "
+"filtert. Und diese Art von Fehler löst oft nicht sofort einen Fehler aus, "
+"sondern lässt die Eigenkapitalkurve nur „ein bisschen daneben“ aussehen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:47
 msgid ""
 "**没有 benchmark 很难判断好坏**：只看组合曲线很容易“自嗨”。它可能只是踩中了 2022 年某一段风格或大盘趋势。把 "
 "`000300.SH` 拉进来做对照，至少能回答一个更接近实战的问题：这套择时规则，是在**创造超额**，还是只是**跟着市场波动**？"
 msgstr ""
-"**Ohne Benchmark ist es schwierig, die Leistung zu beurteilen**: Wenn man"
-" sich nur die Portfoliokurve anschaut, kann man sich leicht selbst auf "
-"die Schulter klopfen. Möglicherweise folgt es in einem Teil des Jahres "
-"2022 einfach einem bestimmten Stil oder einem breiten Markttrend. Die "
+"**Ohne Benchmark ist es schwierig, die Leistung zu beurteilen**: Wenn man "
+"sich nur die Portfoliokurve anschaut, kann man sich leicht selbst auf die "
+"Schulter klopfen. Möglicherweise folgt es in einem Teil des Jahres 2022 "
+"einfach einem bestimmten Stil oder einem breiten Markttrend. Die "
 "Einbeziehung von „000300.SH“ als Referenz beantwortet zumindest eine "
-"praktischere Frage: Erzeugt diese Timing-Regel **Überschussrenditen** "
-"oder bewegt sie sich einfach nur mit dem Markt**?"
+"praktischere Frage: Erzeugt diese Timing-Regel **Überschussrenditen** oder "
+"bewegt sie sich einfach nur mit dem Markt**?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:48
 msgid ""
 "**有结果但难解释**：就算 long "
 "组合跑赢了，也很难解释“为什么赢”。真正的研究需要可复盘：当收益出现明显拐点时，我们能不能迅速回到图上定位“是哪些触发点改变了持仓状态”？"
 msgstr ""
-"**Ergebnisse, aber schwer zu erklären**: Selbst wenn das Long-Portfolio "
-"eine Outperformance erzielt, ist es immer noch schwer zu erklären, „warum"
-" es gewonnen hat“. Echte Forschung muss reproduzierbar und überprüfbar "
-"sein: Wenn die Rendite einen klaren Wendepunkt zeigt, können wir dann "
-"schnell zum Diagramm zurückkehren und genau bestimmen, „welche Auslöser "
-"den Positionsstatus geändert haben“?"
+"**Ergebnisse, aber schwer zu erklären**: Selbst wenn das Long-Portfolio eine"
+" Outperformance erzielt, ist es immer noch schwer zu erklären, „warum es "
+"gewonnen hat“. Echte Forschung muss reproduzierbar und überprüfbar sein: "
+"Wenn die Rendite einen klaren Wendepunkt zeigt, können wir dann schnell zum "
+"Diagramm zurückkehren und genau bestimmen, „welche Auslöser den "
+"Positionsstatus geändert haben“?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:50
 msgid "好在这些能力都可以一步步补齐。本文就按“先跑通，再增强”的节奏，把它补齐成一个真正可用的小研究流程。"
 msgstr ""
 "Glücklicherweise können diese Fähigkeiten Schritt für Schritt ausgefüllt "
 "werden. Dieser Artikel folgt dem Rhythmus „Erst zum Laufen bringen, dann "
-"verbessern“, um daraus einen wirklich brauchbaren kleinen "
-"Forschungsworkflow zu entwickeln."
+"verbessern“, um daraus einen wirklich brauchbaren kleinen Forschungsworkflow"
+" zu entwickeln."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:54
 #, fuzzy
@@ -182,9 +194,9 @@ msgstr "0.5 Zeigen Sie zunächst das Endergebnis (was am Ende herauskommt)"
 #, fuzzy
 msgid "为了让节奏更稳，我们先把“终点形态”讲清楚。按本文做完，您至少会得到两类输出："
 msgstr ""
-"Um das Tempo gleichmäßiger zu halten, machen wir zunächst den "
-"„Endzustand“ klar. Nachdem Sie diesem Artikel gefolgt sind, erhalten Sie "
-"mindestens zwei Arten von Ausgaben:"
+"Um das Tempo gleichmäßiger zu halten, machen wir zunächst den „Endzustand“ "
+"klar. Nachdem Sie diesem Artikel gefolgt sind, erhalten Sie mindestens zwei "
+"Arten von Ausgaben:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:58
 #, fuzzy
@@ -193,9 +205,9 @@ msgid ""
 "起点归一化）放在一张图里，您能一眼看出“择时规则在研究期内是否有效”。"
 msgstr ""
 "**Vergleich auf Portfolioebene**: Platzieren Sie die "
-"„LONG/SHORT/000300.SH“-Kurven (alle normalisiert, um bei 1,0 zu beginnen)"
-" im selben Diagramm, und Sie können auf einen Blick erkennen, ob „die "
-"Timing-Regel während des Forschungszeitraums wirksam ist“."
+"„LONG/SHORT/000300.SH“-Kurven (alle normalisiert, um bei 1,0 zu beginnen) im"
+" selben Diagramm, und Sie können auf einen Blick erkennen, ob „die Timing-"
+"Regel während des Forschungszeitraums wirksam ist“."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:59
 #, fuzzy
@@ -205,21 +217,21 @@ msgid ""
 msgstr ""
 "**Erklärung auf Ebene einzelner Vermögenswerte**: Zeichnen Sie das "
 "Candlestick-Diagramm (oder die Preiskurve) für eine bestimmte Aktie und "
-"markieren Sie die Zeitpunkte, zu denen die „Haltebedingung“ ausgelöst "
-"wird. Wenn Sie auf diese Weise ein abnormales Segment in der "
-"Portfoliokurve entdecken, können Sie schnell zum Einzelaktiendiagramm "
-"zurückkehren, um zu überprüfen, ob die „Triggerpunkte“ Ihrer Intuition "
-"entsprechen."
+"markieren Sie die Zeitpunkte, zu denen die „Haltebedingung“ ausgelöst wird. "
+"Wenn Sie auf diese Weise ein abnormales Segment in der Portfoliokurve "
+"entdecken, können Sie schnell zum Einzelaktiendiagramm zurückkehren, um zu "
+"überprüfen, ob die „Triggerpunkte“ Ihrer Intuition entsprechen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:61
 #, fuzzy
-msgid "注：本文不强制您输出 GIF。更推荐的做法是：先在 Notebook 里把图跑通，截图即可；如果您要写博客或做分享，再把关键步骤录成 GIF。"
+msgid ""
+"注：本文不强制您输出 GIF。更推荐的做法是：先在 Notebook 里把图跑通，截图即可；如果您要写博客或做分享，再把关键步骤录成 GIF。"
 msgstr ""
-"Hinweis: Für diesen Artikel ist die Ausgabe eines GIF nicht erforderlich."
-" Ein empfehlenswerterer Ansatz ist: Zuerst die Diagramme in einem "
-"Notebook zum Laufen bringen und einfach Screenshots machen; Wenn Sie "
-"einen Blogbeitrag schreiben oder eine Präsentation halten möchten, "
-"zeichnen Sie die wichtigsten Schritte in einem GIF auf."
+"Hinweis: Für diesen Artikel ist die Ausgabe eines GIF nicht erforderlich. "
+"Ein empfehlenswerterer Ansatz ist: Zuerst die Diagramme in einem Notebook "
+"zum Laufen bringen und einfach Screenshots machen; Wenn Sie einen "
+"Blogbeitrag schreiben oder eine Präsentation halten möchten, zeichnen Sie "
+"die wichtigsten Schritte in einem GIF auf."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:65
 #, fuzzy
@@ -229,8 +241,8 @@ msgstr "1. Ziel (was dieser Artikel erreichen soll)"
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:67
 msgid "在开始动手之前，我们先把目标讲清楚，这样每一步都知道自己在解决什么问题。"
 msgstr ""
-"Bevor wir beginnen, klären wir das Ziel, damit wir bei jedem Schritt "
-"wissen, welches Problem wir lösen."
+"Bevor wir beginnen, klären wir das Ziel, damit wir bei jedem Schritt wissen,"
+" welches Problem wir lösen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:69
 msgid "获取少量个股 + `000300.SH` 的 `HistoryPanel`"
@@ -245,27 +257,26 @@ msgstr "Leiten Sie einen interpretierbaren Zeitfaktor ab (Beispiel: MACD)"
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:71
 msgid "用比较运算得到 bool 条件，并用 `where()` 生成研究 mask"
 msgstr ""
-"Verwenden Sie Vergleichsoperationen, um boolesche Bedingungen zu "
-"erhalten, und verwenden Sie „where()“, um die Forschungsmaske zu "
-"generieren"
+"Verwenden Sie Vergleichsoperationen, um boolesche Bedingungen zu erhalten, "
+"und verwenden Sie „where()“, um die Forschungsmaske zu generieren"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:72
 msgid "用 `portfolio(mask=...)` 聚合成组合曲线，并与 benchmark 对比"
 msgstr ""
-"Verwenden Sie „portfolio(mask=...)“, um eine Portfoliokurve zu "
-"aggregieren und diese mit der Benchmark zu vergleichen"
+"Verwenden Sie „portfolio(mask=...)“, um eine Portfoliokurve zu aggregieren "
+"und diese mit der Benchmark zu vergleichen"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:73
 msgid "用 `normalize/cum_return` 得到累计收益，并推导 CAGR 摘要"
 msgstr ""
-"Verwenden Sie „normalize/cum_return“, um kumulative Renditen zu erhalten "
-"und eine CAGR-Zusammenfassung abzuleiten"
+"Verwenden Sie „normalize/cum_return“, um kumulative Renditen zu erhalten und"
+" eine CAGR-Zusammenfassung abzuleiten"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:74
 msgid "用 `plot(highlight=...)` 把“触发时点”解释回图上"
 msgstr ""
-"Verwenden Sie „plot(highlight=...)“, um die „Triggerpunkte“ im Diagramm "
-"zu erklären"
+"Verwenden Sie „plot(highlight=...)“, um die „Triggerpunkte“ im Diagramm zu "
+"erklären"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:75
 msgid "文末给出一段“单函数可跑”的完整代码"
@@ -284,12 +295,12 @@ msgid ""
 "整篇文章保持同一个节奏：   **先讲本节要解决什么 -> 再说最小必要原理 -> 最后给关键代码与预期效果**。   "
 "重复代码会适当省略，但每一节都保证可以顺着文章直接复现。"
 msgstr ""
-"Der gesamte Artikel folgt dem gleichen Rhythmus: **erklären Sie zunächst,"
-" was in diesem Abschnitt gelöst werden soll -> gehen Sie dann auf die "
-"minimal notwendigen Prinzipien ein -> geben Sie schließlich den "
-"Schlüsselcode und das erwartete Ergebnis an**.   Wiederholter Code wird "
-"ggf. weggelassen, es ist jedoch garantiert, dass jeder Abschnitt "
-"reproduzierbar ist, indem der Artikel vollständig durchgelesen wird."
+"Der gesamte Artikel folgt dem gleichen Rhythmus: **erklären Sie zunächst, "
+"was in diesem Abschnitt gelöst werden soll -> gehen Sie dann auf die minimal"
+" notwendigen Prinzipien ein -> geben Sie schließlich den Schlüsselcode und "
+"das erwartete Ergebnis an**.   Wiederholter Code wird ggf. weggelassen, es "
+"ist jedoch garantiert, dass jeder Abschnitt reproduzierbar ist, indem der "
+"Artikel vollständig durchgelesen wird."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:84
 #, fuzzy
@@ -303,6 +314,9 @@ msgid ""
 "**前置条件**：已配置 ``tushare_token``，且已下载 2.0 最小数据集中的 ``stock_daily`` / "
 "``index_daily``（至少能取到示例股票与 ``000300.SH`` 的日线 OHLC）。"
 msgstr ""
+"**Voraussetzung**: Der tägliche OHLC von „`tushare_token``，且已下载 2.0 最小数据集中的 "
+"``stock_daily`` / ``index_daily``（至少能取到示例股票与 ``000300.SH`“ wurde "
+"konfiguriert."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:88
 #, fuzzy
@@ -310,17 +324,16 @@ msgid ""
 "本文示例默认 ``qt.get_kline()`` 能成功取到 ``20220101``–``20221231`` "
 "的日线数据。若暂时没有数据，常见现象是：返回空面板，或后续指标全为 NaN。建议您在 **§2** 做完后检查："
 msgstr ""
-"In den Beispielen in diesem Artikel wird standardmäßig davon ausgegangen,"
-" dass Sie die Datenquelle lokal konfiguriert haben und dass "
-"„qt.get_kline()“ die täglichen Balkendaten für „20220101“–20221231 "
-"erfolgreich abrufen kann."
+"In den Beispielen in diesem Artikel wird standardmäßig davon ausgegangen, "
+"dass Sie die Datenquelle lokal konfiguriert haben und dass „qt.get_kline()“ "
+"die täglichen Balkendaten für „20220101“–20221231 erfolgreich abrufen kann."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:90
 #, fuzzy
 msgid "``hp.shape`` 的时间长度是否大于 100（一年日线一般在 200 附近）；"
 msgstr ""
-"Ob die Zeitdauer von „hp.shape“ größer als 100 ist (ein Jahr mit "
-"täglichen Balken beträgt normalerweise etwa 200);"
+"Ob die Zeitdauer von „hp.shape“ größer als 100 ist (ein Jahr mit täglichen "
+"Balken beträgt normalerweise etwa 200);"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:91
 #, fuzzy
@@ -339,6 +352,9 @@ msgid ""
 "**提示**：数据未就绪时，请先完成 [教程 2.0](2.0-get-data.md)；下文专注 ``HistoryPanel`` "
 "纵向择时研究链路本身。"
 msgstr ""
+"**Tipp**: Wenn die Daten noch nicht bereit sind, schließen Sie bitte zuerst "
+"[Tutorial 2.0](2.0-get-data.md) ab; Der folgende Abschnitt konzentriert sich"
+" auf den Längsschnitt-Timing-Forschungslink „`HistoryPanel`“ selbst."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:98
 #, fuzzy
@@ -357,8 +373,8 @@ msgstr "7.1 Was dieser Abschnitt lösen soll"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:102
 msgid ""
-"我们先把数据准备干净：   用 3 只个股做纵向择时，同时把 `000300.SH`（沪深 300）加入面板，作为后面 "
-"`portfolio(..., benchmark=...)` 的对照。"
+"我们先把数据准备干净：   用 3 只个股做纵向择时，同时把 `000300.SH`（沪深 300）加入面板，作为后面 `portfolio(..., "
+"benchmark=...)` 的对照。"
 msgstr ""
 "Lassen Sie uns zunächst die Daten bereinigen: Verwenden Sie drei "
 "Einzelaktien für das Querschnittstiming und fügen Sie dem Panel außerdem "
@@ -370,10 +386,10 @@ msgid ""
 "这里最关键的一步是：**确认 OHLC 列齐全**。   因为后面不管是画 K 线、还是做形态识别，都绕不开 "
 "`open/high/low/close`。"
 msgstr ""
-"Der wichtigste Schritt hier ist: **Stellen Sie sicher, dass die OHLC-"
-"Säulen vollständig sind**.   Denn egal, ob Sie Candlesticks zeichnen oder"
-" später eine Mustererkennung durchführen, Sie können "
-"„Eröffnung/Hoch/Tief/Schluss“ nicht vermeiden."
+"Der wichtigste Schritt hier ist: **Stellen Sie sicher, dass die OHLC-Säulen "
+"vollständig sind**.   Denn egal, ob Sie Candlesticks zeichnen oder später "
+"eine Mustererkennung durchführen, Sie können „Eröffnung/Hoch/Tief/Schluss“ "
+"nicht vermeiden."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:108
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:165
@@ -392,8 +408,8 @@ msgid ""
 "`shape/shares/htypes`，并做一个最低限度的字段校验，可以把后面大部分“写到一半才报错”的坑提前堵掉。"
 msgstr ""
 "„HistoryPanel“ sind 3D-Daten: „(share, time, htype)“.   Nachfolgendes "
-"„where/mask/portfolio/cum_return“ wird sich alle auf die Voraussetzung "
-"der „Formausrichtung“ stützen.   So at the very beginning we print "
+"„where/mask/portfolio/cum_return“ wird sich alle auf die Voraussetzung der "
+"„Formausrichtung“ stützen.   So at the very beginning we print "
 "`shape/shares/htypes` and do a minimal field validation, which can block "
 "most of the “only errors out halfway through writing it” pitfalls in "
 "advance."
@@ -420,15 +436,15 @@ msgstr "`hp.shares` enthält 3 Einzelbestände + `000300.SH`"
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:154
 msgid "`hp.htypes` 至少包含 `open/high/low/close`（以及可能还有 `vol`）"
 msgstr ""
-"„hp.htypes“ sollte mindestens „open/high/low/close“ (und möglicherweise "
-"auch „vol“) enthalten."
+"„hp.htypes“ sollte mindestens „open/high/low/close“ (und möglicherweise auch"
+" „vol“) enthalten."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:158
 #, fuzzy
 msgid "派生择时因子：MACD（把信号落成一列可复用的数据）"
 msgstr ""
-"3. Leiten Sie einen Zeitfaktor ab: MACD (materialisieren Sie das Signal "
-"in einer wiederverwendbaren Datenspalte)"
+"3. Leiten Sie einen Zeitfaktor ab: MACD (materialisieren Sie das Signal in "
+"einer wiederverwendbaren Datenspalte)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:162
 msgid ""
@@ -437,15 +453,15 @@ msgid ""
 msgstr ""
 "Zuerst wählen wir einen Timing-Faktor aus, der häufig genug vorkommt, "
 "interpretierbar genug und auch „unmittelbar verwendbar“ ist: MACD.   Das "
-"Ziel dieses Abschnitts ist einfach: **Berechnen Sie den MACD und "
-"erstellen Sie daraus eine neue Spalte von „HistoryPanel“**, damit spätere"
-" bedingte Filterung direkt mit der Spalte verglichen werden kann."
+"Ziel dieses Abschnitts ist einfach: **Berechnen Sie den MACD und erstellen "
+"Sie daraus eine neue Spalte von „HistoryPanel“**, damit spätere bedingte "
+"Filterung direkt mit der Spalte verglichen werden kann."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:167
 msgid "`hp.kline.macd()` 会返回一个**新** `HistoryPanel`，并在 `htypes` 里追加三列："
 msgstr ""
-"„hp.kline.macd()“ gibt ein **neues** „HistoryPanel“ zurück und hängt drei"
-" Spalten an „htypes“ an:"
+"„hp.kline.macd()“ gibt ein **neues** „HistoryPanel“ zurück und hängt drei "
+"Spalten an „htypes“ an:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:169
 msgid "`macd_12_26_9`"
@@ -463,9 +479,9 @@ msgstr "`macd_hist_12_26_9`"
 msgid "注意这个命名：默认是带后缀的，不是裸的 `macd_hist`。   这一步我们把列名打印出来，后面写条件时就不会猜错。"
 msgstr ""
 "Achten Sie auf diese Benennung: Standardmäßig ist sie mit einem Suffix "
-"versehen; es ist nicht das bloße „macd_hist“.   In diesem Schritt geben "
-"wir die Spaltennamen aus, damit wir beim späteren Schreiben von "
-"Bedingungen nicht raten und einen Fehler machen müssen."
+"versehen; es ist nicht das bloße „macd_hist“.   In diesem Schritt geben wir "
+"die Spaltennamen aus, damit wir beim späteren Schreiben von Bedingungen "
+"nicht raten und einen Fehler machen müssen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:176
 #, fuzzy
@@ -474,22 +490,21 @@ msgid ""
 " `htypes`，后续的条件、聚合、可视化都只依赖这些列。"
 msgstr ""
 "Wenn viele Menschen zum ersten Mal Faktorenforschung betreiben, kann es "
-"außerdem sein, dass sie Indikatoren unbewusst an verschiedenen Stellen "
-"„neu berechnen“. Auf kurze Sicht sieht es vielleicht gut aus, aber sobald"
-" Sie anfangen, mehr Spalten hinzuzufügen und mehr Diagramme zu zeichnen, "
-"kann es leicht zu einem Durcheinander kommen, bei dem „gleichnamige "
-"Spalten überschrieben werden/mehrere Kopien synonymer Spalten“ auftreten."
-" Ein robusterer Ansatz besteht darin, Indikatoren zuerst in Spalten zu "
-"berechnen, sie explizit in „htypes“ zu schreiben und dann die "
-"nachfolgenden Bedingungen, die Aggregation und die Visualisierung nur von"
-" diesen Spalten abhängig zu machen."
+"außerdem sein, dass sie Indikatoren unbewusst an verschiedenen Stellen „neu "
+"berechnen“. Auf kurze Sicht sieht es vielleicht gut aus, aber sobald Sie "
+"anfangen, mehr Spalten hinzuzufügen und mehr Diagramme zu zeichnen, kann es "
+"leicht zu einem Durcheinander kommen, bei dem „gleichnamige Spalten "
+"überschrieben werden/mehrere Kopien synonymer Spalten“ auftreten. Ein "
+"robusterer Ansatz besteht darin, Indikatoren zuerst in Spalten zu berechnen,"
+" sie explizit in „htypes“ zu schreiben und dann die nachfolgenden "
+"Bedingungen, die Aggregation und die Visualisierung nur von diesen Spalten "
+"abhängig zu machen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:185
 #, fuzzy
 msgid "预期：您会看到 `macd_hist_12_26_9` 出现在 `htypes` 里。"
 msgstr ""
-"Erwartet: Sie werden sehen, dass „macd_hist_12_26_9“ in „htypes“ "
-"erscheint."
+"Erwartet: Sie werden sehen, dass „macd_hist_12_26_9“ in „htypes“ erscheint."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:189
 #, fuzzy
@@ -498,31 +513,31 @@ msgstr "4. Faktorschwelle -> Bool-Bedingung -> `where()`-Maskenstudie"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:193
 msgid ""
-"现在我们把择时规则写清楚：   例如“MACD 柱状图大于 0 的时候属于 long，小于等于 0 属于 short”。   "
-"这一步要交付的产物是两个 mask："
+"现在我们把择时规则写清楚：   例如“MACD 柱状图大于 0 的时候属于 long，小于等于 0 属于 short”。   这一步要交付的产物是两个 "
+"mask："
 msgstr ""
 "Nun formulieren wir die Timing-Regel klar: Zum Beispiel: „Wenn das MACD-"
-"Histogramm größer als 0 ist, ist es long; wenn es kleiner oder gleich 0 "
-"ist, ist es short.“   Was dieser Schritt liefern muss, sind zwei Masken:"
+"Histogramm größer als 0 ist, ist es long; wenn es kleiner oder gleich 0 ist,"
+" ist es short.“   Was dieser Schritt liefern muss, sind zwei Masken:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:197
 msgid "`mask_long`：哪些格点参与 long 组合聚合"
 msgstr ""
-"„mask_long“: Welche Gitterpunkte nehmen an der Long-Portfolio-Aggregation"
-" teil?"
+"„mask_long“: Welche Gitterpunkte nehmen an der Long-Portfolio-Aggregation "
+"teil?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:198
 msgid "`mask_short`：哪些格点参与 short 组合聚合"
 msgstr ""
-"„mask_short“: Welche Rasterpunkte nehmen an der Short-Portfolio-"
-"Aggregation teil?"
+"„mask_short“: Welche Rasterpunkte nehmen an der Short-Portfolio-Aggregation "
+"teil?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:202
 #, fuzzy
 msgid ""
 "从 v2.2.8 起，`HistoryPanel` 支持直接做比较运算：   例如 `hp_macd > 0` 会返回 "
-"`numpy.ndarray(bool)`。   而 `hp.where(condition)` 会把各种可广播条件规整为与 "
-"`hp.values` 同形的 `(M,L,N)` mask。"
+"`numpy.ndarray(bool)`。   而 `hp.where(condition)` 会把各种可广播条件规整为与 `hp.values` "
+"同形的 `(M,L,N)` mask。"
 msgstr ""
 "Ab 2.2.8 unterstützt „HistoryPanel“ die direkte Durchführung von "
 "Vergleichsoperationen: „hp_macd > 0“ gibt beispielsweise "
@@ -532,13 +547,13 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:206
 msgid ""
-"这一步非常关键：我们不是在“删除数据”，而是在“定义研究口径”：   mask 为 False 的格点，在 "
-"`portfolio/cum_return` 里会被视作缺失（不参与聚合或导致路径断开）。   因此 mask 就是“研究规则本身”。"
+"这一步非常关键：我们不是在“删除数据”，而是在“定义研究口径”：   mask 为 False 的格点，在 `portfolio/cum_return`"
+" 里会被视作缺失（不参与聚合或导致路径断开）。   因此 mask 就是“研究规则本身”。"
 msgstr ""
 "Dieser Schritt ist entscheidend: Wir „löschen keine Daten“, sondern "
 "„definieren die Forschungskonvention“: Rasterpunkte, bei denen die Maske "
-"„Falsch“ ist, werden in „portfolio/cum_return“ als fehlend behandelt (sie"
-" nehmen nicht an der Aggregation teil oder führen zu einer "
+"„Falsch“ ist, werden in „portfolio/cum_return“ als fehlend behandelt (sie "
+"nehmen nicht an der Aggregation teil oder führen zu einer "
 "Pfadunterbrechung).   Daher sei die Maske „die Forschungsregel selbst“."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:210
@@ -549,8 +564,8 @@ msgstr "Lassen Sie uns hier „Form“ etwas klarer erklären:"
 #, fuzzy
 msgid "您脑子里的择时规则是“每只股票每天一个 True/False”，因此最自然的条件形状是 `(M, L)`。"
 msgstr ""
-"Die Timing-Regel in Ihrem Kopf lautet „ein Wahr/Falsch pro Aktie und "
-"Tag“, daher ist die natürlichste Zustandsform „(M, L)“."
+"Die Timing-Regel in Ihrem Kopf lautet „ein Wahr/Falsch pro Aktie und Tag“, "
+"daher ist die natürlichste Zustandsform „(M, L)“."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:213
 msgid "但 `HistoryPanel` 的 values 是 `(M, L, N)`，有 N 个字段列。"
@@ -561,8 +576,8 @@ msgstr "Aber die Werte von „HistoryPanel“ sind „(M, L, N)“ mit N Feldspa
 msgid "`where()` 做的事情就是：把您的条件扩展/广播成 `(M, L, N)`，让后续任何需要按格点过滤的计算都有一个**统一的入口**。"
 msgstr ""
 "Was „where()“ tut, ist: Erweitern/Broadcasten Ihrer Bedingung in „(M, L, "
-"N)“, sodass jede nachfolgende Berechnung, die nach Gitterpunkt filtern "
-"muss, einen **einzigen, einheitlichen Einstiegspunkt** hat."
+"N)“, sodass jede nachfolgende Berechnung, die nach Gitterpunkt filtern muss,"
+" einen **einzigen, einheitlichen Einstiegspunkt** hat."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:216
 #, fuzzy
@@ -570,9 +585,9 @@ msgid ""
 "一旦您养成“条件都先过 `where()`”的习惯，后面把条件喂给 "
 "`portfolio(mask=...)`、`cum_return(mask=...)` 时，就不容易在形状上踩坑。"
 msgstr ""
-"Wenn Sie sich erst einmal angewöhnt haben, „alle Bedingungen zuerst durch"
-" „where()“ laufen zu lassen“, ist die Wahrscheinlichkeit geringer, dass "
-"Sie später auf Shape-Fallstricke stoßen, wenn Sie Bedingungen in "
+"Wenn Sie sich erst einmal angewöhnt haben, „alle Bedingungen zuerst durch "
+"„where()“ laufen zu lassen“, ist die Wahrscheinlichkeit geringer, dass Sie "
+"später auf Shape-Fallstricke stoßen, wenn Sie Bedingungen in "
 "„portfolio(mask=...)“ und „cum_return(mask=...)“ eingeben."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:240
@@ -591,25 +606,24 @@ msgstr "`mask_long.dtype == bool`"
 #, fuzzy
 msgid "用 `portfolio(mask=...)` 聚合组合曲线，并与 benchmark 对比"
 msgstr ""
-"Verwenden Sie „portfolio(mask=...)“, um eine Portfoliokurve zu "
-"aggregieren und diese mit der Benchmark zu vergleichen"
+"Verwenden Sie „portfolio(mask=...)“, um eine Portfoliokurve zu aggregieren "
+"und diese mit der Benchmark zu vergleichen"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:251
 msgid ""
-"我们不做交易回测，只做研究向的“粗聚合”：   对每一天，把满足条件的股票（long/short）聚合成一条组合曲线，然后把 "
-"`000300.SH` 作为 benchmark 拉出来对比。"
+"我们不做交易回测，只做研究向的“粗聚合”：   对每一天，把满足条件的股票（long/short）聚合成一条组合曲线，然后把 `000300.SH` "
+"作为 benchmark 拉出来对比。"
 msgstr ""
 "Wir führen keinen Trading-Backtest durch, sondern nur eine "
 "forschungsorientierte „grobe Aggregation“: Fassen Sie für jeden Tag die "
-"Aktien zusammen, die die Kriterien (Long/Short) erfüllen, in einer "
-"einzigen Portfoliokurve und ziehen Sie dann „000300.SH“ als Benchmark zum"
-" Vergleich heraus."
+"Aktien zusammen, die die Kriterien (Long/Short) erfüllen, in einer einzigen "
+"Portfoliokurve und ziehen Sie dann „000300.SH“ als Benchmark zum Vergleich "
+"heraus."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:256
 msgid "`HistoryPanel.portfolio()` 的几个关键点（我们用到的）："
 msgstr ""
-"Ein paar wichtige Punkte von „HistoryPanel.portfolio()“ (das wir "
-"verwenden):"
+"Ein paar wichtige Punkte von „HistoryPanel.portfolio()“ (das wir verwenden):"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:258
 msgid "`mask=`：与 `where()` 同形规则；False 的格点不参与聚合"
@@ -632,8 +646,8 @@ msgstr ""
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:262
 msgid "再次强调：这是**研究向**聚合，不含交易成本、无资金约束、也不做调仓执行。"
 msgstr ""
-"Um es noch einmal zu wiederholen: Dies ist eine **forschungsorientierte**"
-" Aggregation; Es beinhaltet keine Transaktionskosten, unterliegt keinen "
+"Um es noch einmal zu wiederholen: Dies ist eine **forschungsorientierte** "
+"Aggregation; Es beinhaltet keine Transaktionskosten, unterliegt keinen "
 "Kapitalbeschränkungen und führt keine Neuausrichtung durch."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:264
@@ -642,48 +656,47 @@ msgid "您可以把它理解成一种“研究口径上的等权篮子”：每�
 msgstr ""
 "Man kann es sich als einen „gleichgewichtigen Korb gemäß einer "
 "Forschungskonvention“ vorstellen: Jeden Tag werden die Aktien, die die "
-"Kriterien erfüllen, in einer einzigen Kurve gleichgewichtet gemittelt. "
-"Sein Zweck besteht nicht darin, echten Handel zu simulieren, sondern eine"
-" grundlegendere Frage zu beantworten:"
+"Kriterien erfüllen, in einer einzigen Kurve gleichgewichtet gemittelt. Sein "
+"Zweck besteht nicht darin, echten Handel zu simulieren, sondern eine "
+"grundlegendere Frage zu beantworten:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:266
 msgid "如果我用这个条件去定义一个“持有集合”，它在样本期内表现有没有系统性差异？"
 msgstr ""
-"Wenn ich dieses Kriterium zur Definition eines „Haltesatzes“ verwende, "
-"weist dieser dann im Stichprobenzeitraum systematische "
-"Leistungsunterschiede auf?"
+"Wenn ich dieses Kriterium zur Definition eines „Haltesatzes“ verwende, weist"
+" dieser dann im Stichprobenzeitraum systematische Leistungsunterschiede auf?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:268
 msgid "只有当这个问题的答案是“有”，我们才值得继续投入，把它升级成真正的交易策略回测。"
 msgstr ""
-"Erst wenn die Antwort auf diese Frage „Ja“ lautet, lohnt es sich, weiter "
-"zu investieren und es zu einem echten Trading-Strategie-Backtest "
-"auszubauen."
+"Erst wenn die Antwort auf diese Frage „Ja“ lautet, lohnt es sich, weiter zu "
+"investieren und es zu einem echten Trading-Strategie-Backtest auszubauen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:298
 msgid "预期：`pf_long.shares` 里会有 `LONG` 和 `000300.SH` 两行。"
-msgstr "Erwartet: „pf_long.shares“ enthält zwei Zeilen: „LONG“ und „000300.SH“."
+msgstr ""
+"Erwartet: „pf_long.shares“ enthält zwei Zeilen: „LONG“ und „000300.SH“."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:302
 #, fuzzy
 msgid "`normalize / cum_return` + CAGR：把曲线变成可比较的年化摘要"
 msgstr ""
-"6. „normalize / cum_return“ + CAGR: Wandeln Sie die Kurven in "
-"vergleichbare jährliche Zusammenfassungen um"
+"6. „normalize / cum_return“ + CAGR: Wandeln Sie die Kurven in vergleichbare "
+"jährliche Zusammenfassungen um"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:306
-msgid "两条曲线摆在一起，人眼能看趋势，但很难快速总结：   “这一段研究期，long 比 benchmark 到底强多少？”   因此我们做两件事："
+msgid ""
+"两条曲线摆在一起，人眼能看趋势，但很难快速总结：   “这一段研究期，long 比 benchmark 到底强多少？”   因此我们做两件事："
 msgstr ""
-"Wenn man zwei Kurven nebeneinander sieht, kann man den Trend mit bloßem "
-"Auge erkennen, aber es ist schwierig, schnell zusammenzufassen: „Wie viel"
-" stärker ist in diesem Forschungszeitraum genau gegenüber der Benchmark?“"
-"   Also machen wir zwei Dinge:"
+"Wenn man zwei Kurven nebeneinander sieht, kann man den Trend mit bloßem Auge"
+" erkennen, aber es ist schwierig, schnell zusammenzufassen: „Wie viel "
+"stärker ist in diesem Forschungszeitraum genau gegenüber der Benchmark?“   "
+"Also machen wir zwei Dinge:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:310
 msgid "`normalize`：统一起点（便于目视比较）"
 msgstr ""
-"„normalisieren“: Startpunkt ausrichten (zum einfacheren visuellen "
-"Vergleich)"
+"„normalisieren“: Startpunkt ausrichten (zum einfacheren visuellen Vergleich)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:311
 msgid "`cum_return + CAGR`：给出一个可复用的年化摘要表"
@@ -695,16 +708,18 @@ msgstr ""
 msgid "`normalize(base_index=0)` 会把基准点缩放到 1.0（研究口径），非常适合画同图比较"
 msgstr ""
 "„normalize(base_index=0)“ skaliert den Basispunkt auf 1,0 "
-"(Forschungskonvention), was ideal für die Darstellung und den Vergleich "
-"im selben Diagramm ist"
+"(Forschungskonvention), was ideal für die Darstellung und den Vergleich im "
+"selben Diagramm ist"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:316
 msgid "`cum_return(method='simple')` 给出累计收益 `cumret_*`"
-msgstr "`cum_return(method='simple')` gibt kumulative Rückgaben `cumret_*` aus"
+msgstr ""
+"`cum_return(method='simple')` gibt kumulative Rückgaben `cumret_*` aus"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:317
 msgid "CAGR 的本质是“等效年化增长率”："
-msgstr "Das Wesentliche der CAGR ist eine „äquivalente jährliche Wachstumsrate“:"
+msgstr ""
+"Das Wesentliche der CAGR ist eine „äquivalente jährliche Wachstumsrate“:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:319
 msgid "\\[ \\\\text{CAGR}=(1+R)^{1/T}-1 \\]"
@@ -713,8 +728,8 @@ msgstr "\\[ \\\\text{CAGR}=(1+R)^{1/T}-1 \\]"
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:323
 msgid "其中 \\(R\\) 是区间累计收益（末值），\\(T\\) 是年数。"
 msgstr ""
-"Dabei ist \\(R\\) die kumulative Rendite über das Intervall (Endwert) und"
-" \\(T\\) die Anzahl der Jahre."
+"Dabei ist \\(R\\) die kumulative Rendite über das Intervall (Endwert) und "
+"\\(T\\) die Anzahl der Jahre."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:325
 msgid ""
@@ -722,14 +737,13 @@ msgid ""
 "CAGR”：很多时候我们会拿不同长度的区间做对比（半年、一年、两年）。如果只看累计收益，很容易“区间越长看起来越厉害”。CAGR "
 "把它折算成“每年等效增长多少”，这样不同研究期的结果才更容易横向比较。"
 msgstr ""
-"Fügen wir hier noch einen Satz zum Thema „Warum die CAGR berechnen?“ "
-"hinzu: Sehr oft vergleichen wir Zeiträume unterschiedlicher Länge (ein "
-"halbes Jahr, ein Jahr, zwei Jahre). Wenn man nur die kumulative Rendite "
-"betrachtet, kann man leicht zu dem Schluss kommen: „Je länger der "
-"Zeitraum, desto beeindruckender sieht er aus.“ CAGR wandelt es in "
-"„äquivalentes jährliches Wachstum“ um, wodurch Ergebnisse aus "
-"verschiedenen Forschungshorizonten einfacher miteinander verglichen "
-"werden können."
+"Fügen wir hier noch einen Satz zum Thema „Warum die CAGR berechnen?“ hinzu: "
+"Sehr oft vergleichen wir Zeiträume unterschiedlicher Länge (ein halbes Jahr,"
+" ein Jahr, zwei Jahre). Wenn man nur die kumulative Rendite betrachtet, kann"
+" man leicht zu dem Schluss kommen: „Je länger der Zeitraum, desto "
+"beeindruckender sieht er aus.“ CAGR wandelt es in „äquivalentes jährliches "
+"Wachstum“ um, wodurch Ergebnisse aus verschiedenen Forschungshorizonten "
+"einfacher miteinander verglichen werden können."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:367
 #, fuzzy
@@ -741,16 +755,16 @@ msgstr ""
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:369
 msgid "**LONG vs 000300.SH**：是否真的跑赢（CAGR 更高/或累计收益更高）？"
 msgstr ""
-"**LONG vs. 000300.SH**: Hat es wirklich eine Outperformance erzielt "
-"(höhere CAGR und/oder höhere kumulative Rendite)?"
+"**LONG vs. 000300.SH**: Hat es wirklich eine Outperformance erzielt (höhere "
+"CAGR und/oder höhere kumulative Rendite)?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:370
 msgid "**SHORT 的表现**：它不一定要“亏”，但它能帮助我们判断条件是否真的在分离样本（LONG/SHORT 两端的差异是否明显）。"
 msgstr ""
-"**KURZE Leistung**: Es muss nicht unbedingt „Geld verlieren“, aber es "
-"hilft uns zu beurteilen, ob die Bedingung wirklich die Stichprobe trennt "
-"(d. h. ob der Unterschied zwischen dem LANGEN und dem KURZEN Ende "
-"offensichtlich ist)."
+"**KURZE Leistung**: Es muss nicht unbedingt „Geld verlieren“, aber es hilft "
+"uns zu beurteilen, ob die Bedingung wirklich die Stichprobe trennt (d. h. ob"
+" der Unterschied zwischen dem LANGEN und dem KURZEN Ende offensichtlich "
+"ist)."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:374
 #, fuzzy
@@ -764,15 +778,16 @@ msgid ""
 "我们已经有收益曲线了，但还差最后一环：**解释**。   这一步我们做一个“复盘友好”的动作：在单只股票的 K "
 "线图上，把触发点高亮出来，让读者能一眼看到“什么时候触发了择时条件”。"
 msgstr ""
-"Wir haben bereits die Rückkehrkurve, aber uns fehlt noch der letzte Teil:"
-" **Erklärung**.   In diesem Schritt machen wir etwas "
-"„Überprüfungsfreundliches“: Markieren Sie auf dem Candlestick-Chart einer"
-" einzelnen Aktie die Triggerpunkte, damit die Leser auf einen Blick sehen"
-" können, „wann die Timing-Bedingung ausgelöst wurde“."
+"Wir haben bereits die Rückkehrkurve, aber uns fehlt noch der letzte Teil: "
+"**Erklärung**.   In diesem Schritt machen wir etwas "
+"„Überprüfungsfreundliches“: Markieren Sie auf dem Candlestick-Chart einer "
+"einzelnen Aktie die Triggerpunkte, damit die Leser auf einen Blick sehen "
+"können, „wann die Timing-Bedingung ausgelöst wurde“."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:383
 msgid "`HistoryPanel.plot(highlight=...)` 支持两种常用写法："
-msgstr "„HistoryPanel.plot(highlight=...)“ unterstützt zwei häufige Verwendungen:"
+msgstr ""
+"„HistoryPanel.plot(highlight=...)“ unterstützt zwei häufige Verwendungen:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:385
 msgid "简写：`highlight='max'/'min'`"
@@ -784,12 +799,12 @@ msgstr "显式：`highlight={'condition': <1D bool over time>, 'style': {...}}`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:388
 msgid ""
-"注意一点：静态渲染路径里 `condition` 更偏向 **1D 时间轴**（用于在图上散点标记）。因此我们在这里用单股时间轴的 1D bool"
-" 来做高亮更稳。"
+"注意一点：静态渲染路径里 `condition` 更偏向 **1D 时间轴**（用于在图上散点标记）。因此我们在这里用单股时间轴的 1D bool "
+"来做高亮更稳。"
 msgstr ""
 "Eines ist zu beachten: Im statischen Rendering-Pfad orientiert sich "
-"„Bedingung“ eher an einer **1D-Zeitachse** (wird für Streumarkierungen im"
-" Diagramm verwendet). Daher ist es hier robuster, zum Hervorheben einen "
+"„Bedingung“ eher an einer **1D-Zeitachse** (wird für Streumarkierungen im "
+"Diagramm verwendet). Daher ist es hier robuster, zum Hervorheben einen "
 "1D-Bool auf einer Einzelstock-Zeitachse zu verwenden."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:412
@@ -798,15 +813,14 @@ msgid ""
 "预期效果：您会在图上看到一系列被高亮标出的点（对应 `macd_hist_12_26_9 > 0` 的时点）。   "
 "这一步的价值在于：当您看到组合曲线某段突然变差时，可以回到单股图快速确认：触发点是否集中出现在震荡区、是否“来回打脸”，从而决定下一步要不要加过滤条件（例如趋势过滤、波动过滤等）。"
 msgstr ""
-"Erwartetes Ergebnis: Sie sehen eine Reihe hervorgehobener Punkte im "
-"Diagramm (entsprechend den Zeiten, in denen „macd_hist_12_26_9 > 0“ ist)."
-"   Der Wert dieses Schrittes liegt darin, dass Sie sehen, dass sich ein "
-"Segment der Portfoliokurve plötzlich verschlechtert, und so zum "
-"Einzelaktiendiagramm zurückkehren können, um schnell zu überprüfen, ob "
-"die Triggerpunkte in einer unruhigen Spanne gruppiert sind, ob Sie hin "
-"und her „gepeitscht“ werden, und dann entscheiden können, ob Sie als "
-"Nächstes Filterbedingungen hinzufügen möchten (z. B. Trendfilter, "
-"Volatilitätsfilter usw.)."
+"Erwartetes Ergebnis: Sie sehen eine Reihe hervorgehobener Punkte im Diagramm"
+" (entsprechend den Zeiten, in denen „macd_hist_12_26_9 > 0“ ist).   Der Wert"
+" dieses Schrittes liegt darin, dass Sie sehen, dass sich ein Segment der "
+"Portfoliokurve plötzlich verschlechtert, und so zum Einzelaktiendiagramm "
+"zurückkehren können, um schnell zu überprüfen, ob die Triggerpunkte in einer"
+" unruhigen Spanne gruppiert sind, ob Sie hin und her „gepeitscht“ werden, "
+"und dann entscheiden können, ob Sie als Nächstes Filterbedingungen "
+"hinzufügen möchten (z. B. Trendfilter, Volatilitätsfilter usw.)."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:417
 #, fuzzy
@@ -841,17 +855,19 @@ msgstr ""
 #, fuzzy
 msgid "说明：上面 `normalize` 只为了画图对比更直观；您做统计时仍以 `cum_return` 或原始价格序列为准。"
 msgstr ""
-"Hinweis: Das obige „Normalisieren“ dient nur dazu, den visuellen "
-"Vergleich intuitiver zu gestalten. Für Statistiken sollten Sie sich "
-"weiterhin auf „cum_return“ oder die Rohpreisreihe verlassen."
+"Hinweis: Das obige „Normalisieren“ dient nur dazu, den visuellen Vergleich "
+"intuitiver zu gestalten. Für Statistiken sollten Sie sich weiterhin auf "
+"„cum_return“ oder die Rohpreisreihe verlassen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:588
 msgid "小结与下一步"
-msgstr ""
+msgstr "Zusammenfassung und nächste Schritte"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:590
 msgid "读到这里，您应已跑通「少量标的纵向择时」的完整研究链路："
 msgstr ""
+"Nachdem Sie dies gelesen haben, sollten Sie den vollständigen Forschungslink"
+" zu „Vertical Timing of a Small Number of Targets“ durchgearbeitet haben:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:592
 #, fuzzy
@@ -859,59 +875,79 @@ msgid ""
 "数据 → 因子（MACD）→ bool 条件 → ``where`` 掩码 → ``portfolio`` + benchmark → "
 "``cum_return`` / CAGR → ``plot(highlight)`` 解释。"
 msgstr ""
-"Zu diesem Zeitpunkt haben wir bereits eine vollständige "
-"Forschungsschleife für „Timing bei einem kleinen Satz von Instrumenten“ "
-"durchlaufen: Daten -> Faktor -> Bool-Bedingung -> `Where`-Maske -> "
-"`Portfolio + Benchmark` -> `cum_return + CAGR` -> "
-"`plot(highlight)`-Erklärung."
+"Zu diesem Zeitpunkt haben wir bereits eine vollständige Forschungsschleife "
+"für „Timing bei einem kleinen Satz von Instrumenten“ durchlaufen: Daten -> "
+"Faktor -> Bool-Bedingung -> `Where`-Maske -> `Portfolio + Benchmark` -> "
+"`cum_return + CAGR` -> `plot(highlight)`-Erklärung."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:594
 msgid ""
 "**注**：``portfolio`` / ``cum_return`` "
 "均为**研究向**计算，**不含**交易成本、滑点、交割、资金约束等完整回测语义。"
 msgstr ""
+"**Hinweis**: „`portfolio`` / ``cum_return`“ werden alle durch **Recherche "
+"berechnet und **enthalten** keine vollständige Backtesting-Semantik wie "
+"Transaktionskosten, Slippage, Lieferung und Kapitalbeschränkungen."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:596
 msgid "**建议的下一步**："
-msgstr ""
+msgstr "**Vorgeschlagene nächste Schritte**:"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:598
 msgid ""
 "回到 [History历史数据分析基础](2.5-historypanel-data-analysis.md) 查阅 "
 "``where``、``rank`` / ``zscore`` 等通用 API"
 msgstr ""
+"Kehren Sie zu [Grundlagen der historischen Datenanalyse im Verlauf] "
+"(2.5-historypanel-data-analysis.md) zurück, um gängige APIs wie "
+"„`where``、``rank`` / ``zscore`“ auszuprobieren"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:599
-msgid "**横截面选股**：[横截面多因子](2.7-historypanel-advanced-horizontal-multifactor.md)"
+msgid ""
+"**横截面选股**：[横截面多因子](2.7-historypanel-advanced-horizontal-multifactor.md)"
 msgstr ""
+"**Horizontale Aktienauswahl**: [Querschnitts-Multifaktor](2.7-historypanel-"
+"advanced-horizontal-multifactor.md)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:600
 msgid "**事件型形态**：[K 线形态因子](2.8-historypanel-advanced-event-kline-pattern.md)"
 msgstr ""
+"**Ereignismuster**: [K-Line-Formfaktor](2.8-historypanel-advanced-event-"
+"kline-pattern.md)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:601
 msgid ""
-"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径) 或 [教程 3：第一个策略](3"
-"-start-first-strategy.md)"
+"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-研究到-"
+"strategy--operator迁移路径) 或 [教程 3：第一个策略](3-start-first-strategy.md)"
 msgstr ""
+"**Zu formalem Backtesting migrieren**: [2.5 §9](2.5-historypanel-data-"
+"analysis.md#9-from-historypanel-research to-strategy--operator migration "
+"path) oder [Tutorial 3: Erste Strategie](3-start-first-strategy.md)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:603
 msgid "文末 ``demo_vertical_timing()`` 可整段复制进 Notebook 一键复现；插图建议见下方附录。"
 msgstr ""
+"Der „`demo_vertical_timing()`“ am Ende des Artikels kann in Notebook kopiert"
+" und mit einem Klick reproduziert werden; Illustrationsvorschläge finden Sie"
+" im Anhang unten."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:607
 #, fuzzy
 msgid "附录：插图索引（可选：在 Notebook 中生成后截图）"
-msgstr "Anhang: Abbildungsindex (empfohlen zur Erstellung/Screenshot im Notebook)"
+msgstr ""
+"Anhang: Abbildungsindex (empfohlen zur Erstellung/Screenshot im Notebook)"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:609
 msgid "下列文件名为**建议**命名；仓库内未必已包含对应 png，不影响跟做正文代码。在 Notebook 跑通各节后自行截图即可。"
 msgstr ""
+"Die folgenden Dateinamen werden **empfohlen**; Das entsprechende PNG ist "
+"möglicherweise nicht im Warehouse enthalten und hat keinen Einfluss auf den "
+"folgenden Textcode. Machen Sie einfach Screenshots, nachdem Sie jeden "
+"Abschnitt in Notebook durchgegangen sind."
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "建议文件名"
-msgstr ""
+msgstr "Vorgeschlagener Dateiname"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "建议放置位置"
@@ -923,9 +959,8 @@ msgid "您将看到什么"
 msgstr "Was Sie sehen werden"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_minimal_run.png`"
-msgstr "`img/3.1_minimal_run.png`"
+msgstr "`3.1_minimal_run.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§0 开场最小可跑"
@@ -936,9 +971,8 @@ msgid "证明 `get_kline -> plot` 链路通了"
 msgstr "Beweisen Sie, dass die `get_kline -> plot`-Pipeline funktioniert"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_pf_compare.png`"
-msgstr "`img/3.1_pf_compare.png`"
+msgstr "`3.1_pf_compare.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§0.5 或 §6"
@@ -949,9 +983,8 @@ msgid "`LONG/SHORT/000300.SH` 归一化曲线对比"
 msgstr "Normalisierter Kurvenvergleich von `LONG/SHORT/000300.SH`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_highlight_one_share.png`"
-msgstr "`img/3.1_highlight_one_share.png`"
+msgstr "`3.1_highlight_one_share.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§7"
@@ -960,54 +993,43 @@ msgstr "§7"
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "单股图上高亮触发点（便于复盘解释）"
 msgstr ""
-"Markieren Sie Triggerpunkte in einem Einzelaktiendiagramm (zur "
-"einfacheren Überprüfung und Erklärung)."
+"Markieren Sie Triggerpunkte in einem Einzelaktiendiagramm (zur einfacheren "
+"Überprüfung und Erklärung)."
 
 #~ msgid "纵向择时：因子阈值 -> bool mask -> 组合收益与 CAGR 对比"
 #~ msgstr ""
-#~ "Querschnitts-Timing: Faktorschwelle -> "
-#~ "Bool-Maske -> Portfoliorenditen und CAGR"
-#~ " vergleichen"
+#~ "Querschnitts-Timing: Faktorschwelle -> Bool-Maske -> Portfoliorenditen und "
+#~ "CAGR vergleichen"
 
 #~ msgid "0. 开场：先跑通一个最小可用的研究闭环"
 #~ msgstr ""
-#~ "0. Eröffnung: Erstellen Sie zunächst "
-#~ "eine minimale, durchführbare Forschungsschleife, "
-#~ "die durchgehend verläuft"
+#~ "0. Eröffnung: Erstellen Sie zunächst eine minimale, durchführbare "
+#~ "Forschungsschleife, die durchgehend verläuft"
 
 #~ msgid "如果你在 Notebook 里运行，上面这一段通常就能立即看到一张图。"
 #~ msgstr ""
-#~ "Wenn Sie dies in einem Notebook "
-#~ "ausführen, können Sie im obigen Snippet"
-#~ " normalerweise sofort ein Diagramm sehen."
+#~ "Wenn Sie dies in einem Notebook ausführen, können Sie im obigen Snippet "
+#~ "normalerweise sofort ein Diagramm sehen."
 
 #~ msgid ""
 #~ "如果你的环境里暂时没有数据，最常见的现象是：`qt.get_kline()` 返回空面板，或者在后续计算指标时出现全 "
 #~ "NaN。为了避免“跑到一半才发现没数据”，建议你在第 2 节做完后务必检查："
 #~ msgstr ""
-#~ "Wenn Ihre Umgebung noch keine Daten "
-#~ "hat, sind die häufigsten Symptome: "
-#~ "„qt.get_kline()“ gibt ein leeres Panel "
-#~ "zurück, oder Sie erhalten alle NaNs, "
-#~ "wenn Sie später Indikatoren berechnen. "
-#~ "Um zu vermeiden, dass Sie „erst "
-#~ "auf halbem Weg merken, dass keine "
-#~ "Daten vorhanden sind“, wird empfohlen, "
-#~ "dass Sie nach Abschluss von Abschnitt"
-#~ " 2 Folgendes überprüfen:"
+#~ "Wenn Ihre Umgebung noch keine Daten hat, sind die häufigsten Symptome: "
+#~ "„qt.get_kline()“ gibt ein leeres Panel zurück, oder Sie erhalten alle NaNs, "
+#~ "wenn Sie später Indikatoren berechnen. Um zu vermeiden, dass Sie „erst auf "
+#~ "halbem Weg merken, dass keine Daten vorhanden sind“, wird empfohlen, dass "
+#~ "Sie nach Abschluss von Abschnitt 2 Folgendes überprüfen:"
 
 #~ msgid ""
-#~ "如果你在自己的环境里需要先下载数据，请先完成“数据下载与数据源配置”相关章节；本文不展开数据通道细节，专注在 "
-#~ "`HistoryPanel` 的研究链路本身。"
+#~ "如果你在自己的环境里需要先下载数据，请先完成“数据下载与数据源配置”相关章节；本文不展开数据通道细节，专注在 `HistoryPanel` "
+#~ "的研究链路本身。"
 #~ msgstr ""
-#~ "Wenn Sie zuerst Daten in Ihrer "
-#~ "eigenen Umgebung herunterladen müssen, "
-#~ "schließen Sie bitte zuerst die Kapitel"
-#~ " „Datendownload und Datenquellenkonfiguration“ "
-#~ "ab. Dieser Artikel geht nicht auf "
-#~ "Details der Datenpipeline ein und "
-#~ "konzentriert sich auf den Forschungsworkflow"
-#~ " rund um „HistoryPanel“ selbst."
+#~ "Wenn Sie zuerst Daten in Ihrer eigenen Umgebung herunterladen müssen, "
+#~ "schließen Sie bitte zuerst die Kapitel „Datendownload und "
+#~ "Datenquellenkonfiguration“ ab. Dieser Artikel geht nicht auf Details der "
+#~ "Datenpipeline ein und konzentriert sich auf den Forschungsworkflow rund um "
+#~ "„HistoryPanel“ selbst."
 
 #~ msgid "2.1 本节要解决什么"
 #~ msgstr "2.1 Was dieser Abschnitt lösen soll"
@@ -1038,9 +1060,8 @@ msgstr ""
 
 #~ msgid "5. 用 `portfolio(mask=...)` 聚合组合曲线，并与 benchmark 对比"
 #~ msgstr ""
-#~ "5. Verwenden Sie „portfolio(mask=...)“, um "
-#~ "die Portfoliokurve zu aggregieren und "
-#~ "mit der Benchmark zu vergleichen"
+#~ "5. Verwenden Sie „portfolio(mask=...)“, um die Portfoliokurve zu aggregieren"
+#~ " und mit der Benchmark zu vergleichen"
 
 #~ msgid "5.1 本节要解决什么"
 #~ msgstr "5.1 Was dieser Abschnitt lösen soll"
@@ -1064,25 +1085,18 @@ msgstr ""
 #~ msgstr "9. Zusammenfassung und Grenzen"
 
 #~ msgid ""
-#~ "需要注意的是：这里的 `portfolio/cum_return` "
-#~ "都是研究向计算，**不包含**交易成本、滑点、交割、资金约束等完整回测语义。   "
-#~ "如果你希望把研究逻辑迁移到真正的策略回测，建议把因子/条件输出成策略可用的数据列或信号，并交给 "
-#~ "`Operator/Backtester` 处理交易层语义。"
+#~ "需要注意的是：这里的 `portfolio/cum_return` 都是研究向计算，**不包含**交易成本、滑点、交割、资金约束等完整回测语义。   "
+#~ "如果你希望把研究逻辑迁移到真正的策略回测，建议把因子/条件输出成策略可用的数据列或信号，并交给 `Operator/Backtester` "
+#~ "处理交易层语义。"
 #~ msgstr ""
-#~ "Hinweis: Bei „portfolio/cum_return“ handelt es"
-#~ " sich hier ausschließlich um "
-#~ "forschungsorientierte Berechnungen und **enthalten**"
-#~ " keine vollständige Backtesting-Semantik "
-#~ "wie Transaktionskosten, Slippage, Abwicklung, "
-#~ "Kapitalbeschränkungen usw. Wenn Sie die "
-#~ "Forschungslogik in einen echten Strategie-"
-#~ "Backtest migrieren möchten, wird empfohlen,"
-#~ " den Faktor/die Bedingung als für die"
-#~ " Strategie verwendbare Datenspalten oder "
-#~ "Signale auszugeben und sie an "
-#~ "„Operator/Backtester“ zu übergeben, um die "
-#~ "Semantik der Handelsebene zu verwalten."
+#~ "Hinweis: Bei „portfolio/cum_return“ handelt es sich hier ausschließlich um "
+#~ "forschungsorientierte Berechnungen und **enthalten** keine vollständige "
+#~ "Backtesting-Semantik wie Transaktionskosten, Slippage, Abwicklung, "
+#~ "Kapitalbeschränkungen usw. Wenn Sie die Forschungslogik in einen echten "
+#~ "Strategie-Backtest migrieren möchten, wird empfohlen, den Faktor/die "
+#~ "Bedingung als für die Strategie verwendbare Datenspalten oder Signale "
+#~ "auszugeben und sie an „Operator/Backtester“ zu übergeben, um die Semantik "
+#~ "der Handelsebene zu verwalten."
 
 #~ msgid "插图"
 #~ msgstr "Abbildung"
-

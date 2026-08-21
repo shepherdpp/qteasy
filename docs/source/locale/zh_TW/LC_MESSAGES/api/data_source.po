@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/data_source.rst:2
@@ -25,12 +25,12 @@ msgstr "歷史數據的存儲——DataSource對象"
 #: ../../source/api/data_source.rst:4
 msgid ""
 "DataSource 负责对接本地历史数据存储，可以管理基于文件的存储（如 csv/hdf/feather） 或基于数据库的存储（如 "
-"MySQL/MariaDB），对上层暴露统一的表结构与读取接口；数据的 下载与更新通常通过 ``qt.refill_data_source()``"
-" 完成，而非由 DataSource 自动拉取。"
+"MySQL/MariaDB），对上层暴露统一的表结构与读取接口；数据的 下载与更新通常通过 ``qt.refill_data_source()`` "
+"完成，而非由 DataSource 自动拉取。"
 msgstr ""
 "DataSource 負責對接本地歷史數據存儲，可以管理基於文件的存儲（如 csv/hdf/feather） 或基於數據庫的存儲（如 "
-"MySQL/MariaDB），對上層暴露統一的表結構與讀取接口；數據的 下載與更新通常通過 ``qt.refill_data_source()``"
-" 完成，而非由 DataSource 自動拉取。"
+"MySQL/MariaDB），對上層暴露統一的表結構與讀取接口；數據的 下載與更新通常通過 ``qt.refill_data_source()`` "
+"完成，而非由 DataSource 自動拉取。"
 
 #: of qteasy.database.DataSource:1
 msgid "管理本地历史数据存储（文件或数据库）的统一入口对象。"
@@ -38,13 +38,13 @@ msgstr "管理本地歷史數據存儲（文件或數據庫）的統一入口對
 
 #: of qteasy.database.DataSource:3
 msgid ""
-"DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览， 并保证生成的数据结构可以被 HistoryPanel "
-"与上层 API 正确消费；当某些表缺失时， DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` "
-"等函数完成维护。 支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」 相关章节。"
+"DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览， 并保证生成的数据结构可以被 HistoryPanel 与上层 "
+"API 正确消费；当某些表缺失时， DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` 等函数完成维护。"
+" 支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」 相关章节。"
 msgstr ""
-"DataSource 負責與本地文件或數據庫交互，統一管理歷史數據表的讀取、寫入與概覽， 並保證生成的數據結構可以被 HistoryPanel "
-"與上層 API 正確消費；當某些表缺失時， DataSource 本身不會自動下載數據，而是配合 ``refill_data_source`` "
-"等函數完成維護。 支持的文件類型與數據庫種類及更多初始化細節，見文檔「DataSource 與本地數據源」 相關章節。"
+"DataSource 負責與本地文件或數據庫交互，統一管理歷史數據表的讀取、寫入與概覽， 並保證生成的數據結構可以被 HistoryPanel 與上層 "
+"API 正確消費；當某些表缺失時， DataSource 本身不會自動下載數據，而是配合 ``refill_data_source`` 等函數完成維護。"
+" 支持的文件類型與數據庫種類及更多初始化細節，見文檔「DataSource 與本地數據源」 相關章節。"
 
 #: of qteasy.database.DataSource:10
 #: qteasy.database.DataSource.get_table_data_coverage:15
@@ -307,20 +307,20 @@ msgstr "*一個dict，包含數據表的結構化資訊：*"
 #: of qteasy.database.DataSource.get_table_info:16
 msgid ""
 "*{* -- table name:    1, str, 数据表名称 table_exists:  2, bool，数据表是否存在 "
-"table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:"
-"    4, int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  5, "
-"str，数据表第一个主键名称 pk_count1:     6, int，数据表第一个主键记录数量 pk_min1:       7, "
-"obj，数据表主键1起始记录 pk_max1:       8, obj，数据表主键2最终记录 primary_key2:  9, "
-"str，数据表第二个主键名称 pk_count2:     10, int，数据表第二个主键记录 pk_min2:       11, "
-"obj，数据表主键2起始记录 pk_max2:       12, obj，数据表主键2最终记录"
+"table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    4,"
+" int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  5, str，数据表第一个主键名称 "
+"pk_count1:     6, int，数据表第一个主键记录数量 pk_min1:       7, obj，数据表主键1起始记录 pk_max1:"
+"       8, obj，数据表主键2最终记录 primary_key2:  9, str，数据表第二个主键名称 pk_count2:     10,"
+" int，数据表第二个主键记录 pk_min2:       11, obj，数据表主键2起始记录 pk_max2:       12, "
+"obj，数据表主键2最终记录"
 msgstr ""
 "*{* -- table name:    1, str, 數據表名稱 table_exists:  2, bool，數據表是否存在 "
-"table_size:    3, int/str，數據表佔用磁盤空間，human 爲True時返回容易閱讀的字符串 table_rows:"
-"    4, int/str，數據表的行數，human 爲True時返回容易閱讀的字符串 primary_key1:  5, "
-"str，數據表第一個主鍵名稱 pk_count1:     6, int，數據表第一個主鍵記錄數量 pk_min1:       7, "
-"obj，數據表主鍵1起始記錄 pk_max1:       8, obj，數據表主鍵2最終記錄 primary_key2:  9, "
-"str，數據表第二個主鍵名稱 pk_count2:     10, int，數據表第二個主鍵記錄 pk_min2:       11, "
-"obj，數據表主鍵2起始記錄 pk_max2:       12, obj，數據表主鍵2最終記錄"
+"table_size:    3, int/str，數據表佔用磁盤空間，human 爲True時返回容易閱讀的字符串 table_rows:    4,"
+" int/str，數據表的行數，human 爲True時返回容易閱讀的字符串 primary_key1:  5, str，數據表第一個主鍵名稱 "
+"pk_count1:     6, int，數據表第一個主鍵記錄數量 pk_min1:       7, obj，數據表主鍵1起始記錄 pk_max1:"
+"       8, obj，數據表主鍵2最終記錄 primary_key2:  9, str，數據表第二個主鍵名稱 pk_count2:     10,"
+" int，數據表第二個主鍵記錄 pk_min2:       11, obj，數據表主鍵2起始記錄 pk_max2:       12, "
+"obj，數據表主鍵2最終記錄"
 
 #: of qteasy.database.DataSource.get_table_info:28
 msgid "*}*"
@@ -495,8 +495,10 @@ msgid "更新系统操作表的数据，根据指定的id更新数据，更新�
 msgstr "更新系統操作表的數據，根據指定的id更新數據，更新的內容由kwargs給出。"
 
 #: of qteasy.database.DataSource.update_sys_table_data:3
-msgid "每次只能更新一条数据，数据以dict形式给出 可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。 id必须存在，否则抛出异常"
-msgstr "每次只能更新一條數據，數據以dict形式給出 可以更新一個或多個字段，如果給出的字段不存在，則拋出異，id不可更新。 id必須存在，否則拋出異常"
+msgid ""
+"每次只能更新一条数据，数据以dict形式给出 可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。 id必须存在，否则抛出异常"
+msgstr ""
+"每次只能更新一條數據，數據以dict形式給出 可以更新一個或多個字段，如果給出的字段不存在，則拋出異，id不可更新。 id必須存在，否則拋出異常"
 
 #: of qteasy.database.DataSource.update_sys_table_data:9
 msgid "需要更新的数据的id"
@@ -537,31 +539,30 @@ msgid "数据表名，必须是database中定义的数据表"
 msgstr "數據表名，必須是database中定義的數據表"
 
 #: of qteasy.database.DataSource.update_table_data:10
-#, fuzzy
 msgid ""
 "指定如何合并下载数据和本地数据： - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据；   对 "
 "``table_usage=='basics'`` 的表在重复主键上仅当下载字段非空时才覆盖该列（patch），   避免稀疏通道（如 "
 "AKShare）用空行业/日期等冲掉既有 Tushare 元数据 - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分"
 msgstr ""
-"指定如何合併下載數據和本地數據： - 'update': 默認值，如果下載數據與本地數據重複，用下載數據替代本地數據 - 'ignore' : "
-"如果下載數據與本地數據重複，忽略重複部分"
+"指定如何合併下載資料和本地資料： - 'update': 預設值，如果下載資料與本地資料重複，用下載資料替代本地資料；   對 "
+"``table_usage=='basics'`` 的表在重複主鍵上僅當下載字段非空時才覆蓋該列（patch），   避免稀疏通道（如 "
+"AKShare）用空行業/日期等沖掉既有 Tushare 元資料 - 'ignore' : 如果下載資料與本地資料重複，忽略重複部分"
 
 #: of qteasy.database.DataSource.update_table_data:10
-#, fuzzy
 msgid "指定如何合并下载数据和本地数据： - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据；"
-msgstr ""
-"指定如何合併下載數據和本地數據： - 'update': 默認值，如果下載數據與本地數據重複，用下載數據替代本地數據 - 'ignore' : "
-"如果下載數據與本地數據重複，忽略重複部分"
+msgstr "指定如何合併下載資料和本地資料： - 'update': 預設值，如果下載資料與本地資料重複，用下載資料替代本地資料；"
 
 #: of qteasy.database.DataSource.update_table_data:12
 msgid ""
 "对 ``table_usage=='basics'`` 的表在重复主键上仅当下载字段非空时才覆盖该列（patch）， 避免稀疏通道（如 "
 "AKShare）用空行业/日期等冲掉既有 Tushare 元数据"
 msgstr ""
+"對 ``table_usage=='basics'`` 的表在重複主鍵上僅當下載字段非空時才覆蓋該列（patch）， 避免稀疏通道（如 "
+"AKShare）用空行業/日期等沖掉既有 Tushare 元資料"
 
 #: of qteasy.database.DataSource.update_table_data:14
 msgid "'ignore' : 如果下载数据与本地数据重复，忽略重复部分"
-msgstr ""
+msgstr "'ignore' : 如果下載資料與本地資料重複，忽略重複部分"
 
 #: of qteasy.database.DataSource.update_table_data:16
 msgid "通过传递一个DataFrame获取数据 如果数据获取渠道为\"df\"，则必须给出此参数"
@@ -605,5 +606,5 @@ msgstr "備註"
 
 #: of qteasy.database.DataSource.write_table_data:20
 msgid "注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查 请使用update_table_data()来更新或写入数据到本地"
-msgstr "注意！！不應直接使用該函數將數據寫入本地數據庫，因爲寫入的數據不會被檢查 請使用update_table_data()來更新或寫入數據到本地"
-
+msgstr ""
+"注意！！不應直接使用該函數將數據寫入本地數據庫，因爲寫入的數據不會被檢查 請使用update_table_data()來更新或寫入數據到本地"

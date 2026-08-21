@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/getting_started.md:1
@@ -27,12 +27,11 @@ msgid "安装与导入"
 msgstr "安裝與導入"
 
 #: ../../source/getting_started.md:5
-#, fuzzy
 msgid ""
 "使用 `pip` 安装（要求 `Python >= 3.9, <3.13`）：部分功能（如全部内置策略、数据库存储等）需要可选依赖，详见 "
-"[FAQ](https://qteasy.readthedocs.io/zh-cn/latest/faq.html) 与安装说明。"
+"[FAQ](https://qteasy.readthedocs.io/zh-tw/latest/faq.html) 与安装说明。"
 msgstr ""
-"使用 `pip` 安裝（要求 `Python >= 3.9, <3.13`）：部分功能（如全部內置策略、數據庫存儲等）需要可選依賴，詳見 "
+"使用 `pip` 安裝（要求 `Python >= 3.9, <3.13`）：部分功能（如全部內置策略、資料庫存儲等）需要可選依賴，詳見 "
 "[FAQ](https://qteasy.readthedocs.io/zh-tw/latest/faq.html) 與安裝說明。"
 
 #: ../../source/getting_started.md:10
@@ -51,7 +50,7 @@ msgstr "[qteasy發佈歷史](RELEASE_HISTORY.md) — 各版本變更說明，升
 
 #: ../../source/getting_started.md:27
 msgid "一分钟跑通 `qteasy`"
-msgstr ""
+msgstr "一分鐘跑通 `qteasy`"
 
 #: ../../source/getting_started.md:29
 msgid ""
@@ -106,8 +105,10 @@ msgstr ""
 "指數（000300.SH）的日線數據。建議先下載交易日曆與指數基礎資訊，再下載指數日線（約十年）："
 
 #: ../../source/getting_started.md:65
-msgid "使用`qteasy.refill_data_source()`函数，`qteasy`会自动从配置好的数据下载渠道下载数据，当数据量太大时，会自动分块下载数据、完成数据检查和清洗并存储到数据库中。"
-msgstr "使用`qteasy.refill_data_source()`函數，`qteasy`會自動從配置好的數據下載渠道下載數據，當數據量太大時，會自動分塊下載數據、完成數據檢查和清洗並存儲到數據庫中。"
+msgid ""
+"使用`qteasy.refill_data_source()`函数，`qteasy`会自动从配置好的数据下载渠道下载数据，当数据量太大时，会自动分块下载数据、完成数据检查和清洗并存储到数据库中。"
+msgstr ""
+"使用`qteasy.refill_data_source()`函數，`qteasy`會自動從配置好的數據下載渠道下載數據，當數據量太大時，會自動分塊下載數據、完成數據檢查和清洗並存儲到數據庫中。"
 
 #: ../../source/getting_started.md:96
 msgid "3. 查看数据与 K 线图"
@@ -189,11 +190,11 @@ msgstr "3.5 操作歷史數據（HistoryPanel）"
 
 #: ../../source/getting_started.md:167
 msgid ""
-"在实际研究中，很多时候我们不仅需要“看 K 线”，还需要**在代码里对历史数据做统计、生成因子**。   `get_history_data()`"
-" 除了可以返回 `DataFrame` 外，还可以直接返回一个三维的 `HistoryPanel`，便于对多标的、多指标做统一计算："
+"在实际研究中，很多时候我们不仅需要“看 K 线”，还需要**在代码里对历史数据做统计、生成因子**。   `get_history_data()` "
+"除了可以返回 `DataFrame` 外，还可以直接返回一个三维的 `HistoryPanel`，便于对多标的、多指标做统一计算："
 msgstr ""
-"在實際研究中，很多時候我們不僅需要“看 K 線”，還需要**在代碼裏對歷史數據做統計、生成因子**。   `get_history_data()`"
-" 除了可以返回 `DataFrame` 外，還可以直接返回一個三維的 `HistoryPanel`，便於對多標的、多指標做統一計算："
+"在實際研究中，很多時候我們不僅需要“看 K 線”，還需要**在代碼裏對歷史數據做統計、生成因子**。   `get_history_data()` "
+"除了可以返回 `DataFrame` 外，還可以直接返回一個三維的 `HistoryPanel`，便於對多標的、多指標做統一計算："
 
 #: ../../source/getting_started.md:203
 msgid ""
@@ -229,11 +230,11 @@ msgstr "![png](img/output_14_1.png)"
 
 #: ../../source/getting_started.md:274
 msgid ""
-"运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「`qteasy` 能做什么」中的参数优化与"
-" [回测文档](references/3-back-test-strategy.md)。"
+"运行后将得到收益曲线、最大回撤、夏普比等评价指标及可视化图表。若要尝试其他参数或优化区间，可参考下一节「`qteasy` 能做什么」中的参数优化与 "
+"[回测文档](references/3-back-test-strategy.md)。"
 msgstr ""
-"運行後將得到收益曲線、最大回撤、夏普比等評價指標及可視化圖表。若要嘗試其他參數或優化區間，可參考下一節「`qteasy` 能做什麼」中的參數優化與"
-" [回測文檔](references/3-back-test-strategy.md)。"
+"運行後將得到收益曲線、最大回撤、夏普比等評價指標及可視化圖表。若要嘗試其他參數或優化區間，可參考下一節「`qteasy` 能做什麼」中的參數優化與 "
+"[回測文檔](references/3-back-test-strategy.md)。"
 
 #: ../../source/getting_started.md:278
 msgid "`qteasy` 能做什么"
@@ -346,6 +347,15 @@ msgid ""
 "[事件型因子](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)；可运行 "
 "`examples/data_playground_e2e.py`"
 msgstr ""
+"**下載資料** → [教程：獲取資料](tutorials/2.0-get-"
+"data.md)、[下載並管理金融歷史資料](manage_data/1.%20overview.md) 2b. "
+"**玩資料與簡單因子（可選，建議策略回測前完成）** → [獲取資料 / 最小資料集](tutorials/2.0-get-data.md) → "
+"[HistoryPanel 基礎操作](tutorials/2.4-historypanel-basics.md) → "
+"[玩資料與因子分析](tutorials/2.5-historypanel-data-analysis.md) "
+"→（進階）[縱向擇時](tutorials/2.6-historypanel-advanced-vertical-timeaxis.md) / "
+"[橫截面選股](tutorials/2.7-historypanel-advanced-horizontal-multifactor.md) / "
+"[事件型因子](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)；可運行 "
+"`examples/data_playground_e2e.py`"
 
 #: ../../source/getting_started.md:320
 #, python-format
@@ -373,12 +383,12 @@ msgstr ""
 #, python-format
 msgid ""
 "**模拟/实盘运行** → "
-"[教程：交易策略的部署及运行](tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)、[模拟实盘运行概览](references/1"
-"-simulation-overview.md)"
+"[教程：交易策略的部署及运行](tutorials/Tutorial%2007%20-%20交易策略的部署及运行.md)、[模拟实盘运行概览](references/1-simulation-"
+"overview.md)"
 msgstr ""
 "**模擬/實盤運行** → "
-"[教程：交易策略的部署及運行](tutorials/Tutorial%2007%20-%20交易策略的部署及運行.md)、[模擬實盤運行概覽](references/1"
-"-simulation-overview.md)"
+"[教程：交易策略的部署及運行](tutorials/Tutorial%2007%20-%20交易策略的部署及運行.md)、[模擬實盤運行概覽](references/1-simulation-"
+"overview.md)"
 
 #: ../../source/getting_started.md:324
 msgid ""
@@ -397,14 +407,18 @@ msgid "[教程：获取数据](tutorials/2.0-get-data.md) — 配置数据源与
 msgstr "[教程：獲取數據](tutorials/2.0-get-data.md) — 配置數據源與下載更多數據"
 
 #: ../../source/getting_started.md:331
-msgid "[教程：HistoryPanel 基础操作](tutorials/2.4-historypanel-basics.md) — 结构、切片、扩列与对齐"
+msgid ""
+"[教程：HistoryPanel 基础操作](tutorials/2.4-historypanel-basics.md) — 结构、切片、扩列与对齐"
 msgstr ""
+"[教程：HistoryPanel 基礎操作](tutorials/2.4-historypanel-basics.md) — 結構、切片、擴列與對齊"
 
 #: ../../source/getting_started.md:332
 msgid ""
 "[教程：HistoryPanel 玩数据](tutorials/2.5-historypanel-data-analysis.md) — "
 "因子研究最小闭环"
 msgstr ""
+"[教程：HistoryPanel 玩資料](tutorials/2.5-historypanel-data-analysis.md) — "
+"因子研究最小閉環"
 
 #: ../../source/getting_started.md:333
 msgid "[教程：第一个策略](tutorials/3-start-first-strategy.md) — 使用内置策略与回测"
@@ -427,4 +441,3 @@ msgstr "[API 參考](api/use_qteasy.rst) — 完整接口說明"
 #~ msgstr ""
 #~ "**下載數據** → [教程：獲取數據](tutorials/2.0-get-"
 #~ "data.md)、[下載並管理金融歷史數據](manage_data/1.%20overview.md)"
-

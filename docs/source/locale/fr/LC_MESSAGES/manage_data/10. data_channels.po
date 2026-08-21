@@ -8,31 +8,32 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/manage_data/10. data_channels.md:1
 msgid "使用数据获取渠道自动填充数据"
 msgstr ""
-"Remplissez automatiquement les données à l’aide des canaux d’acquisition "
-"de données."
+"Remplissez automatiquement les données à l’aide des canaux d’acquisition de "
+"données."
 
 #: ../../source/manage_data/10. data_channels.md:3
-msgid "前面介绍过`DataSource`对象的基本操作方法，但是在实际使用中，我们需要往`DataSource`对象中填充大量数据，如果使用前面章节介绍的`DataSource.update_table_data()`方法手动填充数据，这样的工作量是非常大的。"
+msgid ""
+"前面介绍过`DataSource`对象的基本操作方法，但是在实际使用中，我们需要往`DataSource`对象中填充大量数据，如果使用前面章节介绍的`DataSource.update_table_data()`方法手动填充数据，这样的工作量是非常大的。"
 msgstr ""
 "Nous avons présenté les méthodes de fonctionnement de base de l'objet "
-"`DataSource`. Cependant, en utilisation réelle, nous devons remplir "
-"l'objet `DataSource` avec une grande quantité de données. Si nous "
-"remplissons manuellement les données à l'aide de la méthode "
-"`DataSource.update_table_data()` introduite dans le chapitre précédent, "
-"la charge de travail sera très importante."
+"`DataSource`. Cependant, en utilisation réelle, nous devons remplir l'objet "
+"`DataSource` avec une grande quantité de données. Si nous remplissons "
+"manuellement les données à l'aide de la méthode "
+"`DataSource.update_table_data()` introduite dans le chapitre précédent, la "
+"charge de travail sera très importante."
 
 #: ../../source/manage_data/10. data_channels.md:5
 msgid "这里我们介绍如何使用数据获取渠道自动填充数据。"
@@ -55,72 +56,76 @@ msgid "数据获取模块结构"
 msgstr "Structure du module d'acquisition de données"
 
 #: ../../source/manage_data/10. data_channels.md:11
-msgid "如上图所示，`qteasy`的数据功能分为三层，第一层包括多种数据下载接口，用于从网络数据提供商获取数据，这个过程称为`DataFetching`。"
+msgid ""
+"如上图所示，`qteasy`的数据功能分为三层，第一层包括多种数据下载接口，用于从网络数据提供商获取数据，这个过程称为`DataFetching`。"
 msgstr ""
 "Comme le montre le diagramme ci-dessus, la fonctionnalité de données de "
-"`qteasy` est divisée en trois couches. La première couche comprend "
-"diverses interfaces de téléchargement de données permettant d'obtenir des"
-" données auprès de fournisseurs de données en ligne ; ce processus est "
-"appelé `DataFetching`."
+"`qteasy` est divisée en trois couches. La première couche comprend diverses "
+"interfaces de téléchargement de données permettant d'obtenir des données "
+"auprès de fournisseurs de données en ligne ; ce processus est appelé "
+"`DataFetching`."
 
 #: ../../source/manage_data/10. data_channels.md:13
 msgid "数据拉取接口`refill_data_source()`"
 msgstr "L'interface de récupération de données `refill_data_source()`"
 
 #: ../../source/manage_data/10. data_channels.md:15
-msgid "`qteasy`提供了一个自动化数据下载接口`qteasy.refill_data_source()`，可以从多个不同的网络数据提供商拉取多种金融数据，满足不同用户的使用习惯。`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
+msgid ""
+"`qteasy`提供了一个自动化数据下载接口`qteasy.refill_data_source()`，可以从多个不同的网络数据提供商拉取多种金融数据，满足不同用户的使用习惯。`qteasy`提供的数据拉取API具备强大的多线程并行下载、数据分块下载、下载流量控制和错误延时重试功能，以适应不同数据供应商各种变态的流量限制，同时数据拉取API可以方便地定期自动运行完成数据批量下载任务，不用担心错过高频数据。"
 msgstr ""
 "`qteasy` fournit une interface de téléchargement de données automatisée "
 "`qteasy.refill_data_source()`, qui peut extraire diverses données "
-"financières de plusieurs fournisseurs de données en ligne différents pour"
-" répondre aux habitudes d'utilisation des différents utilisateurs. L'API "
-"d'extraction de données fournie par `qteasy` propose de puissantes "
-"fonctions de téléchargement parallèle multithread, de téléchargement par "
+"financières de plusieurs fournisseurs de données en ligne différents pour "
+"répondre aux habitudes d'utilisation des différents utilisateurs. L'API "
+"d'extraction de données fournie par `qteasy` propose de puissantes fonctions"
+" de téléchargement parallèle multithread, de téléchargement par "
 "fragmentation de données, de contrôle du trafic de téléchargement et de "
-"nouvelles tentatives de délai d'erreur pour s'adapter aux diverses "
-"limites de trafic imprévisibles des différents fournisseurs de données. "
-"Dans le même temps, l'API d'extraction de données peut exécuter "
-"facilement et automatiquement des tâches de téléchargement de données par"
-" lots de manière régulière, vous n'avez donc pas à vous soucier de "
-"manquer de données à haute fréquence."
+"nouvelles tentatives de délai d'erreur pour s'adapter aux diverses limites "
+"de trafic imprévisibles des différents fournisseurs de données. Dans le même"
+" temps, l'API d'extraction de données peut exécuter facilement et "
+"automatiquement des tâches de téléchargement de données par lots de manière "
+"régulière, vous n'avez donc pas à vous soucier de manquer de données à haute"
+" fréquence."
 
 #: ../../source/manage_data/10. data_channels.md:17
-msgid "下面先用一个例子解释如何使用`qteasy.refill_data_source()`接口自动填充数据。我们先创建一个不含数据的`DataSource`对象，并向其中填充最基本的数据。"
+msgid ""
+"下面先用一个例子解释如何使用`qteasy.refill_data_source()`接口自动填充数据。我们先创建一个不含数据的`DataSource`对象，并向其中填充最基本的数据。"
 msgstr ""
-"Utilisons d'abord un exemple pour expliquer comment remplir "
-"automatiquement les données à l'aide de l'interface "
-"`qteasy.refill_data_source()`. Nous allons commencer par créer un objet "
-"`DataSource` qui ne contient aucune donnée, puis le remplir avec les "
-"données les plus basiques."
+"Utilisons d'abord un exemple pour expliquer comment remplir automatiquement "
+"les données à l'aide de l'interface `qteasy.refill_data_source()`. Nous "
+"allons commencer par créer un objet `DataSource` qui ne contient aucune "
+"donnée, puis le remplir avec les données les plus basiques."
 
 #: ../../source/manage_data/10. data_channels.md:37
-msgid "我们可以看到，`DataSource`对象中已经有了一些数据表，为了进行下面的测试，我们将首先删除`trade_calendar`以及`stock_daily`两张数据表中的数据，然后再使用数据拉取接口自动填充它们。"
+msgid ""
+"我们可以看到，`DataSource`对象中已经有了一些数据表，为了进行下面的测试，我们将首先删除`trade_calendar`以及`stock_daily`两张数据表中的数据，然后再使用数据拉取接口自动填充它们。"
 msgstr ""
 "Comme nous pouvons le voir, l'objet `DataSource` contient déjà quelques "
-"tables de données. Pour effectuer les tests suivants, nous allons d'abord"
-" supprimer les données des tables de données `trade_calendar` et "
-"`stock_daily`, puis utiliser l'interface de récupération de données pour "
-"les remplir automatiquement."
+"tables de données. Pour effectuer les tests suivants, nous allons d'abord "
+"supprimer les données des tables de données `trade_calendar` et "
+"`stock_daily`, puis utiliser l'interface de récupération de données pour les"
+" remplir automatiquement."
 
 #: ../../source/manage_data/10. data_channels.md:39
 msgid "首先删除两张数据表，为了删除数据表，首先将数据源的`allow_drop_table`属性设置为`True`，然后再删除数据表。"
 msgstr ""
-"Tout d’abord, supprimez deux tables de données. Pour supprimer une table "
-"de données, définissez d'abord l'attribut `allow_drop_table` de la source"
-" de données sur `True`, puis supprimez la table de données."
+"Tout d’abord, supprimez deux tables de données. Pour supprimer une table de "
+"données, définissez d'abord l'attribut `allow_drop_table` de la source de "
+"données sur `True`, puis supprimez la table de données."
 
 #: ../../source/manage_data/10. data_channels.md:58
 msgid "可以看到，`trade_calendar`和`stock_daily`两张数据表中的数据已经被删除。"
 msgstr ""
-"Comme vous pouvez le constater, les données des tables `trade_calendar` "
-"et `stock_daily` ont été supprimées."
+"Comme vous pouvez le constater, les données des tables `trade_calendar` et "
+"`stock_daily` ont été supprimées."
 
 #: ../../source/manage_data/10. data_channels.md:60
-msgid "接下来，我们使用`qteasy.refill_data_source()`接口自动填充数据，代码很简单，只有一行，剩下的工作`qteasy`会自动完成。"
+msgid ""
+"接下来，我们使用`qteasy.refill_data_source()`接口自动填充数据，代码很简单，只有一行，剩下的工作`qteasy`会自动完成。"
 msgstr ""
 "Ensuite, nous utiliserons l'interface `qteasy.refill_data_source()` pour "
-"remplir automatiquement les données. Le code est très simple, avec une "
-"seule ligne, et `qteasy` fera le reste automatiquement."
+"remplir automatiquement les données. Le code est très simple, avec une seule"
+" ligne, et `qteasy` fera le reste automatiquement."
 
 #: ../../source/manage_data/10. data_channels.md:79
 msgid "拉取并填充数据后，可以检查数据已经下载成功了："
@@ -135,8 +140,8 @@ msgstr "Fonctionnalités de l'API de récupération de données"
 #: ../../source/manage_data/10. data_channels.md:148
 msgid "分析数据拉取的过程，我们可以看到，`qteasy`自动完成了下面的工作："
 msgstr ""
-"En analysant le processus de récupération des données, nous pouvons voir "
-"que `qteasy` a automatiquement effectué les tâches suivantes :"
+"En analysant le processus de récupération des données, nous pouvons voir que"
+" `qteasy` a automatiquement effectué les tâches suivantes :"
 
 #: ../../source/manage_data/10. data_channels.md:150
 msgid ""
@@ -154,8 +159,8 @@ msgid ""
 "**下载进度可视化** —— "
 "`qteasy`提供了下载进度可视化，可以看到每个数据分块的下载进度，以及总体下载进度，过程中可以显示剩余时间，方便用户查看数据下载的情况。"
 msgstr ""
-"**Visualisation de la progression du téléchargement** — `qteasy` fournit "
-"une visualisation de la progression du téléchargement, permettant aux "
+"**Visualisation de la progression du téléchargement** — `qteasy` fournit une"
+" visualisation de la progression du téléchargement, permettant aux "
 "utilisateurs de voir la progression du téléchargement de chaque bloc de "
 "données, ainsi que la progression globale du téléchargement. Il affiche "
 "également le temps restant, permettant aux utilisateurs de surveiller "
@@ -166,55 +171,54 @@ msgid ""
 "**大数据量自动分块** —— "
 "上面的代码下载了2021年全年所有股票的日K线数据，这些数据量共有239万行，不管从任何数据渠道，这么大量的数据都不可能一次性下载下来，因此，`qteasy`自动将数据分块，每一块只有一天的数据，可以看到整年的数据被分成了243块，数据分块下载显著降低了每次网络申请的数据量，提高成功率且降低了被阻断的风险。"
 msgstr ""
-"**Chunking automatique des données** — Le code ci-dessus a téléchargé les"
-" données quotidiennes des graphiques en chandeliers pour toutes les "
-"actions tout au long de 2021, totalisant 2,39 millions de lignes. Quelle "
-"que soit la source de données, une telle quantité de données ne peut pas "
-"être téléchargée d’un seul coup. Par conséquent, `qteasy` segmente "
-"automatiquement les données, chaque bloc ne contenant que les données "
-"d'une journée. Comme vous pouvez le constater, les données de l’année "
-"entière ont été divisées en 243 morceaux. Ce téléchargement fragmenté "
-"réduit considérablement la quantité de données demandées par requête "
-"réseau, augmentant ainsi le taux de réussite et réduisant le risque de "
-"blocage."
+"**Chunking automatique des données** — Le code ci-dessus a téléchargé les "
+"données quotidiennes des graphiques en chandeliers pour toutes les actions "
+"tout au long de 2021, totalisant 2,39 millions de lignes. Quelle que soit la"
+" source de données, une telle quantité de données ne peut pas être "
+"téléchargée d’un seul coup. Par conséquent, `qteasy` segmente "
+"automatiquement les données, chaque bloc ne contenant que les données d'une "
+"journée. Comme vous pouvez le constater, les données de l’année entière ont "
+"été divisées en 243 morceaux. Ce téléchargement fragmenté réduit "
+"considérablement la quantité de données demandées par requête réseau, "
+"augmentant ainsi le taux de réussite et réduisant le risque de blocage."
 
 #: ../../source/manage_data/10. data_channels.md:153
 msgid ""
-"**多线程并行下载** —— "
-"实行数据分块下载后，`qteasy`自动使用多线程并行下载，加快数据下载速度，243个数据分块并行下载总共耗时仅16秒。"
+"**多线程并行下载** —— 实行数据分块下载后，`qteasy`自动使用多线程并行下载，加快数据下载速度，243个数据分块并行下载总共耗时仅16秒。"
 msgstr ""
 "**Téléchargement parallèle multithread** — Après avoir implémenté le "
 "regroupement des données pour le téléchargement, `qteasy` utilise "
-"automatiquement le téléchargement parallèle multithread pour accélérer le"
-" processus de téléchargement des données. Le temps total de "
-"téléchargement de 243 blocs de données en parallèle n'était que de 16 "
-"secondes."
+"automatiquement le téléchargement parallèle multithread pour accélérer le "
+"processus de téléchargement des données. Le temps total de téléchargement de"
+" 243 blocs de données en parallèle n'était que de 16 secondes."
 
 #: ../../source/manage_data/10. data_channels.md:155
-msgid "有了上面这些特性，`qteasy`的数据拉取功能可以满足几乎所有用户的数据获取需求，不管是下载大量数据，还是下载高频数据，`qteasy`都能提供高效的数据下载服务。"
+msgid ""
+"有了上面这些特性，`qteasy`的数据拉取功能可以满足几乎所有用户的数据获取需求，不管是下载大量数据，还是下载高频数据，`qteasy`都能提供高效的数据下载服务。"
 msgstr ""
 "Grâce à ces fonctionnalités, la fonction de récupération de données de "
-"`qteasy` peut répondre aux besoins d'acquisition de données de presque "
-"tous les utilisateurs. Qu'il s'agisse de télécharger de grandes quantités"
-" de données ou de données à haute fréquence, `qteasy` peut fournir des "
-"services de téléchargement de données efficaces."
+"`qteasy` peut répondre aux besoins d'acquisition de données de presque tous "
+"les utilisateurs. Qu'il s'agisse de télécharger de grandes quantités de "
+"données ou de données à haute fréquence, `qteasy` peut fournir des services "
+"de téléchargement de données efficaces."
 
 #: ../../source/manage_data/10. data_channels.md:157
 msgid "当然，除了上面提到的这些特性之外，`qteasy`还提供了更多的功能特性，以针对下载过程中出现的各种状况，这些功能特性我们在后面会逐步介绍："
 msgstr ""
-"Bien entendu, en plus des fonctionnalités mentionnées ci-dessus, `qteasy`"
-" offre de nombreuses autres fonctionnalités pour répondre à diverses "
+"Bien entendu, en plus des fonctionnalités mentionnées ci-dessus, `qteasy` "
+"offre de nombreuses autres fonctionnalités pour répondre à diverses "
 "situations pouvant survenir pendant le processus de téléchargement. Nous "
 "présenterons ces fonctionnalités en détail plus tard :"
 
 #: ../../source/manage_data/10. data_channels.md:159
-msgid "**多渠道下载** —— `qteasy`提供了多种数据下载渠道，很多数据表可以从多个不同的渠道下载，而且随着版本更新，数据拉取渠道也在不断增加。"
+msgid ""
+"**多渠道下载** —— `qteasy`提供了多种数据下载渠道，很多数据表可以从多个不同的渠道下载，而且随着版本更新，数据拉取渠道也在不断增加。"
 msgstr ""
 "**Téléchargement multicanal** — `qteasy` fournit plusieurs canaux de "
 "téléchargement de données. De nombreuses tables de données peuvent être "
-"téléchargées à partir de plusieurs canaux différents, et le nombre de "
-"canaux de récupération de données augmente constamment à chaque mise à "
-"jour de version."
+"téléchargées à partir de plusieurs canaux différents, et le nombre de canaux"
+" de récupération de données augmente constamment à chaque mise à jour de "
+"version."
 
 #: ../../source/manage_data/10. data_channels.md:160
 msgid ""
@@ -222,12 +226,12 @@ msgid ""
 "有些数据渠道对数据下载有流量限制，`qteasy`提供了流量控制功能，可以限制数据下载的速度，即下载一定分块数量的数据后，可以暂停一段时间，例如每下载300个分块的数据，就暂停一分钟，避免被数据渠道封禁。"
 msgstr ""
 "**Contrôle du trafic** — Certains canaux de données ont des limites de "
-"trafic sur les téléchargements de données. `qteasy` fournit une fonction "
-"de contrôle du trafic qui peut limiter la vitesse de téléchargement des "
-"données. Autrement dit, après avoir téléchargé un certain nombre de blocs"
-" de données, vous pouvez faire une pause pendant un certain temps. Par "
-"exemple, faites une pause d'une minute après avoir téléchargé 300 blocs "
-"de données pour éviter d'être bloqué par le canal de données."
+"trafic sur les téléchargements de données. `qteasy` fournit une fonction de "
+"contrôle du trafic qui peut limiter la vitesse de téléchargement des "
+"données. Autrement dit, après avoir téléchargé un certain nombre de blocs de"
+" données, vous pouvez faire une pause pendant un certain temps. Par exemple,"
+" faites une pause d'une minute après avoir téléchargé 300 blocs de données "
+"pour éviter d'être bloqué par le canal de données."
 
 #: ../../source/manage_data/10. data_channels.md:161
 msgid ""
@@ -235,12 +239,12 @@ msgid ""
 "有些数据渠道下载数据时，可能会出现网络错误，`qteasy`提供了错误重试功能，可以在下载失败后，自动重试下载，如果重试不成功，会延长重试等待时间再试，直到下载成功或超过重试次数并报错。"
 msgstr ""
 "**Réessai d'erreur** : lors du téléchargement de données à partir de "
-"certaines sources de données, des erreurs réseau peuvent survenir. "
-"`qteasy` fournit une fonction de nouvelle tentative d'erreur, qui peut "
-"automatiquement réessayer le téléchargement après un échec. Si la "
-"nouvelle tentative échoue, le temps d'attente sera prolongé et réessayera"
-" jusqu'à ce que le téléchargement réussisse ou que le nombre de "
-"tentatives soit dépassé et qu'une erreur soit signalée."
+"certaines sources de données, des erreurs réseau peuvent survenir. `qteasy` "
+"fournit une fonction de nouvelle tentative d'erreur, qui peut "
+"automatiquement réessayer le téléchargement après un échec. Si la nouvelle "
+"tentative échoue, le temps d'attente sera prolongé et réessayera jusqu'à ce "
+"que le téléchargement réussisse ou que le nombre de tentatives soit dépassé "
+"et qu'une erreur soit signalée."
 
 #: ../../source/manage_data/10. data_channels.md:162
 msgid ""
@@ -252,8 +256,7 @@ msgstr ""
 "enregistrer des informations détaillées pour chaque téléchargement de "
 "données, y compris la quantité de données téléchargées, le temps de "
 "téléchargement, la vitesse de téléchargement, etc., ce qui permet aux "
-"utilisateurs de visualiser facilement l'état du téléchargement des "
-"données."
+"utilisateurs de visualiser facilement l'état du téléchargement des données."
 
 #: ../../source/manage_data/10. data_channels.md:164
 msgid "多渠道拉取数据"
@@ -262,168 +265,180 @@ msgstr "Données extraites de plusieurs canaux"
 #: ../../source/manage_data/10. data_channels.md:166
 msgid "`qteasy`提供了多种数据下载渠道，很多数据表可以从多个不同的渠道下载，而且随着版本更新，数据拉取渠道也在不断增加。"
 msgstr ""
-"`qteasy` propose plusieurs canaux de téléchargement de données, "
-"permettant de télécharger de nombreuses tables de données à partir de "
-"différents canaux. De plus, à chaque mise à jour de version, le nombre de"
-" canaux de récupération de données continue d'augmenter."
+"`qteasy` propose plusieurs canaux de téléchargement de données, permettant "
+"de télécharger de nombreuses tables de données à partir de différents "
+"canaux. De plus, à chaque mise à jour de version, le nombre de canaux de "
+"récupération de données continue d'augmenter."
 
 #: ../../source/manage_data/10. data_channels.md:168
-#, fuzzy
-msgid "refill_data_source()接口的channel参数可以指定数据下载渠道，如果不指定，`qteasy`会使用默认渠道`tushare`（见`qteasy/core.py`中`refill_data_source`的默认逻辑）。用户也可以手动指定数据下载渠道。"
+msgid ""
+"refill_data_source()接口的channel参数可以指定数据下载渠道，如果不指定，`qteasy`会使用默认渠道`tushare`（见`qteasy/core.py`中`refill_data_source`的默认逻辑）。用户也可以手动指定数据下载渠道。"
 msgstr ""
-"Le paramètre `channel` de l'interface `refill_data_source()` peut "
-"spécifier le canal de téléchargement des données. S'il n'est pas "
-"spécifié, `qteasy` sélectionnera automatiquement un canal de "
-"téléchargement de données par défaut, `tushare`. Cependant, les "
-"utilisateurs peuvent également spécifier manuellement le canal de "
-"téléchargement des données, par exemple :"
+"Le paramètre `channel` de l'interface `refill_data_source()` peut spécifier "
+"le canal de téléchargement des données. S'il n'est pas spécifié, `qteasy` "
+"sélectionnera automatiquement un canal de téléchargement de données par "
+"défaut, `tushare`. Cependant, les utilisateurs peuvent également spécifier "
+"manuellement le canal de téléchargement des données, par exemple :"
 
 #: ../../source/manage_data/10. data_channels.md:170
 msgid "当前内置四通道为：`tushare`、`akshare`、`eastmoney`（别名 `emoney`）、`sina`。"
 msgstr ""
+"Les quatre canaux intégrés actuels sont : `tushare`, `akshare`, `eastmoney` "
+"(alias `emoney`), `sina`."
 
 #: ../../source/manage_data/10. data_channels.md:172
 msgid "四通道能力对照（常用表）"
 msgstr ""
+"Comparaison des capacités à quatre canaux (tableau couramment utilisé)"
 
 #: ../../source/manage_data/10. data_channels.md:174
 msgid ""
-"下表概括**常用数据表**在各通道下的支持情况（「支持」表示当前版本已实现映射并可走 refill 链路；「不支持」表示该通道无映射，refill"
-" 会跳过并提示）。AKShare 完整 108 表状态见仓库内维护清单 "
-"`tests/akshare_data_test_checklist.md`。"
+"下表概括**常用数据表**在各通道下的支持情况（「支持」表示当前版本已实现映射并可走 refill 链路；「不支持」表示该通道无映射，refill "
+"会跳过并提示）。AKShare 完整 108 表状态见仓库内维护清单 `tests/akshare_data_test_checklist.md`。"
 msgstr ""
+"Le tableau suivant résume l'état de prise en charge des **tables de données "
+"communes** dans chaque canal (« support » signifie que la version actuelle a"
+" implémenté le mappage et peut utiliser le lien de recharge ; « non pris en "
+"charge » signifie que le canal n'a pas de mappage et que la recharge sera "
+"ignorée et invitée). Pour l'état complet de la table AKShare 108, veuillez "
+"consulter la liste de maintenance `tests/akshare_data_test_checklist.md` "
+"dans l'entrepôt."
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "数据表"
-msgstr ""
+msgstr "Fiche de données"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "tushare"
-msgstr ""
+msgstr "tushare"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "akshare"
-msgstr ""
+msgstr "akshare"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "eastmoney"
-msgstr ""
+msgstr "eastmoney"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "sina"
-msgstr ""
+msgstr "sina"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "trade_calendar"
-msgstr ""
+msgstr "trade_calendar"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（需 token/积分）"
-msgstr ""
+msgstr "Support (jeton/points requis)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**"
-msgstr ""
+msgstr "**soutien**"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "暂不支持"
-msgstr ""
+msgstr "Pas encore pris en charge"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_basic"
-msgstr ""
+msgstr "stock_basic"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（行业/上市日等完整）"
-msgstr ""
+msgstr "Support (complet par secteur/date de lancement, etc.)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（代码+简称索引；行业/地域等常为空）"
 msgstr ""
+"**Support** (code + index des abréviations ; secteur/région, etc. sont "
+"souvent vides)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "部分场景不支持"
-msgstr ""
+msgstr "Certains scénarios ne sont pas pris en charge"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_basic / fund_basic"
-msgstr ""
+msgstr "index_basic / fund_basic"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持"
-msgstr ""
+msgstr "soutien"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（字段少于 Tushare 的项可能为空）"
 msgstr ""
+"**Pris en charge** (les éléments avec moins de champs que Tushare peuvent "
+"être vides)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "部分"
-msgstr ""
+msgstr "partie"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_daily / weekly / monthly"
-msgstr ""
+msgstr "stock_daily / weekly / monthly"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日/部分分）"
-msgstr ""
+msgstr "Assistance (points quotidiens/partiels)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日/分）"
-msgstr ""
+msgstr "Assistance (jour/minute)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_5/15/30min、hourly"
-msgstr ""
+msgstr "stock_5/15/30min、hourly"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_adj_factor"
-msgstr ""
+msgstr "stock_adj_factor"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（新浪因子源）"
-msgstr ""
+msgstr "**Support** (source du facteur Sina)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_daily / weekly / monthly"
-msgstr ""
+msgstr "index_daily / weekly / monthly"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日）"
-msgstr ""
+msgstr "Assistance (Japon)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "fund_daily / weekly / monthly / 1min"
-msgstr ""
+msgstr "fund_daily / weekly / monthly / 1min"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_suspend / money_flow / dividend"
-msgstr ""
+msgstr "stock_suspend / money_flow / dividend"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "new_share / stock_company"
-msgstr ""
+msgstr "new_share / stock_company"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（字段可能少于 Tushare）"
-msgstr ""
+msgstr "**Pris en charge** (Peut avoir moins de champs que Tushare)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "realtime_bars / realtime_quotes"
-msgstr ""
+msgstr "realtime_bars / realtime_quotes"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_1min 等指数分钟"
-msgstr ""
+msgstr "index_1min est égal à l'index minutes"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "暂不支持（待 spike）"
-msgstr ""
+msgstr "Pas encore pris en charge (à enrichir)"
 
 #: ../../source/manage_data/10. data_channels.md:191
 msgid "说明："
-msgstr ""
+msgstr "illustrer:"
 
 #: ../../source/manage_data/10. data_channels.md:193
 msgid ""
@@ -434,33 +449,58 @@ msgid ""
 "等。按行业/地域筛选股票（`filter_stocks` / `filter_stock_codes`）仍建议以 **Tushare 的 "
 "`stock_basic`** 为准或先确认本地行业列非空。"
 msgstr ""
+"**table de base et `merge_type='update'`** : Pour les tables "
+"`table_usage=='basics'` (telles que `stock_basic`, `index_basic`, "
+"`fund_basic`, etc.), lorsque les conflits de clé primaire **utilisez "
+"uniquement le champ non vide côté téléchargement pour écraser la colonne "
+"correspondante**, et lorsque la valeur de téléchargement est une chaîne vide"
+" ou `NULL`, le la valeur existante locale est conservée. Par conséquent, "
+"vous pouvez utiliser AKShare pour compléter la liste de codes et extraire le"
+" tableau de dépendance de la ligne des minutes sans effacer les `industry`, "
+"`list_date`, etc. précédemment écrits avec Tushare. Lors de la sélection des"
+" actions par secteur/région (`filter_stocks` / `filter_stock_codes`), il est"
+" toujours recommandé d'utiliser le `stock_basic`** de **Tushare ou de "
+"confirmer que la colonne de l'industrie locale n'est pas vide en premier."
 
 #: ../../source/manage_data/10. data_channels.md:194
 msgid "**tushare**：覆盖最全，多数表需配置 `tushare_token` 及相应积分/权限。"
 msgstr ""
+"**tushare** : La couverture la plus complète, la plupart des tables doivent "
+"être configurées avec `tushare_token` et les points/autorisations "
+"correspondants."
 
 #: ../../source/manage_data/10. data_channels.md:195
 msgid ""
 "**akshare**：无需 token；当前 **25 张**历史/基础/事件表已实现（见 "
 "`tests/akshare_data_test_checklist.md`），其余表仍为 `blocked` 或 "
-"`not_supported`。`stock_basic` 等 basics 表仅保证 **代码与名称索引**，不替代 Tushare "
-"完整基本面。"
+"`not_supported`。`stock_basic` 等 basics 表仅保证 **代码与名称索引**，不替代 Tushare 完整基本面。"
 msgstr ""
+"**akshare** : aucun jeton requis ; actuellement **25** tables "
+"d'historique/de base/d'événements ont été implémentées (voir "
+"`tests/akshare_data_test_checklist.md`), et les tables restantes sont "
+"toujours `blocked` ou `not_supported`. Les tableaux de base tels que "
+"`stock_basic` garantissent uniquement **l'index de code et de nom** et ne "
+"remplacent pas les fondamentaux complets de Tushare."
 
 #: ../../source/manage_data/10. data_channels.md:196
 msgid "**eastmoney**：无需 token；分钟线覆盖较全，部分基础表（如 `stock_basic`）可能无法从此通道拉取。"
 msgstr ""
+"**eastmoney** : aucun jeton requis ; La couverture des lignes minutes est "
+"relativement complète et certaines tables de base (telles que `stock_basic`)"
+" peuvent ne pas être extraites de ce canal."
 
 #: ../../source/manage_data/10. data_channels.md:197
 msgid "**sina**：无需 token；以股票日线与分钟线为主，无周/月线等。"
 msgstr ""
+"**sina** : aucun jeton requis ; principalement des lignes journalières et "
+"minutes pour les actions, pas de lignes hebdomadaires/mensuelles, etc."
 
 #: ../../source/manage_data/10. data_channels.md:199
 msgid "下面的代码尝试从`eastmoney`数据渠道下载`stock_daily`数据表从2025年最初两个月的日K线数据："
 msgstr ""
 "Le code suivant tente de télécharger les données quotidiennes des "
-"chandeliers de la table de données `stock_daily` pour les deux premiers "
-"mois de 2025 à partir du canal de données `eastmoney` :"
+"chandeliers de la table de données `stock_daily` pour les deux premiers mois"
+" de 2025 à partir du canal de données `eastmoney` :"
 
 #: ../../source/manage_data/10. data_channels.md:217
 msgid "验证一下数据是否下载成功："
@@ -469,40 +509,40 @@ msgstr "Vérifiez que les données ont été téléchargées avec succès :"
 #: ../../source/manage_data/10. data_channels.md:273
 msgid "数据下载显然也是成功的。分析上面的下载过程，可以发现几个特点："
 msgstr ""
-"Le téléchargement des données a clairement été un succès. En analysant le"
-" processus de téléchargement ci-dessus, plusieurs caractéristiques "
-"peuvent être observées :"
+"Le téléchargement des données a clairement été un succès. En analysant le "
+"processus de téléchargement ci-dessus, plusieurs caractéristiques peuvent "
+"être observées :"
 
 #: ../../source/manage_data/10. data_channels.md:275
-msgid "不同渠道下载的数据格式是相同的，这是`qteasy`的设计原则，不同的数据下载渠道下载的数据会经历相同的清洗过程，这样用户可以方便地切换不同的数据下载渠道，而不用担心数据格式不同导致的数据处理问题。"
+msgid ""
+"不同渠道下载的数据格式是相同的，这是`qteasy`的设计原则，不同的数据下载渠道下载的数据会经历相同的清洗过程，这样用户可以方便地切换不同的数据下载渠道，而不用担心数据格式不同导致的数据处理问题。"
 msgstr ""
 "Les données téléchargées à partir de différents canaux sont dans le même "
 "format. Il s'agit d'un principe de conception de `qteasy`. Les données "
 "téléchargées depuis différents canaux subiront le même processus de "
 "nettoyage. Cela permet aux utilisateurs de basculer facilement entre "
-"différents canaux de téléchargement de données sans se soucier des "
-"problèmes de traitement des données causés par les différents formats de "
-"données."
+"différents canaux de téléchargement de données sans se soucier des problèmes"
+" de traitement des données causés par les différents formats de données."
 
 #: ../../source/manage_data/10. data_channels.md:276
-msgid "不同的渠道下载分块方式不同，导致下载速度不同，`eastmoney`数据渠道下载速度较慢，需要约17分钟才能下载完成。这是由于不同下载渠道的特殊限制决定的。"
+msgid ""
+"不同的渠道下载分块方式不同，导致下载速度不同，`eastmoney`数据渠道下载速度较慢，需要约17分钟才能下载完成。这是由于不同下载渠道的特殊限制决定的。"
 msgstr ""
 "Différents canaux de téléchargement utilisent différentes méthodes de "
-"segmentation, ce qui entraîne des vitesses de téléchargement variables. "
-"Le canal de données `eastmoney` est plus lent et prend environ 17 "
-"minutes. Cela est dû aux limitations spécifiques de chaque canal de "
-"téléchargement."
+"segmentation, ce qui entraîne des vitesses de téléchargement variables. Le "
+"canal de données `eastmoney` est plus lent et prend environ 17 minutes. Cela"
+" est dû aux limitations spécifiques de chaque canal de téléchargement."
 
 #: ../../source/manage_data/10. data_channels.md:277
-msgid "不同渠道的下载可以下载的数据表也不同，有些数据表无法通过某些渠道下载，可能是因为权限限制或者其他因素导致的，如果某个数据表无法下载，`qteasy`会自动跳过这个数据表，不会影响其他数据表的下载。"
+msgid ""
+"不同渠道的下载可以下载的数据表也不同，有些数据表无法通过某些渠道下载，可能是因为权限限制或者其他因素导致的，如果某个数据表无法下载，`qteasy`会自动跳过这个数据表，不会影响其他数据表的下载。"
 msgstr ""
 "Différents canaux de téléchargement peuvent permettre de télécharger "
-"différents tableaux de données. Certains tableaux de données peuvent ne "
-"pas être téléchargeables via certains canaux, probablement en raison de "
-"restrictions d'autorisation ou d'autres facteurs. Si une table de données"
-" ne peut pas être téléchargée, `qteasy` ignorera automatiquement cette "
-"table de données sans affecter le téléchargement des autres tables de "
-"données."
+"différents tableaux de données. Certains tableaux de données peuvent ne pas "
+"être téléchargeables via certains canaux, probablement en raison de "
+"restrictions d'autorisation ou d'autres facteurs. Si une table de données ne"
+" peut pas être téléchargée, `qteasy` ignorera automatiquement cette table de"
+" données sans affecter le téléchargement des autres tables de données."
 
 #: ../../source/manage_data/10. data_channels.md:279
 msgid "因此，用户需要根据自身的情况选择不同的渠道拉取数据。"
@@ -512,134 +552,168 @@ msgstr ""
 
 #: ../../source/manage_data/10. data_channels.md:281
 msgid "使用 AKShare 通道"
-msgstr ""
+msgstr "Utilisation du canal AKShare"
 
 #: ../../source/manage_data/10. data_channels.md:283
 msgid "AKShare 适合**无 Tushare token**、仅需 P0 行情表的场景。使用前请安装依赖："
 msgstr ""
+"AKShare convient aux scénarios dans lesquels il n'y a pas de jeton Tushare "
+"et uniquement une table de marché P0. Veuillez installer les dépendances "
+"avant utilisation :"
 
 #: ../../source/manage_data/10. data_channels.md:289
 msgid "最小 refill 示例（短日期窗、指定 `channel='akshare'`）："
 msgstr ""
+"Exemple de recharge minimale (fenêtre de date courte, en spécifiant "
+"`channel='akshare'`) :"
 
 #: ../../source/manage_data/10. data_channels.md:302
 msgid ""
 "完整可运行脚本见仓库 "
 "[`examples/akshare_refill_minimal.py`](../../../examples/akshare_refill_minimal.py)（需联网）。"
 msgstr ""
+"Le script exécutable complet peut être trouvé dans l'entrepôt "
+"[`examples/akshare_refill_minimal.py`](../../../examples/akshare_refill_minimal.py)"
+" (nécessite une connexion Internet)."
 
 #: ../../source/manage_data/10. data_channels.md:304
 msgid "**限制与注意**："
-msgstr ""
+msgstr "**Restrictions et remarques** :"
 
 #: ../../source/manage_data/10. data_channels.md:306
 msgid "AKShare 接口由第三方维护，稳定性与速率不可控；失败时会按 `hist_dnld_retry_*` 配置重试。"
 msgstr ""
+"L'interface AKShare est gérée par un tiers, et la stabilité et la vitesse "
+"sont incontrôlables ; en cas d'échec, il sera réessayé selon la "
+"configuration `hist_dnld_retry_*`."
 
 #: ../../source/manage_data/10. data_channels.md:307
 msgid ""
 "当前版本**不**承诺 108 张内置表均可从 AKShare 下载；扩表属于 S3.2 后续批次，详见 "
 "`tests/akshare_data_test_checklist.md`。"
 msgstr ""
+"La version actuelle **ne** promet pas que les 108 tables intégrées puissent "
+"être téléchargées depuis AKShare ; les tables développées appartiennent aux "
+"lots suivants de S3.2, voir `tests/akshare_data_test_checklist.md` pour plus"
+" de détails."
 
 #: ../../source/manage_data/10. data_channels.md:308
 msgid ""
 "拉取分钟线时若自动补 `stock_basic`，AKShare 会更新代码/名称，但**不会**用空值覆盖已有 `industry` "
-"等列；若库中从未写入过 Tushare 基本面，按行业选股前仍需 "
-"`refill_data_source(tables='stock_basic', channel='tushare')`。"
+"等列；若库中从未写入过 Tushare 基本面，按行业选股前仍需 `refill_data_source(tables='stock_basic', "
+"channel='tushare')`。"
 msgstr ""
+"Si `stock_basic` est automatiquement ajouté lors de l'extraction de la ligne"
+" des minutes, AKShare mettra à jour le code/nom, mais n'écrasera pas le "
+"`industry` existant et les autres colonnes avec des valeurs nulles ; si les "
+"fondamentaux de Tushare n'ont jamais été écrits dans la bibliothèque, "
+"`refill_data_source(tables='stock_basic', channel='tushare')` est toujours "
+"requis avant de sélectionner les actions par secteur."
 
 #: ../../source/manage_data/10. data_channels.md:310
 msgid "通道切换与配置"
-msgstr ""
+msgstr "Commutation et configuration des canaux"
 
 #: ../../source/manage_data/10. data_channels.md:312
 msgid ""
-"**一次性下载（脚本 / 交互）**：在 `refill_data_source(..., channel='...')` "
-"中显式传入通道名即可，例如 Tushare 与 AKShare 对比如下："
+"**一次性下载（脚本 / 交互）**：在 `refill_data_source(..., channel='...')` 中显式传入通道名即可，例如 "
+"Tushare 与 AKShare 对比如下："
 msgstr ""
+"**Téléchargement unique (script/interaction)** : transmettez simplement le "
+"nom de la chaîne explicitement dans `refill_data_source(..., "
+"channel='...')`. Par exemple, la comparaison entre Tushare et AKShare est la"
+" suivante :"
 
 #: ../../source/manage_data/10. data_channels.md:319
 msgid "**实盘默认渠道**（写入 `qteasy.cfg` 或通过 `qt.configure()` 修改）："
 msgstr ""
+"**Canal par défaut pour l'offre réelle** (écrire `qteasy.cfg` ou modifier "
+"via `qt.configure()`) :"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "配置键"
-msgstr ""
+msgstr "clé de configuration"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "含义"
-msgstr ""
+msgstr "signification"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "默认值"
-msgstr ""
+msgstr "valeur par défaut"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "`live_trade_data_refill_channel`"
-msgstr ""
+msgstr "`live_trade_data_refill_channel`"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "Trader 日更自动 refill 使用的通道"
 msgstr ""
+"Trader La mise à jour quotidienne réapprovisionne automatiquement le canal "
+"utilisé"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "`eastmoney`"
-msgstr ""
+msgstr "`eastmoney`"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "`live_price_acquire_channel`"
-msgstr ""
+msgstr "`live_price_acquire_channel`"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "实盘获取实时价格的通道"
-msgstr ""
+msgstr "Un canal pour obtenir les prix en temps réel des offres réelles"
 
 #: ../../source/manage_data/10. data_channels.md:326
 msgid "示例："
-msgstr ""
+msgstr "Exemple:"
 
 #: ../../source/manage_data/10. data_channels.md:333
 msgid ""
 "修改后，实盘任务会使用新通道执行 refill / 取价；历史脚本仍可在每次 `refill_data_source` 调用中单独指定 "
 "`channel`，与全局配置无关。"
 msgstr ""
+"Après modification, la tâche d'offre réelle utilisera le nouveau canal pour "
+"effectuer la récupération de réapprovisionnement/prix ; les scripts "
+"historiques peuvent toujours spécifier `channel` séparément dans chaque "
+"appel `refill_data_source`, quelle que soit la configuration globale."
 
 #: ../../source/manage_data/10. data_channels.md:335
 msgid "实现下载流量控制"
 msgstr "Implémenter le contrôle du trafic de téléchargement"
 
 #: ../../source/manage_data/10. data_channels.md:337
-msgid "`qteasy`的`refill_data_source`提供了流量控制功能，可以限制数据下载的速度，即下载一定分块数量的数据后，可以暂停一段时间，例如每下载300个分块的数据，就暂停一分钟，避免被数据渠道封禁。"
+msgid ""
+"`qteasy`的`refill_data_source`提供了流量控制功能，可以限制数据下载的速度，即下载一定分块数量的数据后，可以暂停一段时间，例如每下载300个分块的数据，就暂停一分钟，避免被数据渠道封禁。"
 msgstr ""
-"Le `refill_data_source` de `qteasy` fournit une fonction de contrôle de "
-"flux qui peut limiter la vitesse de téléchargement des données. Autrement"
-" dit, après avoir téléchargé un certain nombre de blocs de données, il "
-"peut s'arrêter pendant un certain temps. Par exemple, il peut faire une "
-"pause d'une minute après le téléchargement de 300 blocs de données pour "
-"éviter d'être bloqué par le canal de données."
+"Le `refill_data_source` de `qteasy` fournit une fonction de contrôle de flux"
+" qui peut limiter la vitesse de téléchargement des données. Autrement dit, "
+"après avoir téléchargé un certain nombre de blocs de données, il peut "
+"s'arrêter pendant un certain temps. Par exemple, il peut faire une pause "
+"d'une minute après le téléchargement de 300 blocs de données pour éviter "
+"d'être bloqué par le canal de données."
 
 #: ../../source/manage_data/10. data_channels.md:339
-msgid "这个功能通过refill_data_source()接口的`download_batch_size`和`download_batch_interval`两个参数实现："
+msgid ""
+"这个功能通过refill_data_source()接口的`download_batch_size`和`download_batch_interval`两个参数实现："
 msgstr ""
-"Cette fonctionnalité est réalisée grâce aux paramètres "
-"`download_batch_size` et `download_batch_interval` de l'interface "
-"`refill_data_source()` :"
+"Cette fonctionnalité est réalisée grâce aux paramètres `download_batch_size`"
+" et `download_batch_interval` de l'interface `refill_data_source()` :"
 
 #: ../../source/manage_data/10. data_channels.md:341
 msgid "`download_batch_size`参数指定每次下载的数据分块数量，如果设置为300，则在下载300个数据分块后，会暂停一段时间。"
 msgstr ""
-"Le paramètre `download_batch_size` spécifie le nombre de blocs de données"
-" téléchargés à chaque fois. S'il est défini sur 300, le téléchargement "
-"s'arrêtera pendant un certain temps après le téléchargement de 300 blocs "
-"de données."
+"Le paramètre `download_batch_size` spécifie le nombre de blocs de données "
+"téléchargés à chaque fois. S'il est défini sur 300, le téléchargement "
+"s'arrêtera pendant un certain temps après le téléchargement de 300 blocs de "
+"données."
 
 #: ../../source/manage_data/10. data_channels.md:342
 msgid "`download_batch_interval`参数指定每次下载数据分块后的暂停时间，默认为0，即不暂停。"
 msgstr ""
-"Le paramètre `download_batch_interval` spécifie le temps de pause après "
-"le téléchargement de chaque bloc de données ; la valeur par défaut est 0,"
-" ce qui signifie aucune pause."
+"Le paramètre `download_batch_interval` spécifie le temps de pause après le "
+"téléchargement de chaque bloc de données ; la valeur par défaut est 0, ce "
+"qui signifie aucune pause."
 
 #: ../../source/manage_data/10. data_channels.md:344
 msgid "下面的代码演示了如何使用`download_batch_size`和`download_batch_interval`参数实现下载流量控制："
@@ -663,8 +737,8 @@ msgstr "Implémenter des tentatives d'erreur"
 #: ../../source/manage_data/10. data_channels.md:362
 msgid "需要注意的是，数据下载过程中出错，`qteasy`会自动重试下载，重试机制如下："
 msgstr ""
-"Il convient de noter que si une erreur se produit pendant le processus de"
-" téléchargement des données, `qteasy` réessayera automatiquement le "
+"Il convient de noter que si une erreur se produit pendant le processus de "
+"téléchargement des données, `qteasy` réessayera automatiquement le "
 "téléchargement. Le mécanisme de nouvelle tentative est le suivant :"
 
 #: ../../source/manage_data/10. data_channels.md:364
@@ -676,27 +750,28 @@ msgstr ""
 #: ../../source/manage_data/10. data_channels.md:365
 msgid "每次重试失败后，等待时间都会增加，默认等待时间增加为2倍，即第一次等待1.0秒，第二次等待2.0秒，第三次等待4.0秒，以此类推。"
 msgstr ""
-"Chaque fois qu'une nouvelle tentative échoue, le temps d'attente "
-"augmente, le temps d'attente par défaut augmentant jusqu'à doubler la "
-"valeur d'origine. Autrement dit, la première fois attend 1,0 seconde, la "
-"deuxième fois attend 2,0 secondes, la troisième fois attend 4,0 secondes,"
-" et ainsi de suite."
+"Chaque fois qu'une nouvelle tentative échoue, le temps d'attente augmente, "
+"le temps d'attente par défaut augmentant jusqu'à doubler la valeur "
+"d'origine. Autrement dit, la première fois attend 1,0 seconde, la deuxième "
+"fois attend 2,0 secondes, la troisième fois attend 4,0 secondes, et ainsi de"
+" suite."
 
 #: ../../source/manage_data/10. data_channels.md:366
 msgid "重试超过最大限额后停止重试并报错，默认情况下最多重复7次。"
 msgstr ""
-"Les nouvelles tentatives s'arrêteront et une erreur sera signalée une "
-"fois le nombre maximum de tentatives dépassé. Par défaut, le nombre "
-"maximum de tentatives est de 7."
+"Les nouvelles tentatives s'arrêteront et une erreur sera signalée une fois "
+"le nombre maximum de tentatives dépassé. Par défaut, le nombre maximum de "
+"tentatives est de 7."
 
 #: ../../source/manage_data/10. data_channels.md:368
-msgid "以上三个错误重试参数都是通过`qteasy`的配置文件在设定的，用户可以通过`qt.config()`接口查看或修改这些参数，也可以在`qteasy`的初始配置文件中修改这些参数。"
+msgid ""
+"以上三个错误重试参数都是通过`qteasy`的配置文件在设定的，用户可以通过`qt.config()`接口查看或修改这些参数，也可以在`qteasy`的初始配置文件中修改这些参数。"
 msgstr ""
 "Les trois paramètres de nouvelle tentative d'erreur ci-dessus sont tous "
-"définis via le fichier de configuration `qteasy`. Les utilisateurs "
-"peuvent visualiser ou modifier ces paramètres via l'interface "
-"`qt.config()`, ou ils peuvent modifier ces paramètres dans le fichier de "
-"configuration initiale de `qteasy`."
+"définis via le fichier de configuration `qteasy`. Les utilisateurs peuvent "
+"visualiser ou modifier ces paramètres via l'interface `qt.config()`, ou ils "
+"peuvent modifier ces paramètres dans le fichier de configuration initiale de"
+" `qteasy`."
 
 #: ../../source/manage_data/10. data_channels.md:370
 msgid "`hist_dnld_retry_cnt` - 最大重试次数，默认为7次"
@@ -705,36 +780,38 @@ msgstr "`hist_dnld_retry_cnt` - Nombre maximum de tentatives, par défaut 7."
 #: ../../source/manage_data/10. data_channels.md:371
 msgid "`hist_dnld_retry_wait` - 第一次重试等待时间，默认为1.0秒"
 msgstr ""
-"`hist_dnld_retry_wait` - Le temps d'attente pour la première tentative, "
-"la valeur par défaut est de 1,0 seconde."
+"`hist_dnld_retry_wait` - Le temps d'attente pour la première tentative, la "
+"valeur par défaut est de 1,0 seconde."
 
 #: ../../source/manage_data/10. data_channels.md:372
 msgid "`hist_dnld_backoff` - 重试等待时间增加倍数，默认为2.0"
 msgstr ""
-"`hist_dnld_backoff` - Le multiplicateur pour augmenter le temps d'attente"
-" pour les nouvelles tentatives ; la valeur par défaut est 2.0."
+"`hist_dnld_backoff` - Le multiplicateur pour augmenter le temps d'attente "
+"pour les nouvelles tentatives ; la valeur par défaut est 2.0."
 
 #: ../../source/manage_data/10. data_channels.md:374
-msgid "关于如何修改配置文件，或者使用`qteasy`的初始配置文件，请参考[`qteasy`的配置文件章节](../api/api_reference.rst)。"
+msgid ""
+"关于如何修改配置文件，或者使用`qteasy`的初始配置文件，请参考[`qteasy`的配置文件章节](../api/api_reference.rst)。"
 msgstr ""
 "Pour obtenir des instructions sur la façon de modifier le fichier de "
 "configuration ou d'utiliser le fichier de configuration initial pour "
-"`qteasy`, veuillez vous référer à la section du fichier de configuration "
-"de `qteasy` (../api/api_reference.rst)."
+"`qteasy`, veuillez vous référer à la section du fichier de configuration de "
+"`qteasy` (../api/api_reference.rst)."
 
 #: ../../source/manage_data/10. data_channels.md:376
 msgid "日志记录"
 msgstr "Enregistrement"
 
 #: ../../source/manage_data/10. data_channels.md:378
-msgid "`qteasy`提供了数据下载日志记录功能，可以记录每次数据下载的详细信息，包括下载的数据量、下载的时间、下载的速度等，方便用户查看数据下载的情况。"
+msgid ""
+"`qteasy`提供了数据下载日志记录功能，可以记录每次数据下载的详细信息，包括下载的数据量、下载的时间、下载的速度等，方便用户查看数据下载的情况。"
 msgstr ""
-"`qteasy` fournit une fonction d'enregistrement du journal de "
-"téléchargement de données, qui peut enregistrer des informations "
-"détaillées pour chaque téléchargement de données, y compris la quantité "
-"de données téléchargées, le temps de téléchargement, la vitesse de "
-"téléchargement, etc., ce qui permet aux utilisateurs de vérifier "
-"facilement l'état de téléchargement des données."
+"`qteasy` fournit une fonction d'enregistrement du journal de téléchargement "
+"de données, qui peut enregistrer des informations détaillées pour chaque "
+"téléchargement de données, y compris la quantité de données téléchargées, le"
+" temps de téléchargement, la vitesse de téléchargement, etc., ce qui permet "
+"aux utilisateurs de vérifier facilement l'état de téléchargement des "
+"données."
 
 #: ../../source/manage_data/10. data_channels.md:380
 msgid "其他功能"
@@ -747,12 +824,13 @@ msgstr ""
 "fonctionnalités, telles que :"
 
 #: ../../source/manage_data/10. data_channels.md:384
-msgid "限制下载数据的范围，可以通过`start_date`和`end_date`参数限制下载数据的时间范围，通过`shares`参数限制下载数据的股票范围。"
+msgid ""
+"限制下载数据的范围，可以通过`start_date`和`end_date`参数限制下载数据的时间范围，通过`shares`参数限制下载数据的股票范围。"
 msgstr ""
 "Pour limiter la plage de données téléchargées, vous pouvez utiliser les "
-"paramètres `start_date` et `end_date` pour restreindre la plage horaire "
-"des données téléchargées, et le paramètre `shares` pour restreindre la "
-"plage de titres à télécharger."
+"paramètres `start_date` et `end_date` pour restreindre la plage horaire des "
+"données téléchargées, et le paramètre `shares` pour restreindre la plage de "
+"titres à télécharger."
 
 #: ../../source/manage_data/10. data_channels.md:385
 msgid ""
@@ -761,6 +839,16 @@ msgid ""
 "会包含需按日期分块下载的 **`new_share`（IPO 新股）**；若不传日期，会从 1970-01-01 "
 "分块拉至今日，耗时较长。若只需代码/行业类 basics、不要 IPO 表，请显式指定表名或传入较窄的日期窗。"
 msgstr ""
+"**Comportement par défaut lorsque `start_date` / `end_date` n'est pas "
+"transmis** : en interne, `start_date` est considéré comme le premier jour "
+"disponible dans le mappage de table (par exemple, `new_share` est "
+"`19700101`), et `end_date` est considéré comme **le jour en cours**. Par "
+"conséquent, `tables='basics'` inclura **`new_share` (nouvelles actions "
+"IPO)** qui doit être téléchargé en morceaux par date ; si la date n'est pas "
+"dépassée, elle sera extraite en morceaux du 01/01/1970 à aujourd'hui, ce qui"
+" prend beaucoup de temps. Si vous n'avez besoin que des bases du code/de "
+"l'industrie et d'aucune table IPO, veuillez spécifier explicitement le nom "
+"de la table ou transmettre une fenêtre de date plus étroite."
 
 #: ../../source/manage_data/10. data_channels.md:386
 msgid "设置是否并行下载，可以通过`parallel`参数设置是否并行下载，如果设置为False，则会串行下载，否则会并行下载。"
@@ -770,22 +858,21 @@ msgstr ""
 "effectués en série ; sinon, ils seront réalisés en parallèle."
 
 #: ../../source/manage_data/10. data_channels.md:387
-msgid "设置是否下载依赖表，可以通过`download_dependent`参数设置是否下载依赖表，如果设置为False，则不会下载依赖表，否则会下载依赖表。"
+msgid ""
+"设置是否下载依赖表，可以通过`download_dependent`参数设置是否下载依赖表，如果设置为False，则不会下载依赖表，否则会下载依赖表。"
 msgstr ""
-"Pour configurer s'il faut télécharger les tables de dépendances, vous "
-"pouvez utiliser le paramètre `download_dependent`. Si la valeur est "
-"False, les tables de dépendances ne seront pas téléchargées ; sinon, ils "
-"seront téléchargés."
+"Pour configurer s'il faut télécharger les tables de dépendances, vous pouvez"
+" utiliser le paramètre `download_dependent`. Si la valeur est False, les "
+"tables de dépendances ne seront pas téléchargées ; sinon, ils seront "
+"téléchargés."
 
 #: ../../source/manage_data/10. data_channels.md:388
 msgid "设置是否强制更新交易日历表。"
 msgstr ""
-"Configurez s'il faut forcer une mise à jour du calendrier des "
-"transactions."
+"Configurez s'il faut forcer une mise à jour du calendrier des transactions."
 
 #: ../../source/manage_data/10. data_channels.md:390
 msgid "其他更多关于该接口的解释，请参见`qteasy`的[API文档](../api/history_data.rst)。"
 msgstr ""
 "Pour plus d'explications sur cette interface, veuillez vous référer à la "
 "documentation de l'API `qteasy` (../api/history_data.rst)."
-

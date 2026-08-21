@@ -121,12 +121,19 @@ def postprocess_locale(text: str, rtd_code: str) -> str:
     return text
 
 
-def needs_pivot_translation(msgid: str, msgstr_loc: str, msgstr_en: str) -> bool:
+def needs_pivot_translation(
+    msgid: str,
+    msgstr_loc: str,
+    msgstr_en: str,
+    is_fuzzy: bool = False,
+) -> bool:
     """判断是否需要从 en 机翻为目标语言。"""
     if not CHINESE_RE.search(msgid):
         return False
     if not msgstr_en.strip():
         return False
+    if is_fuzzy:
+        return True
     if not msgstr_loc.strip() or msgstr_loc.strip() == msgstr_en.strip():
         return True
     return False
@@ -204,6 +211,7 @@ def process_file(
     cache: Dict[str, str],
     rtd_code: str,
     dry_run: bool,
+    save_every: int = 25,
 ) -> Tuple[int, int]:
     """机翻单个 po 文件中需 pivot 的条目。"""
     root = locale_root(lang)
@@ -217,11 +225,13 @@ def process_file(
     en_map = {e.msgid: e.msgstr for e in en_po if e.msgid and not e.obsolete}
 
     translated = skipped = 0
+    since_save = 0
     for entry in loc_po:
         if entry.obsolete or not entry.msgid:
             continue
         en_s = en_map.get(entry.msgid, '')
-        if not needs_pivot_translation(entry.msgid, entry.msgstr, en_s):
+        fuzzy = 'fuzzy' in entry.flags
+        if not needs_pivot_translation(entry.msgid, entry.msgstr, en_s, fuzzy):
             skipped += 1
             continue
         if dry_run:
@@ -232,8 +242,14 @@ def process_file(
             if 'fuzzy' in entry.flags:
                 entry.flags.remove('fuzzy')
             translated += 1
+            since_save += 1
         except Exception as exc:  # noqa: BLE001
-            print(f'  WARN {rel}: {exc!s} :: {entry.msgid[:60]!r}')
+            print(f'  WARN {rel}: {exc!s} :: {entry.msgid[:60]!r}', flush=True)
+        if since_save >= save_every:
+            loc_po.save(str(loc_path))
+            save_cache(lang, cache)
+            print(f'    checkpoint {rel.name}: +{translated}', flush=True)
+            since_save = 0
 
     if not dry_run and translated:
         loc_po.save(str(loc_path))

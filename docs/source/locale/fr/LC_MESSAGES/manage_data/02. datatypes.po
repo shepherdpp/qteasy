@@ -8,31 +8,39 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 14:00+0800\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/manage_data/02. datatypes.md:1
 msgid "用稳定的信息 ID 取数（DataType）"
-msgstr ""
+msgstr "Utilisez un ID de message stable pour obtenir le numéro (DataType)"
 
 #: ../../source/manage_data/02. datatypes.md:3
 msgid ""
 "前面的章节介绍了数据源，以及如何往数据源中填充金融数据。本章回答另一件事：您真正要用的，往往不是「表里的某一列」，而是**策略和分析可直接消费的信息**。`qteasy`"
 " 用一套稳定的 **信息 ID** 来命名这些信息；存储可以换表、换渠道，ID 尽量不变。"
 msgstr ""
+"Les chapitres précédents ont présenté les sources de données et comment "
+"alimenter les données financières dans les sources de données. Ce chapitre "
+"répond à une autre chose : ce que vous souhaitez réellement utiliser n'est "
+"souvent pas « une colonne dans un tableau », mais des informations qui "
+"peuvent être directement consommées par la stratégie et l'analyse. `qteasy` "
+"Utilisez un ensemble stable d'**informations ID** pour nommer ces "
+"informations ; le stockage peut changer de tables et de canaux, et l'ID doit"
+" rester inchangé autant que possible."
 
 #: ../../source/manage_data/02. datatypes.md:5
 msgid "`QTEASY`数据管理模块: ![数据获取模块结构](img/InformationExtraction.png)"
 msgstr ""
-"`QTEASY` Module de gestion des données : ![Structure du module "
-"d'acquisition de données](img/InformationExtraction.png)"
+"`QTEASY` Module de gestion des données : ![Structure du module d'acquisition"
+" de données](img/InformationExtraction.png)"
 
 #: ../../source/manage_data/02. datatypes.md:5
 msgid "数据获取模块结构"
@@ -44,36 +52,51 @@ msgid ""
 "标的、仅时间、仅标的）。日常您写的是**字符串**（如 `close`、`close|b`、`close_E_d`），不必手写 "
 "`DataType(...)`。它不是数据表列名，也不是又一个下载器。"
 msgstr ""
+"**À propos de DataType** : Il s'agit d'un identifiant stable pour un type "
+"d'informations qui peut être extrait d'une table de données locale et "
+"utilisé directement à des fins de stratégie ou d'analyse, plus une "
+"convention de forme (temps × cible, temps uniquement, cible uniquement). "
+"Habituellement, vous écrivez des **chaînes** (telles que `close`, `close|b`,"
+" `close_E_d`), il n'est pas nécessaire d'écrire `DataType(...)` à la main. "
+"Il ne s'agit pas d'une liste de fiches techniques, ni d'un autre "
+"téléchargeur."
 
 #: ../../source/manage_data/02. datatypes.md:9
 msgid "**本篇覆盖**："
-msgstr ""
+msgstr "**Cet article couvre** :"
 
 #: ../../source/manage_data/02. datatypes.md:11
 msgid "为什么「信息 ≠ 表里的一行」；"
-msgstr ""
+msgstr "Pourquoi « information ≠ une ligne du tableau » ;"
 
 #: ../../source/manage_data/02. datatypes.md:12
 msgid "三种形状：History / Reference / Static；"
-msgstr ""
+msgstr "Trois formes : Historique / Référence / Statique ;"
 
 #: ../../source/manage_data/02. datatypes.md:13
 msgid "四条工作路径（写策略、研究、宏观与基准、证券属性）；"
 msgstr ""
+"Quatre parcours de travail (stratégie d'écriture, recherche, macro et "
+"benchmark, attributs titres) ;"
 
 #: ../../source/manage_data/02. datatypes.md:14
 msgid "两种字符串 ID：宽匹配名与完整 id；"
 msgstr ""
+"Deux types d'identifiants de chaîne : nom de correspondance large et "
+"identifiant complet ;"
 
 #: ../../source/manage_data/02. datatypes.md:15
 msgid "如何发现类型，以及按业务分类的精选表。"
-msgstr ""
+msgstr "Comment découvrir les types et une liste organisée par entreprise."
 
 #: ../../source/manage_data/02. datatypes.md:17
 msgid ""
-"**完整罗列**（一千余条）见 [内置 DataType 完整清单](../references/datatypes/index.md)；API "
-"签名见 [DataType API](../api/data_types.rst)。"
+"**完整罗列**（一千余条）见 [内置 DataType 完整清单](../references/datatypes/index.md)；API 签名见"
+" [DataType API](../api/data_types.rst)。"
 msgstr ""
+"**Liste complète** (plus d'un millier d'éléments) voir [Liste complète "
+"DataType intégrée](../references/datatypes/index.md) ; pour la signature "
+"API, voir [DataType API](../api/data_types.rst)."
 
 #: ../../source/manage_data/02. datatypes.md:19
 msgid ""
@@ -82,73 +105,111 @@ msgid ""
 "[获取数据](../tutorials/2.0-get-data.md) 准备本地数据）。宏观与基准走 Reference，证券属性走 "
 "Static，**不要**用 `get_history_data`「顺便」取。"
 msgstr ""
+"**Comment utiliser l'entrée (veuillez lire ce paragraphe en premier)** : "
+"`get_kline` / `get_history_data` dans le chemin 2, `get_reference_data` dans"
+" le chemin 3 et `get_static_data` dans le chemin 4 sont actuellement des "
+"entrées publiques stables (vous devez appuyer sur [Get "
+"Data](../tutorials/2.0-get-data.md) pour préparer les données locales). Pour"
+" les macros et les tests de référence, utilisez Reference et pour les "
+"attributs de sécurité, utilisez Static. **N'utilisez pas** d'utilisation "
+"`get_history_data`\"au fait\"."
 
 #: ../../source/manage_data/02. datatypes.md:23
 msgid "信息 ≠ 表里的一行"
-msgstr ""
+msgstr "information ≠ une ligne dans le tableau"
 
 #: ../../source/manage_data/02. datatypes.md:25
-#, fuzzy
 msgid "在量化交易中，我们需要准备大量金融数据，但数据不是最终目的——我们需要从数据中提取有用的**信息**，并据此做决策。"
 msgstr ""
 "Dans le trading quantitatif, nous devons préparer une grande quantité de "
-"données financières. Cependant, les données elles-mêmes ne constituent "
-"pas l’objectif ultime ; nous devons en extraire des informations utiles. "
-"Dans nos stratégies de trading, nous utilisons ces informations pour "
-"prendre des décisions de trading."
+"données financières. Cependant, les données elles-mêmes ne constituent pas "
+"l’objectif ultime ; nous devons en extraire des informations utiles. Dans "
+"nos stratégies de trading, nous utilisons ces informations pour prendre des "
+"décisions de trading."
 
 #: ../../source/manage_data/02. datatypes.md:27
 msgid "信息不等于数据，常见原因有："
 msgstr ""
+"L’information n’est pas égale aux données. Les raisons courantes incluent :"
 
 #: ../../source/manage_data/02. datatypes.md:29
 msgid "某些数据本身意义不足，需要与其他数据结合才成为可用信息；"
 msgstr ""
+"Certaines données ne sont pas suffisamment significatives en elles-mêmes et "
+"doivent être combinées avec d’autres données pour devenir des informations "
+"utilisables ;"
 
 #: ../../source/manage_data/02. datatypes.md:30
 msgid "同一份数据可能包含多重信息，可以从不同角度提取；"
 msgstr ""
+"Les mêmes données peuvent contenir plusieurs informations qui peuvent être "
+"extraites sous différents angles ;"
 
 #: ../../source/manage_data/02. datatypes.md:31
 msgid "信息的定义是动态的：同样的原始列，经过不同加工可以有不同解读。"
 msgstr ""
+"La définition de l'information est dynamique : une même colonne originale "
+"peut être interprétée différemment après des traitements différents."
 
 #: ../../source/manage_data/02. datatypes.md:33
 msgid "因此，把「数据表里的某一列」直接等同于「策略要用的信息」往往过于草率：数据只是信息的载体。"
 msgstr ""
+"Par conséquent, il est souvent trop hâtif d'assimiler directement « une "
+"certaine colonne du tableau de données » aux « informations utilisées par la"
+" stratégie » : les données ne sont que le support de l'information."
 
 #: ../../source/manage_data/02. datatypes.md:35
-msgid "有些信息可以直接从表中读出，例如股票的开盘价、收盘价。有些必须通过多表组合才能得到——最典型的是**复权价格**：需要价格表与复权因子表，再经计算得到。同一张行情表里，也可以读出昨收、涨跌幅等不同信息。"
+msgid ""
+"有些信息可以直接从表中读出，例如股票的开盘价、收盘价。有些必须通过多表组合才能得到——最典型的是**复权价格**：需要价格表与复权因子表，再经计算得到。同一张行情表里，也可以读出昨收、涨跌幅等不同信息。"
 msgstr ""
+"Certaines informations peuvent être lues directement à partir du tableau, "
+"comme le cours d'ouverture et le cours de clôture d'une action. Certains "
+"d'entre eux ne peuvent être obtenus que par la combinaison de plusieurs "
+"tableaux - le plus typique est le **prix de repondération** : une liste de "
+"prix et un tableau des facteurs de repondération sont requis, puis calculés."
+" Dans le même tableau de marché, vous pouvez également lire différentes "
+"informations telles que le cours de clôture d'hier, l'augmentation et la "
+"diminution du prix, etc."
 
 #: ../../source/manage_data/02. datatypes.md:37
 msgid "例如，策略需要后复权收盘价时，原始数据分别在："
 msgstr ""
+"Par exemple, lorsque la stratégie nécessite des cours de clôture après "
+"repondération, les données d'origine sont :"
 
 #: ../../source/manage_data/02. datatypes.md:39
-#, fuzzy
 msgid "`stock_daily`：股票日 K 线行情（开高低收等）；"
 msgstr ""
-"`stock_daily` : Un graphique en chandeliers quotidien des cours des "
-"actions, comprenant des informations telles que le cours d'ouverture, le "
-"cours de clôture, le prix le plus élevé et le prix le plus bas."
+"`stock_daily` : Marché boursier quotidien de la ligne K (ouverture haute, "
+"clôture basse, etc.) ;"
 
 #: ../../source/manage_data/02. datatypes.md:40
-#, fuzzy
 msgid "`stock_adj_factor`：复权因子。"
-msgstr ""
-"`stock_adj_factor` : Ce tableau contient des informations sur les "
-"facteurs de cours ajustés de l'action."
+msgstr "`stock_adj_factor` : Facteur de repondération."
 
 #: ../../source/manage_data/02. datatypes.md:42
-msgid "表中已有「数据」，但还不是策略可直接消费的「信息」。若每次用到复权价都要手写多表对齐与换算，甚至还要把日线升成小时线，策略代码会迅速变复杂且易错。"
+msgid ""
+"表中已有「数据」，但还不是策略可直接消费的「信息」。若每次用到复权价都要手写多表对齐与换算，甚至还要把日线升成小时线，策略代码会迅速变复杂且易错。"
 msgstr ""
+"Il y a déjà des « données » dans le tableau, mais ce ne sont pas encore des "
+"« informations » que la stratégie peut directement consommer. Si vous devez "
+"aligner et convertir manuellement plusieurs tables à chaque fois que vous "
+"utilisez le prix correct, ou même mettre à niveau la ligne quotidienne vers "
+"une ligne horaire, le code de stratégie deviendra rapidement complexe et "
+"sujet aux erreurs."
 
 #: ../../source/manage_data/02. datatypes.md:44
 msgid ""
 "为此，`qteasy` 把这类提取与换算封装为信息 ID：您只写 "
 "`close|b`，框架负责从表中取出、换算并对齐成统一形态，供策略、分析与可视化使用。存储层以后若换表、换渠道，只要映射还在，您的策略字符串不必改。"
 msgstr ""
+"À cette fin, `qteasy` encapsule ce type d'extraction et de conversion sous "
+"la forme d'un identifiant d'information : vous écrivez simplement `close|b`,"
+" et le framework est responsable de son extraction, de sa conversion et de "
+"son alignement à partir de la table sous une forme unifiée pour une "
+"utilisation en stratégie, analyse et visualisation. Si la couche de stockage"
+" modifie les tables ou les canaux à l'avenir, votre chaîne de stratégie n'a "
+"pas besoin d'être modifiée tant que le mappage est toujours là."
 
 #: ../../source/manage_data/02. datatypes.md:46
 #, python-format
@@ -157,98 +218,127 @@ msgid ""
 "[数据表章节](04.%20data_tables_10.md)；能提取哪些信息见本章与 "
 "[完整清单](../references/datatypes/index.md)。"
 msgstr ""
+"**Conseils** : La « table de données » de la couche de stockage et l'« ID "
+"d'information » de la couche application ne sont pas le même concept. Pour "
+"la structure de la table, voir le [Chapitre sur la table de données] suivant"
+" (04.%20data_tables_10.md) ; pour savoir quelles informations peuvent être "
+"extraites, consultez ce chapitre et la [Liste complète] "
+"(../references/datatypes/index.md)."
 
 #: ../../source/manage_data/02. datatypes.md:50
 msgid "三种形状：History / Reference / Static"
-msgstr ""
+msgstr "Trois formes : Historique / Référence / Statique"
 
 #: ../../source/manage_data/02. datatypes.md:52
 msgid "同一套信息 ID，按**消费时长什么样**分成三种形状。选错形状，就会把宏观序列硬塞进股票面板，或把「行业」当成每天都在变的行情。"
 msgstr ""
+"Le même ensemble d'informations d'identification est divisé en trois formes "
+"en fonction de **à quoi il ressemble une fois consommé**. Si vous choisissez"
+" la mauvaise forme, vous forcerez la séquence macro dans le panneau boursier"
+" ou traiterez « l'industrie » comme un marché qui change chaque jour."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "形状"
-msgstr ""
+msgstr "forme"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "长什么样"
-msgstr ""
+msgstr "à quoi ça ressemble"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型问题"
-msgstr ""
+msgstr "Questions typiques"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型 ID"
-msgstr ""
+msgstr "ID typique"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**History**"
-msgstr ""
+msgstr "**History**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "时间 × 标的"
-msgstr ""
+msgstr "temps × objectif"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这几只股票这段时间的收盘价 / PE / 是否停牌？"
 msgstr ""
+"Les cours de clôture/PE/de ces valeurs pendant cette période sont suspendus "
+"?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close`、`pe`、`close|b`、`is_suspended`"
-msgstr ""
+msgstr "`close`、`pe`、`close|b`、`is_suspended`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**Reference**"
-msgstr ""
+msgstr "**Reference**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "仅时间（与资产池无一一对应）"
 msgstr ""
+"Uniquement du temps (pas de correspondance individuelle avec le pool "
+"d'actifs)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这段时间的 GDP、北向资金，或把沪深 300 当基准？"
 msgstr ""
+"PIB et fonds nord-ouest pendant cette période, ou faut-il utiliser le CSI "
+"300 comme référence ?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`cn_gdp`、`north_money`、`close-000300.SH`"
-msgstr ""
+msgstr "`cn_gdp`、`north_money`、`close-000300.SH`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**Static**"
-msgstr ""
+msgstr "**Static**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "仅标的（无时间轴）"
-msgstr ""
+msgstr "Cible uniquement (pas de calendrier)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这些股票属于哪个行业、何时上市？"
 msgstr ""
+"À quel secteur appartiennent ces actions et quand ont-elles été cotées ?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`industry`、`list_date`、`stock_name`"
-msgstr ""
+msgstr "`industry`、`list_date`、`stock_name`"
 
 #: ../../source/manage_data/02. datatypes.md:60
 msgid ""
 "您可以这样理解：History 是「面板」；Reference 是「一条跟池子无关的时间序列」；Static "
 "是「股票的户口本」，用来看属性、筛股票池，而不是在 `realize()` 里按时间窗去取「行业字符串」。"
 msgstr ""
+"Vous pouvez le comprendre ainsi : l'Histoire est un « panneau » ; La "
+"référence est « une série chronologique qui n’a rien à voir avec le pool » ;"
+" Statique est le « livre de comptes de stock », qui est utilisé pour "
+"afficher les attributs et filtrer le pool de stocks, au lieu de récupérer "
+"les « chaînes sectorielles » en fonction de la fenêtre de temps dans "
+"`realize()`."
 
 #: ../../source/manage_data/02. datatypes.md:62
 msgid "History：跟标的有关，时间对齐"
-msgstr ""
+msgstr "Historique : lié à la cible, aligné dans le temps"
 
 #: ../../source/manage_data/02. datatypes.md:64
 msgid ""
-"研究时编成 `HistoryPanel`（或多只标的的 DataFrame）；策略里是时间 × 标的的窗口。标准 K 线用 "
-"`get_kline`，其它 History 类型用 `get_history_data`。"
+"研究时编成 `HistoryPanel`（或多只标的的 DataFrame）；策略里是时间 × 标的的窗口。标准 K 线用 `get_kline`，其它"
+" History 类型用 `get_history_data`。"
 msgstr ""
+"`HistoryPanel` (ou un DataFrame de plusieurs cibles) est compilé lors de la "
+"recherche ; la stratégie est une fenêtre temporelle × cible. La ligne K "
+"standard utilise `get_kline`, les autres types d'historique utilisent "
+"`get_history_data`."
 
 #: ../../source/manage_data/02. datatypes.md:80
 msgid "Reference：跟资产池无一一对应"
 msgstr ""
+"Référence : Il n'y a pas de correspondance individuelle avec le pool "
+"d'actifs."
 
 #: ../../source/manage_data/02. datatypes.md:82
 msgid ""
@@ -256,63 +346,101 @@ msgid ""
 "收盘价当成策略里的市场基准：`close-000300.SH`（连字符，不是冒号）。两种都走 Reference 入口，不要把它们当成 "
 "HistoryPanel 的「第三维标的」。"
 msgstr ""
+"La macro, le taux d'intérêt et les flux de capitaux sont des références "
+"natives ; une autre méthode officielle consiste à extraire une seule colonne"
+" de l'Historique, par exemple, le cours de clôture du CSI 300 est utilisé "
+"comme référence du marché dans la stratégie : `close-000300.SH` (trait "
+"d'union, pas deux-points). Utilisez l'entrée Référence pour les deux types "
+"et ne les considérez pas comme les « cibles de troisième dimension » de "
+"HistoryPanel."
 
 #: ../../source/manage_data/02. datatypes.md:95
 msgid "Static：跟标的有关，但没有时间"
-msgstr ""
+msgstr "Statique : lié à la cible, mais il n'y a pas de temps"
 
 #: ../../source/manage_data/02. datatypes.md:97
 msgid ""
 "行业、名称、上市日这类截面属性用于看标签、筛股票池。本阶段**不要**写「在 `realize()` 里 "
 "`get_data('industry')`」——字符串户口本塞不进时间窗。过滤用 pandas 即可；完整选股器不是本章的交付范围。"
 msgstr ""
+"Les attributs transversaux tels que le secteur d'activité, le nom et la date"
+" de cotation sont utilisés pour afficher les étiquettes et filtrer les pools"
+" de stocks. **N'écrivez pas** \"Dans `realize()` dans "
+"`get_data('industry')`\" à ce stade - le livre de comptes en chaîne ne peut "
+"pas tenir dans la fenêtre horaire. Utilisez simplement des pandas pour le "
+"filtrage ; un sélecteur de titres complet dépasse le cadre de ce chapitre."
 
 #: ../../source/manage_data/02. datatypes.md:113
 msgid "四条工作路径（按您要做什么）"
-msgstr ""
+msgstr "Quatre parcours de travail (selon ce que vous souhaitez faire)"
 
 #: ../../source/manage_data/02. datatypes.md:115
 msgid "了解三种形状以后，日常不必先想「构造哪个对象」，按任务选入口即可。"
 msgstr ""
+"Après avoir compris les trois formes, vous n'avez pas besoin de penser "
+"d'abord à « quel objet construire », sélectionnez simplement l'entrée en "
+"fonction de la tâche."
 
 #: ../../source/manage_data/02. datatypes.md:117
 msgid "路径 1：写策略"
-msgstr ""
+msgstr "Voie 1 : Stratégie d’écriture"
 
 #: ../../source/manage_data/02. datatypes.md:119
 msgid ""
 "声明需要哪些信息 ID，框架按窗口注入；在 `realize()` 里用 `get_data` 取数组。策略里更稳妥的是写**完整 id**（如 "
 "`close_E_d`），避免同名多版本绑错表。无歧义时也可以用宽名，但一旦报错列出多个候选，就改成完整 id。"
 msgstr ""
+"Déclarez l'ID d'information nécessaire et le framework l'injecte en fonction"
+" de la fenêtre ; utilisez `get_data` pour obtenir le tableau dans "
+"`realize()`. Une stratégie plus sûre consiste à écrire un **identifiant "
+"complet** (tel que `close_E_d`) pour éviter de lier plusieurs versions du "
+"même nom à la mauvaise table. Vous pouvez également utiliser un nom large "
+"lorsqu'il n'y a aucune ambiguïté, mais une fois qu'une erreur est signalée "
+"et que plusieurs candidats sont répertoriés, remplacez-le par l'ID complet."
 
 #: ../../source/manage_data/02. datatypes.md:126
 msgid ""
 "Reference 可以出现在策略声明里（窗口是时间序列，不是「每只股票一列」）。Static **不要**放进 `data_types` / "
-"`get_data`。声明与窗口的细节见 [教程 3](../tutorials/3-start-first-strategy.md) 与设计文档"
-" [策略如何声明与使用数据](../design/03-data-in-strategies.md)。"
+"`get_data`。声明与窗口的细节见 [教程 3](../tutorials/3-start-first-strategy.md) 与设计文档 "
+"[策略如何声明与使用数据](../design/03-data-in-strategies.md)。"
 msgstr ""
+"La référence peut apparaître dans l'énoncé de stratégie (la fenêtre est une "
+"série chronologique, et non « une colonne par action »). Statique **Ne** "
+"mettez pas `data_types` / `get_data`. Les détails des déclarations et des "
+"fenêtres peuvent être trouvés dans le [Tutoriel 3](../tutorials/3-start-"
+"first-strategy.md) et dans le document de conception [Comment les stratégies"
+" déclarent et utilisent les données](../design/03-data-in-strategies.md)."
 
 #: ../../source/manage_data/02. datatypes.md:128
 msgid "路径 2：研究 / 因子"
-msgstr ""
+msgstr "Voie 2 : Recherche/Facteurs"
 
 #: ../../source/manage_data/02. datatypes.md:130
 msgid ""
 "在 Notebook 里玩面板、算因子、画图：标准 OHLCV 用 `get_kline`；估值、财务、复权价等用 "
 "`get_history_data`。`get_kline` 只是 K 线语法糖，底层仍是 History 管线，不是第四个入口。"
 msgstr ""
+"Jouez avec des panneaux, calculez des facteurs et dessinez des graphiques "
+"dans Notebook : utilisez `get_kline` pour l'OHLCV standard ; utilisez "
+"`get_history_data` pour l'évaluation, la finance, le redressement du prix, "
+"etc. `get_kline` n'est que du sucre syntaxique pour la ligne K. La couche "
+"inférieure est toujours le pipeline Historique, et non la quatrième entrée."
 
 #: ../../source/manage_data/02. datatypes.md:154
 #, python-format
 msgid ""
 "面板怎么切片、扩列、算收益，见下一章 [HistoryPanel](02.5.%20historypanel.md) 与教程 "
-"[2.4](../tutorials/2.4-historypanel-basics.md) / [2.5](../tutorials/2.5"
-"-historypanel-data-analysis.md)。"
+"[2.4](../tutorials/2.4-historypanel-basics.md) / "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md)。"
 msgstr ""
+"Pour savoir comment découper, développer et calculer le panneau, consultez "
+"le chapitre suivant [HistoryPanel](02.5.%20historypanel.md) et le "
+"didacticiel [2.4](../tutorials/2.4-historypanel-basics.md) / "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md)."
 
 #: ../../source/manage_data/02. datatypes.md:156
 msgid "路径 3：宏观与基准"
-msgstr ""
+msgstr "Voie 3 : Macro et benchmarks"
 
 #: ../../source/manage_data/02. datatypes.md:158
 msgid ""
@@ -320,410 +448,494 @@ msgid ""
 "`get_reference_data`。这里**不传股票池**（基准已经写在 ID 里）。不要用 `get_history_data` "
 "去「顺便」取宏观。"
 msgstr ""
+"Le PIB, les fonds orientés vers le nord, SHIBOR et `close-000300.SH` "
+"\"utilisent un certain marché sous-jacent comme référence\", accédez à "
+"`get_reference_data`. **Aucun pool de stocks** n'est transmis ici (le "
+"benchmark est déjà écrit dans l'ID). N'utilisez pas `get_history_data` pour "
+"obtenir la macro \"au fait\"."
 
 #: ../../source/manage_data/02. datatypes.md:160
 msgid "路径 4：证券属性与股票池"
-msgstr ""
+msgstr "Chemin 4 : Attributs de sécurité et pools de stocks"
 
 #: ../../source/manage_data/02. datatypes.md:162
 msgid ""
 "行业、上市日、证券名称走 `get_static_data`，得到按代码索引的表，再用 pandas 筛选。这不是回测里的时间窗，也不是 "
 "`filter_universe` 一类完整选股器。"
 msgstr ""
+"Accédez à `get_static_data` pour le secteur, la date d'inscription et le nom"
+" du titre pour obtenir une table indexée par code, puis utilisez pandas pour"
+" filtrer. Il ne s'agit pas d'une fenêtre de temps dans le backtesting, ni "
+"d'un sélecteur de titres complet comme `filter_universe`."
 
 #: ../../source/manage_data/02. datatypes.md:166
 msgid "两种字符串 ID"
-msgstr ""
+msgstr "Deux identifiants de chaîne"
 
 #: ../../source/manage_data/02. datatypes.md:168
 msgid "每种内置类型在内部由「名称 + 频率 + 资产类型」唯一确定；您日常写的字符串有两种形态，**都要会用**。"
 msgstr ""
+"Chaque type intégré est déterminé de manière unique en interne par « nom + "
+"fréquence + type d'actif » ; les chaînes que vous écrivez chaque jour ont "
+"deux formes et vous devez pouvoir les utiliser."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "形态"
-msgstr ""
+msgstr "formulaire"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "样子"
-msgstr ""
+msgstr "apparence"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型场景"
-msgstr ""
+msgstr "Scénario typique"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "解析直觉"
-msgstr ""
+msgstr "Intuition analytique"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**宽匹配名**"
-msgstr ""
+msgstr "**Nom de correspondance large**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close`、`pe`、`close|b`"
-msgstr ""
+msgstr "`close`、`pe`、`close|b`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "研究、`htype_names`、检索"
-msgstr ""
+msgstr "Recherche, `htype_names`, Recherche"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "框架按频率与资产类型规则挑一条；对不上或有多条候选时会报错，而不是静默抓第一项"
 msgstr ""
+"Le cadre en sélectionne un en fonction des règles de fréquence et de type "
+"d'actif ; s'il ne correspond pas ou s'il y a plusieurs candidats, une erreur"
+" sera signalée au lieu de choisir silencieusement le premier."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**完整 id**"
-msgstr ""
+msgstr "**identifiant complet**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close_E_d`、`close|b_E_d`、`pe_E_d`"
-msgstr ""
+msgstr "`close_E_d`、`close|b_E_d`、`pe_E_d`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "策略 `get_data`、需要消歧、Operator 缓冲键"
-msgstr ""
+msgstr "Politique `get_data`, homonymie requise, Operator clé tampon"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "从**右边**拆：最后一段是频率，倒数第二段是资产类型，余下全部是宽名（宽名里可以含 `|`）"
 msgstr ""
+"Séparé à partir de la **droite** : le dernier paragraphe est la fréquence, "
+"l'avant-dernier paragraphe est le type d'actif et le reste sont tous des "
+"noms larges (le nom large peut contenir `|`)"
 
 #: ../../source/manage_data/02. datatypes.md:175
 msgid "对照："
-msgstr ""
+msgstr "Contraste:"
 
 #: ../../source/manage_data/02. datatypes.md:177
 msgid "`close` → 研究里说「我要收盘价」，让框架按日线股票等规则匹配；"
 msgstr ""
+"`close` → L'étude disait « Je veux le cours de clôture » et laisse le cadre "
+"correspondre en fonction du stock quotidien et d'autres règles ;"
 
 #: ../../source/manage_data/02. datatypes.md:178
 msgid "`close_E_d` → 明确说「股票、日频收盘价」，策略里不会绑到指数的 `close`。"
 msgstr ""
+"`close_E_d` → Il indique clairement « action, cours de clôture à fréquence "
+"quotidienne », et la stratégie ne sera pas liée à l'indice `close`."
 
 #: ../../source/manage_data/02. datatypes.md:180
 msgid "**何时必须写完整 id**"
-msgstr ""
+msgstr "**Quand faut-il écrire l'identifiant complet**"
 
 #: ../../source/manage_data/02. datatypes.md:182
 msgid "同一宽名对应多个资产类型或频率（例如 `pe` 既有股票也有指数）；"
 msgstr ""
+"Le même nom large correspond à plusieurs types ou fréquences d'actifs (par "
+"exemple, `pe` inclut à la fois des actions et des indices) ;"
 
 #: ../../source/manage_data/02. datatypes.md:183
 msgid "策略 `get_data` 需要强约束；"
-msgstr ""
+msgstr "La stratégie `get_data` nécessite des contraintes fortes ;"
 
 #: ../../source/manage_data/02. datatypes.md:184
 msgid "报错已经列出候选完整 id 时——按提示改，不要再猜。"
 msgstr ""
+"Lorsque l'erreur est signalée et que l'identifiant complet du candidat a été"
+" répertorié, suivez les instructions pour le modifier et ne devinez plus."
 
 #: ../../source/manage_data/02. datatypes.md:186
 msgid "**书写符号（三套，不要混）**"
-msgstr ""
+msgstr "**Écrire des symboles (trois ensembles, ne pas mélanger)**"
 
 #: ../../source/manage_data/02. datatypes.md:188
 msgid "类型参数用竖线：`close|b`（后复权）、`close|f`（前复权）；"
 msgstr ""
+"Utilisez des barres verticales pour les paramètres de type : `close|b` "
+"(redressé plus tard), `close|f` (pré-redressé) ;"
 
 #: ../../source/manage_data/02. datatypes.md:189
 msgid "把某标的抽成 Reference 用连字符：`close-000300.SH`；"
 msgstr ""
+"Utilisez un trait d'union pour extraire une certaine cible dans la "
+"référence : `close-000300.SH` ;"
 
 #: ../../source/manage_data/02. datatypes.md:190
 msgid "完整 id 用下划线连接资产类型与频率：`close_E_d`。"
 msgstr ""
+"L'identifiant complet relie le type d'actif et la fréquence avec un trait de"
+" soulignement : `close_E_d`."
 
 #: ../../source/manage_data/02. datatypes.md:192
 msgid "请不要写 `wt_id:000300.SH` 这种冒号语法。"
 msgstr ""
+"Veuillez ne pas écrire une syntaxe deux-points telle que `wt_id:000300.SH`."
 
 #: ../../source/manage_data/02. datatypes.md:194
 msgid ""
 "常见取值备忘：`freq` 如 `d` / `w` / `m` / `q` / `1min`，`None` 表示与频率无关（多为 "
 "Static）；`asset_type` 如 `E` 股票、`IDX` 指数、`FD` 基金、`FT` 期货、`OPT` 期权。"
 msgstr ""
+"Mémos de valeur commune : `freq` tels que `d` / `w` / `m` / `q` / `1min`, "
+"`None` signifie indépendant de la fréquence (principalement statique) ; "
+"`asset_type` tels que `E` Actions, `IDX` Indices, `FD` Fonds, `FT` Futures, "
+"`OPT` Options."
 
 #: ../../source/manage_data/02. datatypes.md:198
 msgid "如何找到需要的 ID"
-msgstr ""
+msgstr "Comment trouver l'identifiant requis"
 
 #: ../../source/manage_data/02. datatypes.md:200
 msgid "完整表有一千余条，不必背。推荐顺序："
 msgstr ""
+"Il y a plus d'un millier d'éléments dans la liste complète, il n'est donc "
+"pas nécessaire de la mémoriser. Commande recommandée :"
 
 #: ../../source/manage_data/02. datatypes.md:202
 msgid "**按中文或名称检索** `find_history_data`；"
-msgstr ""
+msgstr "**Recherche par chinois ou par nom** `find_history_data` ;"
 
 #: ../../source/manage_data/02. datatypes.md:203
 msgid ""
 "看描述，判断它是 History、Reference 还是 Static，再选对应入口——**不要**假定检索到的每一条都能 "
 "`get_history_data`；"
 msgstr ""
+"Regardez la description pour déterminer s'il s'agit d'Historique, de "
+"Référence ou Statique, puis sélectionnez l'entrée correspondante - **Ne "
+"supposez pas** que chaque élément récupéré peut être `get_history_data` ;"
 
 #: ../../source/manage_data/02. datatypes.md:204
 msgid ""
 "需要浏览时打开 "
 "[完整清单](../references/datatypes/index.md)（将按业务分册，并标注可用性；当前分册仍可能按内部获取方式排列，以清单页说明为准）。"
 msgstr ""
+"Lorsque vous avez besoin de parcourir, ouvrez la [Liste "
+"complète](../references/datatypes/index.md) (elle sera divisée en volumes "
+"selon l'activité et marquée par disponibilité ; le volume actuel peut "
+"toujours être organisé selon les méthodes d'acquisition internes, sous "
+"réserve de la description sur la page de liste)."
 
 #: ../../source/manage_data/02. datatypes.md:218
 msgid "交互环境中也可以拉完整映射表："
 msgstr ""
+"Le tableau de mappage complet peut également être extrait dans "
+"l'environnement interactif :"
 
 #: ../../source/manage_data/02. datatypes.md:228
 msgid ""
 "清单由 `docs/scripts/generate_datatype_catalog.py` "
 "生成并入库；发版或变更内置映射后需重跑脚本。**请勿手改** `_generated/` 下的正文。"
 msgstr ""
+"La liste est générée par `docs/scripts/generate_datatype_catalog.py` et "
+"incorporée à la base de données ; vous devez réexécuter le script après "
+"avoir publié la version ou modifié le mappage intégré. **Veuillez ne pas "
+"modifier à la main** Le texte sous `_generated/`."
 
 #: ../../source/manage_data/02. datatypes.md:232
 msgid "常用类型精选"
-msgstr ""
+msgstr "Sélection de types couramment utilisés"
 
 #: ../../source/manage_data/02. datatypes.md:234
 msgid ""
 "下列为手写维护的**精选**表，便于入门。范围是常用子集，不是一千余条的全量。列含义：`name` "
-"是您在字符串里写的宽匹配名；「典型入口」告诉您该走哪条工作路径。查表方式：先按业务找节，再拿 `name` 去 "
-"`find_history_data` 或清单核对频率与资产类型。"
+"是您在字符串里写的宽匹配名；「典型入口」告诉您该走哪条工作路径。查表方式：先按业务找节，再拿 `name` 去 `find_history_data` "
+"或清单核对频率与资产类型。"
 msgstr ""
+"Vous trouverez ci-dessous une liste **sélectionnée** de maintenance de "
+"l'écriture manuscrite pour faciliter le démarrage. La gamme est un sous-"
+"ensemble couramment utilisé, et non la gamme complète de plus d'un millier "
+"d'articles. Signification de la colonne : `name` est le nom à correspondance"
+" large que vous avez écrit dans la chaîne ; « Entrée typique » vous indique "
+"le chemin de travail à suivre. Méthode de recherche dans le tableau : "
+"recherchez d'abord la section par entreprise, puis passez de `name` à "
+"`find_history_data` ou vérifiez la fréquence et le type d'actif dans la "
+"liste."
 
 #: ../../source/manage_data/02. datatypes.md:236
 msgid "完整列表见 [内置 DataType 完整清单](../references/datatypes/index.md)。"
 msgstr ""
+"Pour une liste complète, voir [Liste complète DataType "
+"intégrée](../references/datatypes/index.md)."
 
 #: ../../source/manage_data/02. datatypes.md:238
 msgid "行情与复权"
-msgstr ""
+msgstr "Devis et restauration"
 
 #: ../../source/manage_data/02. datatypes.md:240
 msgid "典型入口：`get_kline`（OHLCV）或 `get_history_data`。"
-msgstr ""
+msgstr "Entrée typique : `get_kline` (OHLCV) ou `get_history_data`."
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "name"
-msgstr "nom"
+msgstr "name"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "简述"
-msgstr "Brève description des utilisations"
+msgstr "Brève description"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "`open` / `high` / `low` / `close`"
-msgstr "open, high, low, close, vol"
+msgstr "`open` / `high` / `low` / `close`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "开高低收"
-msgstr "Ajusté des fractionnements d'actions et des cours d'ouverture hauts et bas"
+msgstr "Ouvrir haut et fermer bas"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`vol`"
-msgstr ""
+msgstr "`vol`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "成交量"
-msgstr ""
+msgstr "Volume"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`amount`"
-msgstr ""
+msgstr "`amount`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "成交额（以清单描述为准）"
-msgstr ""
+msgstr "Volume de transactions (sous réserve de la description de l'annonce)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close|b` / `close|f`"
-msgstr ""
+msgstr "`close|b` / `close|f`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "后复权 / 前复权收盘价"
-msgstr "Cours de clôture des actions après fractionnement d'actions"
+msgstr "Cours de clôture Post-restauration / Pré-restauration"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "`open|b` / `high|b` / `low|b`"
-msgstr "ouvert|b, haut|b, etc."
+msgstr "`open|b` / `high|b` / `low|b`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "后复权开高低"
-msgstr "Ajusté des fractionnements d'actions et des cours d'ouverture hauts et bas"
+msgstr "Ouvert haut et bas après avoir repris le pouvoir"
 
 #: ../../source/manage_data/02. datatypes.md:250
 msgid "例如：研究后复权收盘价时，直接写 `close|b`，不必自己去拼价格表和复权因子。"
 msgstr ""
+"Par exemple : lorsque vous recherchez le cours de clôture d'un redressement,"
+" écrivez simplement `close|b` sans avoir à parcourir vous-même la liste de "
+"prix et les facteurs de redressement."
 
 #: ../../source/manage_data/02. datatypes.md:252
 msgid "估值与财务"
-msgstr ""
+msgstr "Valorisation et Finance"
 
 #: ../../source/manage_data/02. datatypes.md:254
 msgid "典型入口：`get_history_data`。"
-msgstr ""
+msgstr "Entrée typique : `get_history_data`."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`pe` / `pe_2`"
-msgstr ""
+msgstr "`pe` / `pe_2`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "市盈率及相关（股票与指数可能各有一条，策略里建议完整 id）"
 msgstr ""
+"Ratio P/E et associés (les actions et les indices peuvent en avoir chacun "
+"un, l'ID complet est recommandé dans la stratégie)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`pb`"
-msgstr ""
+msgstr "`pb`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "市净率"
-msgstr ""
+msgstr "rapport prix/livraison"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`eps`"
-msgstr ""
+msgstr "`eps`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "每股收益"
-msgstr ""
+msgstr "bénéfice par action"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`total_mv`"
-msgstr ""
+msgstr "`total_mv`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "总市值（注意单位版本，见清单描述）"
 msgstr ""
+"Capitalisation boursière totale (noter la version unitaire, voir la "
+"description de la cotation)"
 
 #: ../../source/manage_data/02. datatypes.md:263
 msgid "宏观、利率与资金"
-msgstr ""
+msgstr "Macro, taux d'intérêt et fonds"
 
 #: ../../source/manage_data/02. datatypes.md:265
 msgid "典型入口：`get_reference_data`。不要用 `get_history_data`。"
 msgstr ""
+"Entrée typique : `get_reference_data`. N'utilisez pas `get_history_data`."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`cn_gdp`"
-msgstr ""
+msgstr "`cn_gdp`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "GDP 累计值"
-msgstr ""
+msgstr "Valeur cumulée du PIB"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`north_money`"
-msgstr ""
+msgstr "`north_money`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "北向资金"
-msgstr ""
+msgstr "Fonds en direction du nord"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`shibor|%`"
-msgstr ""
+msgstr "`shibor|%`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "SHIBOR（参数为期限，以清单为准）"
-msgstr ""
+msgstr "SHIBOR (le paramètre est le point, soumis à la liste)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close-000300.SH`"
-msgstr ""
+msgstr "`close-000300.SH`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "把沪深 300 收盘价当成 Reference（造法，不是原生宏观表）"
 msgstr ""
+"Traitez le cours de clôture du CSI 300 comme référence (méthode créée, pas "
+"le tableau macro d'origine)"
 
 #: ../../source/manage_data/02. datatypes.md:274
 msgid "交易行为与事件"
-msgstr ""
+msgstr "Actions et événements commerciaux"
 
 #: ../../source/manage_data/02. datatypes.md:276
 msgid "典型入口：`get_history_data`（仍是时间 × 标的）。事件类条目多，建议用中文关键词检索。"
 msgstr ""
+"Entrée typique : `get_history_data` (temps fixe × cible). Il existe de "
+"nombreuses entrées d'événements, il est donc recommandé d'effectuer une "
+"recherche avec des mots-clés chinois."
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`is_suspended`"
-msgstr ""
+msgstr "`is_suspended`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "停复牌类型"
-msgstr ""
+msgstr "Type de suspension et de reprise des échanges"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`up_limit`"
-msgstr ""
+msgstr "`up_limit`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "涨停价"
-msgstr ""
+msgstr "limite de prix"
 
 #: ../../source/manage_data/02. datatypes.md:283
-#, fuzzy
 msgid "指数成分与权重"
-msgstr "Pondération des actions constituant l'indice"
+msgstr "Composants et pondérations de l'indice"
 
 #: ../../source/manage_data/02. datatypes.md:285
 msgid "典型入口：研究用 `get_history_data`；也适合用来过滤/加权股票池（不是本章的选股器 API）。"
 msgstr ""
+"Entrée typique : `get_history_data` pour la recherche ; convient également "
+"au filtrage/pondération des pools de titres (pas à l'API de sélection de "
+"titres dans ce chapitre)."
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "`wt_idx|%`"
-msgstr "wt_idx|%"
+msgstr "`wt_idx|%`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "股票在指数中的权重（通配键以清单为准）"
 msgstr ""
+"Le poids du titre dans l'indice (la clé générique est basée sur la liste)"
 
 #: ../../source/manage_data/02. datatypes.md:291
 msgid "静态证券信息"
-msgstr ""
+msgstr "Informations statiques sur les titres"
 
 #: ../../source/manage_data/02. datatypes.md:293
 msgid "典型入口：`get_static_data`。不要放进策略 `get_data`。"
-msgstr ""
+msgstr "Entrée typique : `get_static_data`.不要放进策略 `get_data`。"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "`stock_symbol` / `stock_name`"
-msgstr "stock_symbol, stock_name, industry"
+msgstr "`stock_symbol` / `stock_name`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "代码 / 名称"
-msgstr ""
+msgstr "code/nom"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`industry`"
-msgstr ""
+msgstr "`industry`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "行业"
-msgstr ""
+msgstr "industrie"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`list_date`"
-msgstr ""
+msgstr "`list_date`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "上市日期（以清单为准）"
-msgstr ""
+msgstr "Date d'inscription (sous réserve d'inscription)"
 
 #: ../../source/manage_data/02. datatypes.md:303
 msgid "边界：清单里有，不等于今天能这样用"
 msgstr ""
+"Limite : C'est dans la liste, mais cela ne veut pas dire qu'il peut être "
+"utilisé comme ça aujourd'hui."
 
 #: ../../source/manage_data/02. datatypes.md:305
 msgid ""
 "**可用性**：完整清单会保留全部内置类型，其中一部分今天没有一等用法（目录里看得到，但没有推荐入口）。例如大宗交易买方营业部 "
-"`block_trade_buyer` 虽是 History 形状，但格子是文本，无法编入只吃数值的 HistoryPanel / "
-"策略窗口，清单会标 `usable_in=none`；研究时请直接读底层表（如 "
+"`block_trade_buyer` 虽是 History 形状，但格子是文本，无法编入只吃数值的 HistoryPanel / 策略窗口，清单会标 "
+"`usable_in=none`；研究时请直接读底层表（如 "
 "`DataSource.read_table_data('block_trade')`）。检索结果请按描述与入口提示选用，不要一律 "
 "`get_history_data`。"
 msgstr ""
+"**Disponibilité** : la liste complète conservera tous les types intégrés, "
+"dont certains n'ont pas d'utilisation de première classe aujourd'hui (peut "
+"être consulté dans le répertoire, mais il n'y a aucune entrée recommandée). "
+"Par exemple, le service commercial de l'acheteur de trading en gros "
+"`block_trade_buyer` a la forme d'un historique, mais la grille est du texte "
+"et ne peut pas être compilée dans la fenêtre HistoryPanel/stratégie, qui ne "
+"prend que des valeurs numériques. La liste est marquée `usable_in=none` ; "
+"lors de la recherche, veuillez lire directement le tableau sous-jacent (tel "
+"que `DataSource.read_table_data('block_trade')`). Veuillez sélectionner les "
+"résultats de la recherche en fonction de la description et des invites "
+"d'entrée, n'utilisez pas `get_history_data`."
 
 #: ../../source/manage_data/02. datatypes.md:306
 #, python-format
@@ -731,12 +943,21 @@ msgid ""
 "**下载与表结构**：本地没有表，任何 ID 都取不出数。下载与表结构见 [DataSource](03.%20datasource.md) 与 "
 "[数据表章节](04.%20data_tables_10.md)。"
 msgstr ""
+"**Téléchargement et structure de la table** : il n'y a pas de table locale "
+"et aucun numéro ne peut être obtenu à partir d'un identifiant. Pour le "
+"téléchargement et la structure du tableau, voir "
+"[DataSource](03.%20datasource.md) et [Chapitre sur le tableau de "
+"données](04.%20data_tables_10.md)."
 
 #: ../../source/manage_data/02. datatypes.md:307
 msgid ""
 "**过程数据**：`proc.*`（持仓、现金等回测/实盘过程量）不是本目录里的 DataType，见设计文档 "
 "[过程数据与动态回测](../design/09-process-data-and-dynamic-backtest.md)。"
 msgstr ""
+"**Données de processus** : `proc.*` (position, trésorerie, etc. "
+"backtest/volume de processus d'offre réelle) n'est pas DataType dans ce "
+"répertoire, voir le document de conception [Process Data and Dynamic "
+"Backtest] (../design/09-process-data-and-dynamic-backtest.md)."
 
 #: ../../source/manage_data/02. datatypes.md:308
 msgid ""
@@ -744,252 +965,233 @@ msgid ""
 "`acquisition_type`（直读、复权、事件等），那是框架从表里怎么抽出信息的内部算法，**不是**用户分类，选类型时不必填写。排障时可以在清单靠后列对照"
 " `table_name`。"
 msgstr ""
+"**Méthode d'acquisition interne** : Il y a aussi `acquisition_type` (lecture"
+" directe, restauration droite, événement, etc.) dans la table de mappage. Il"
+" s'agit de l'algorithme interne permettant au framework d'extraire les "
+"informations de la table. Il ne s'agit pas d'une classification "
+"d'utilisateur et il n'est pas nécessaire de la renseigner lors de la "
+"sélection du type. Lors du dépannage, vous pouvez cocher `table_name` à la "
+"fin de la liste."
 
 #: ../../source/manage_data/02. datatypes.md:309
 msgid ""
-"**自定义类型**：面向用户的稳定注册入口尚未交付。需要尚未内置的复合指标时，先取出原子字段，再在 `HistoryPanel.assign` "
-"或策略 `realize()` 中计算（教程见 [玩数据与因子分析](../tutorials/2.5-historypanel-data-"
+"**自定义类型**：面向用户的稳定注册入口尚未交付。需要尚未内置的复合指标时，先取出原子字段，再在 `HistoryPanel.assign` 或策略 "
+"`realize()` 中计算（教程见 [玩数据与因子分析](../tutorials/2.5-historypanel-data-"
 "analysis.md)）。"
 msgstr ""
+"**Type personnalisé** : Le portail d'enregistrement stable pour les "
+"utilisateurs n'a pas encore été livré. Lorsque vous avez besoin d'un "
+"indicateur composite qui n'est pas encore intégré, supprimez d'abord le "
+"champ atomique, puis calculez-le dans `HistoryPanel.assign` ou dans la "
+"stratégie `realize()` (pour les didacticiels, voir [Jouer avec les données "
+"et l'analyse factorielle](../tutorials/2.5-historypanel-data-analysis.md))."
 
 #: ../../source/manage_data/02. datatypes.md:310
 msgid ""
 "**专家层对象**：排查单一类型或编写更底层脚本时，仍可构造 `DataType` 并调用 "
 "`get_data_from_source`。这不是日常路径，签名见 [DataType API](../api/data_types.rst)。"
 msgstr ""
+"**Objet de couche expert** : lors du dépannage d'un seul type ou de "
+"l'écriture de scripts de niveau inférieur, vous pouvez toujours construire "
+"`DataType` et appeler `get_data_from_source`. Ce n'est pas un chemin "
+"quotidien, la signature est dans [DataType API](../api/data_types.rst)."
 
 #: ../../source/manage_data/02. datatypes.md:314
 msgid "小结与下一步"
-msgstr ""
+msgstr "Résumé et prochaines étapes"
 
 #: ../../source/manage_data/02. datatypes.md:316
 msgid "读到这里，您应已掌握："
-msgstr ""
+msgstr "Après avoir lu ceci, vous devriez avoir maîtrisé :"
 
 #: ../../source/manage_data/02. datatypes.md:318
 msgid "DataType 是**信息 ID**，不是表列名，也不是下载器；您日常写字符串。"
 msgstr ""
+"DataType est l'**ID d'information**, pas le nom de la colonne de la table, "
+"ni le téléchargeur ; vous écrivez des chaînes tous les jours."
 
 #: ../../source/manage_data/02. datatypes.md:319
 msgid "三种形状对应三种用法：History 进面板/策略窗，Reference 是与池子无关的时间序列，Static 是截面属性。"
 msgstr ""
+"Les trois formes correspondent à trois usages : l'historique entre dans la "
+"fenêtre du panneau/stratégie, la référence est une série temporelle sans "
+"rapport avec le pool et le statique est un attribut transversal."
 
 #: ../../source/manage_data/02. datatypes.md:320
 msgid ""
 "按任务选入口：策略 `get_data`、研究 `get_kline` / `get_history_data`、宏观与基准 "
 "`get_reference_data`、属性与股票池 `get_static_data`。"
 msgstr ""
+"Sélectionnez l'entrée par tâche : Stratégie `get_data`, Recherche "
+"`get_kline` / `get_history_data`, Macro et Benchmark `get_reference_data`, "
+"Propriétés et Pool d'actions `get_static_data`."
 
 #: ../../source/manage_data/02. datatypes.md:321
 msgid "研究可用宽名；策略与消歧时写完整 id（`close_E_d`）。"
 msgstr ""
+"Utilisez des noms larges pour la recherche ; écrivez l'identifiant complet "
+"(`close_E_d`) pour la stratégie et la désambiguïsation."
 
 #: ../../source/manage_data/02. datatypes.md:323
 msgid "**下一步阅读**："
-msgstr ""
+msgstr "**Lire la suite** :"
 
 #: ../../source/manage_data/02. datatypes.md:325
-#, fuzzy, python-format
+#, python-format
 msgid ""
-"把多标的、多指标收拢到同一时间轴：[HistoryPanel](02.5.%20historypanel.md)，可视化见 "
-"[HistoryPanel 可视化](02.6.%20historypanel_visual.md)；"
+"把多标的、多指标收拢到同一时间轴：[HistoryPanel](02.5.%20historypanel.md)，可视化见 [HistoryPanel "
+"可视化](02.6.%20historypanel_visual.md)；"
 msgstr ""
-"Lorsque plusieurs cibles et types de données doivent être transportés "
-"simultanément sur la même chronologie (par exemple, l'OHLC et le volume "
-"des transactions sont inclus dans le calcul ou le graphique), le chapitre"
-" suivant [HistoryPanel](2.5.%20historypanel.md) présente comment "
-"rassembler les résultats de `get_history_data` dans un panneau 3D ; le "
-"point d'entrée pour la cartographie se trouve dans le chapitre suivant "
-"[HistoryPanel Visualisation](2.6.%20historypanel_visual.md)."
+"Rassemblez plusieurs cibles et indicateurs dans la même chronologie : "
+"[HistoryPanel](02.5.%20historypanel.md). Pour la visualisation, voir "
+"[HistoryPanel Visualisation](02.6.%20historypanel_visual.md) ;"
 
 #: ../../source/manage_data/02. datatypes.md:326
 msgid ""
-"跟做取数与玩面板：[教程 2.0](../tutorials/2.0-get-data.md) → [2.4](../tutorials/2.4"
-"-historypanel-basics.md) → [2.5](../tutorials/2.5-historypanel-data-"
-"analysis.md)；"
+"跟做取数与玩面板：[教程 2.0](../tutorials/2.0-get-data.md) → "
+"[2.4](../tutorials/2.4-historypanel-basics.md) → "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md)；"
 msgstr ""
+"Suivez les étapes pour obtenir des nombres et jouer avec le panneau : "
+"[Tutoriel 2.0](../tutorials/2.0-get-data.md) → "
+"[2.4](../tutorials/2.4-historypanel-basics.md) → "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md) ;"
 
 #: ../../source/manage_data/02. datatypes.md:327
 msgid ""
 "在策略里声明与取窗：[教程 3](../tutorials/3-start-first-"
 "strategy.md)、[策略如何声明与使用数据](../design/03-data-in-strategies.md)；"
 msgstr ""
+"Déclaration et fenêtrage dans les stratégies : [Tutoriel "
+"3](../tutorials/3-start-first-strategy.md), [Comment déclarer et utiliser "
+"des données dans les stratégies](../design/03-data-in-strategies.md) ;"
 
 #: ../../source/manage_data/02. datatypes.md:328
 msgid "专家层对象与函数签名：[DataType API](../api/data_types.rst)。"
 msgstr ""
+"Objet de couche expert et signature de fonction : [DataType "
+"API](../api/data_types.rst)."
 
 #~ msgid "以标准化方式从数据表中提取信息"
 #~ msgstr ""
-#~ "Extraire des informations à partir de"
-#~ " tableaux de données de manière "
+#~ "Extraire des informations à partir de tableaux de données de manière "
 #~ "standardisée"
 
-#~ msgid "前面的章节中，我们介绍了数据源和数据源的概念，并且介绍了如何往数据源中填充金融数据。在这一章节中，我们将介绍如何从数据源中提取对我们有用的信息，而不仅仅是读取数据。"
+#~ msgid ""
+#~ "前面的章节中，我们介绍了数据源和数据源的概念，并且介绍了如何往数据源中填充金融数据。在这一章节中，我们将介绍如何从数据源中提取对我们有用的信息，而不仅仅是读取数据。"
 #~ msgstr ""
-#~ "Dans les chapitres précédents, nous "
-#~ "avons présenté les concepts de sources"
-#~ " de données et comment les alimenter"
-#~ " avec des données financières. Dans "
-#~ "ce chapitre, nous expliquerons comment "
-#~ "extraire des informations utiles à "
-#~ "partir de sources de données, plutôt "
-#~ "que de simplement lire des données."
+#~ "Dans les chapitres précédents, nous avons présenté les concepts de sources "
+#~ "de données et comment les alimenter avec des données financières. Dans ce "
+#~ "chapitre, nous expliquerons comment extraire des informations utiles à "
+#~ "partir de sources de données, plutôt que de simplement lire des données."
 
 #~ msgid "信息 != 数据"
 #~ msgstr "Informations != Données"
 
-#~ msgid "信息不等于数据，有些信息是可以直接从数据表中读出来的，比如股票的收盘价，开盘价等。但是，有些信息是需要通过一定的计算才能得到的，比如股票的复权价格等。"
+#~ msgid ""
+#~ "信息不等于数据，有些信息是可以直接从数据表中读出来的，比如股票的收盘价，开盘价等。但是，有些信息是需要通过一定的计算才能得到的，比如股票的复权价格等。"
 #~ msgstr ""
-#~ "Les informations ne sont pas les "
-#~ "mêmes que les données. Certaines "
-#~ "informations peuvent être directement lues "
-#~ "à partir de tableaux de données, "
-#~ "comme le cours de clôture et le"
-#~ " cours d'ouverture d'une action. Cependant,"
-#~ " certaines informations nécessitent certains "
-#~ "calculs, comme le prix ajusté d’une "
-#~ "action."
+#~ "Les informations ne sont pas les mêmes que les données. Certaines "
+#~ "informations peuvent être directement lues à partir de tableaux de données, "
+#~ "comme le cours de clôture et le cours d'ouverture d'une action. Cependant, "
+#~ "certaines informations nécessitent certains calculs, comme le prix ajusté "
+#~ "d’une action."
 
 #~ msgid "例如，我们在交易策略中需要用到股票的前复权价格，我们知道，复权价格是用股票的价格以及复权因子计算得到的，分别保存在下面两张表中："
 #~ msgstr ""
-#~ "Par exemple, dans notre stratégie de "
-#~ "trading, nous devons utiliser le prix"
-#~ " pré-ajusté d’une action. Nous savons "
-#~ "que le prix ajusté est calculé à"
-#~ " partir du cours de l'action et "
-#~ "du facteur d'ajustement, et ceux-ci "
-#~ "sont stockés dans les deux tableaux "
-#~ "suivants :"
+#~ "Par exemple, dans notre stratégie de trading, nous devons utiliser le prix "
+#~ "pré-ajusté d’une action. Nous savons que le prix ajusté est calculé à partir"
+#~ " du cours de l'action et du facteur d'ajustement, et ceux-ci sont stockés "
+#~ "dans les deux tableaux suivants :"
 
 #~ msgid "此时，上面两张表中已经保存了我们需要的数据，但它们并不是我们需要的信息，我们需要通过计算才能得到我们需要的信息。"
 #~ msgstr ""
-#~ "À ce stade, les deux tableaux "
-#~ "ci-dessus ont stocké les données dont"
-#~ " nous avons besoin, mais ce ne "
-#~ "sont pas les informations dont nous "
-#~ "avons besoin. Nous devons effectuer des"
-#~ " calculs pour obtenir les informations "
-#~ "dont nous avons besoin."
+#~ "À ce stade, les deux tableaux ci-dessus ont stocké les données dont nous "
+#~ "avons besoin, mais ce ne sont pas les informations dont nous avons besoin. "
+#~ "Nous devons effectuer des calculs pour obtenir les informations dont nous "
+#~ "avons besoin."
 
 #~ msgid "因此，为了获取复权价格这条信息，我们无法避免繁琐的计算过程。"
 #~ msgstr ""
-#~ "Par conséquent, afin d’obtenir les "
-#~ "informations sur les prix ajustés, nous"
-#~ " ne pouvons pas éviter le processus"
-#~ " fastidieux de calcul."
-
-#~ msgid "而且，还必须考虑到，如果我们需要的不是复权日K线价格，而是复权后的小时K线价格，还需要把日K线数据转换为小时K线数据，这样的计算过程更加复杂。"
-#~ msgstr ""
-#~ "En outre, il faut considérer que "
-#~ "si nous avons besoin du prix "
-#~ "quotidien ajusté du chandelier au lieu"
-#~ " du prix horaire ajusté du "
-#~ "chandelier, nous devons également convertir"
-#~ " les données quotidiennes du chandelier "
-#~ "en données horaires du chandelier, ce"
-#~ " qui rend le processus de calcul "
-#~ "encore plus compliqué."
+#~ "Par conséquent, afin d’obtenir les informations sur les prix ajustés, nous "
+#~ "ne pouvons pas éviter le processus fastidieux de calcul."
 
 #~ msgid ""
-#~ "在交易策略的实现过程中，如果每次使用复权价格时都要考虑上面的转换和计算过程，那么会使得策略的实现变得复杂，而且容易出错。也会让我们把有限的精力"
-#~ " 分散到这些琐碎的计算过程中，而不是集中在策略的实现上。"
+#~ "而且，还必须考虑到，如果我们需要的不是复权日K线价格，而是复权后的小时K线价格，还需要把日K线数据转换为小时K线数据，这样的计算过程更加复杂。"
 #~ msgstr ""
-#~ "Lors de la mise en œuvre d'une "
-#~ "stratégie de trading, si le processus"
-#~ " de conversion et de calcul ci-"
-#~ "dessus est pris en compte chaque "
-#~ "fois que des prix ajustés sont "
-#~ "utilisés, cela rendra la mise en "
-#~ "œuvre de la stratégie complexe et "
-#~ "sujette aux erreurs. Cela nous amènera"
-#~ " également à disperser notre énergie "
-#~ "limitée sur ces calculs triviaux au "
-#~ "lieu de nous concentrer sur la "
-#~ "mise en œuvre de la stratégie."
+#~ "En outre, il faut considérer que si nous avons besoin du prix quotidien "
+#~ "ajusté du chandelier au lieu du prix horaire ajusté du chandelier, nous "
+#~ "devons également convertir les données quotidiennes du chandelier en données"
+#~ " horaires du chandelier, ce qui rend le processus de calcul encore plus "
+#~ "compliqué."
+
+#~ msgid ""
+#~ "在交易策略的实现过程中，如果每次使用复权价格时都要考虑上面的转换和计算过程，那么会使得策略的实现变得复杂，而且容易出错。也会让我们把有限的精力 "
+#~ "分散到这些琐碎的计算过程中，而不是集中在策略的实现上。"
+#~ msgstr ""
+#~ "Lors de la mise en œuvre d'une stratégie de trading, si le processus de "
+#~ "conversion et de calcul ci-dessus est pris en compte chaque fois que des "
+#~ "prix ajustés sont utilisés, cela rendra la mise en œuvre de la stratégie "
+#~ "complexe et sujette aux erreurs. Cela nous amènera également à disperser "
+#~ "notre énergie limitée sur ces calculs triviaux au lieu de nous concentrer "
+#~ "sur la mise en œuvre de la stratégie."
 
 #~ msgid "因此，我们需要一种方法，能够把这些琐碎的计算过程封装起来，使得我们在实现策略时，只需要关注策略本身，而不需要关注这些琐碎的计算过程。"
 #~ msgstr ""
-#~ "Par conséquent, nous avons besoin d’un"
-#~ " moyen d’encapsuler ces processus "
-#~ "informatiques triviaux afin que, lors de"
-#~ " la mise en œuvre d’une stratégie,"
-#~ " nous n’ayons qu’à nous concentrer "
-#~ "sur la stratégie elle-même, sans "
-#~ "avoir à nous soucier de ces "
-#~ "processus informatiques triviaux."
+#~ "Par conséquent, nous avons besoin d’un moyen d’encapsuler ces processus "
+#~ "informatiques triviaux afin que, lors de la mise en œuvre d’une stratégie, "
+#~ "nous n’ayons qu’à nous concentrer sur la stratégie elle-même, sans avoir à "
+#~ "nous soucier de ces processus informatiques triviaux."
 
 #~ msgid "为此，`qteasy`数据管理模块提供了一种标准化的方式，用于从数据表中提取信息。这种方式就是`DataType`对象。"
 #~ msgstr ""
-#~ "Pour résoudre ce problème, le module "
-#~ "de gestion de données `qteasy` fournit"
-#~ " un moyen standardisé d'extraire des "
-#~ "informations des tables de données. "
-#~ "Cette méthode passe par l'objet "
-#~ "`DataType`."
+#~ "Pour résoudre ce problème, le module de gestion de données `qteasy` fournit "
+#~ "un moyen standardisé d'extraire des informations des tables de données. "
+#~ "Cette méthode passe par l'objet `DataType`."
 
 #~ msgid "DataType对象"
 #~ msgstr "Objet DataType"
 
-#~ msgid "`DataType`对象是`QTEASY`数据管理模块中的一个重要对象，它在v1.4版本中正式引入，它封装了标准化的数据处理逻辑，用于从数据表中提取信息。使得用户只要定义好一个`DataType`对象，就不需要再将精力分散在琐碎的数据信息获取计算过程中，而是可以专注于策略的实现。"
+#~ msgid ""
+#~ "`DataType`对象是`QTEASY`数据管理模块中的一个重要对象，它在v1.4版本中正式引入，它封装了标准化的数据处理逻辑，用于从数据表中提取信息。使得用户只要定义好一个`DataType`对象，就不需要再将精力分散在琐碎的数据信息获取计算过程中，而是可以专注于策略的实现。"
 #~ msgstr ""
-#~ "L'objet `DataType` est un objet "
-#~ "important dans le module de gestion "
-#~ "des données `QTEASY`. Officiellement introduit"
-#~ " dans la version 1.4, il encapsule"
-#~ " une logique de traitement de données"
-#~ " standardisée pour extraire des "
-#~ "informations à partir de tableaux de "
-#~ "données. Cela permet aux utilisateurs de"
-#~ " définir un seul objet `DataType` et"
-#~ " de se concentrer sur la mise "
-#~ "en œuvre de leurs stratégies, plutôt "
-#~ "que de passer du temps sur "
-#~ "l'acquisition et le calcul fastidieux de"
-#~ " données."
+#~ "L'objet `DataType` est un objet important dans le module de gestion des "
+#~ "données `QTEASY`. Officiellement introduit dans la version 1.4, il encapsule"
+#~ " une logique de traitement de données standardisée pour extraire des "
+#~ "informations à partir de tableaux de données. Cela permet aux utilisateurs "
+#~ "de définir un seul objet `DataType` et de se concentrer sur la mise en œuvre"
+#~ " de leurs stratégies, plutôt que de passer du temps sur l'acquisition et le "
+#~ "calcul fastidieux de données."
 
 #~ msgid "`qteasy`提供了大量内置预定义的`DataType`对象，用户也可以根据自己的需求自定义`DataType`对象。"
 #~ msgstr ""
-#~ "`qteasy` fournit un grand nombre "
-#~ "d'objets `DataType` prédéfinis intégrés, et"
-#~ " les utilisateurs peuvent également "
-#~ "personnaliser les objets `DataType` en "
+#~ "`qteasy` fournit un grand nombre d'objets `DataType` prédéfinis intégrés, et"
+#~ " les utilisateurs peuvent également personnaliser les objets `DataType` en "
 #~ "fonction de leurs propres besoins."
 
 #~ msgid "举一个简单的例子，假设我们需要获取股票的后复权价格，可以直接使用内置的`DataType`: `close|b`对象，如下所示："
 #~ msgstr ""
-#~ "Pour un exemple simple, supposons que"
-#~ " nous ayons besoin d’obtenir le prix"
-#~ " ajusté d’une action après un "
-#~ "fractionnement d’actions ou des dividendes."
-#~ " Nous pouvons utiliser directement l'objet"
-#~ " intégré `DataType`: `close|b`, comme "
-#~ "indiqué ci-dessous :"
+#~ "Pour un exemple simple, supposons que nous ayons besoin d’obtenir le prix "
+#~ "ajusté d’une action après un fractionnement d’actions ou des dividendes. "
+#~ "Nous pouvons utiliser directement l'objet intégré `DataType`: `close|b`, "
+#~ "comme indiqué ci-dessous :"
 
 #~ msgid "所有 DataType 清单（罗列并简短介绍）"
 #~ msgstr "Liste de tous les types de données (avec de brèves descriptions)"
 
 #~ msgid ""
 #~ "qteasy 2.0 内置了大量 DataType，每种数据类型由 "
-#~ "**name**（名称）、**freq**（频率）、**asset_type**（资产类型）唯一确定，并对应到具体数据表及列或计算方式。完整清单可通过"
-#~ " ``qteasy.datatypes.get_dtype_map()`` 获取，返回的 DataFrame"
-#~ " 索引为 (dtype, freq, asset_type)，列包含 "
-#~ "description（用途描述）、acquisition_type（获取方式）等。"
+#~ "**name**（名称）、**freq**（频率）、**asset_type**（资产类型）唯一确定，并对应到具体数据表及列或计算方式。完整清单可通过 "
+#~ "``qteasy.datatypes.get_dtype_map()`` 获取，返回的 DataFrame 索引为 (dtype, freq, "
+#~ "asset_type)，列包含 description（用途描述）、acquisition_type（获取方式）等。"
 #~ msgstr ""
-#~ "Qteasy 2.0 inclut un grand nombre "
-#~ "de DataTypes intégrés. Chaque type de"
-#~ " données est identifié de manière "
-#~ "unique par **name**, **freq** et "
-#~ "**asset_type**, qui correspondent à une "
-#~ "table et une colonne de données "
-#~ "spécifiques ou à une méthode de "
-#~ "calcul. Une liste complète peut être "
-#~ "obtenue en utilisant "
-#~ "`qteasy.datatypes.get_dtype_map()`, qui renvoie un"
-#~ " DataFrame avec des indices (dtype, "
-#~ "freq, Asset_type) et des colonnes "
-#~ "comprenant la description (description de "
-#~ "l'objectif), l'acquisition_type (méthode "
+#~ "Qteasy 2.0 inclut un grand nombre de DataTypes intégrés. Chaque type de "
+#~ "données est identifié de manière unique par **name**, **freq** et "
+#~ "**asset_type**, qui correspondent à une table et une colonne de données "
+#~ "spécifiques ou à une méthode de calcul. Une liste complète peut être obtenue"
+#~ " en utilisant `qteasy.datatypes.get_dtype_map()`, qui renvoie un DataFrame "
+#~ "avec des indices (dtype, freq, Asset_type) et des colonnes comprenant la "
+#~ "description (description de l'objectif), l'acquisition_type (méthode "
 #~ "d'acquisition), etc."
 
 #~ msgid "获取完整清单"
@@ -1042,9 +1244,8 @@ msgstr ""
 
 #~ msgid "股票代码、名称、行业等基本信息"
 #~ msgstr ""
-#~ "Informations de base telles que le "
-#~ "code de stock, le nom et le "
-#~ "secteur d'activité."
+#~ "Informations de base telles que le code de stock, le nom et le secteur "
+#~ "d'activité."
 
 #~ msgid "…"
 #~ msgstr "…"
@@ -1053,26 +1254,16 @@ msgstr ""
 #~ msgstr "Voir la liste complète dans la sortie de get_dtype_map()"
 
 #~ msgid ""
-#~ "上表中 ``freq`` 常用取值：``D`` 日线，``1min``/``5min`` "
-#~ "等为分钟线，``None`` 表示与频率无关（如基本信息）。``asset_type``：``E`` "
-#~ "股票，``IDX`` 指数，``FD`` 基金，``None`` "
-#~ "表示不限定资产。每种类型的详细说明、对应数据表及列见 ``get_dtype_map()`` 返回的 "
-#~ "``description`` 与 ``kwargs``。"
+#~ "上表中 ``freq`` 常用取值：``D`` 日线，``1min``/``5min`` 等为分钟线，``None`` "
+#~ "表示与频率无关（如基本信息）。``asset_type``：``E`` 股票，``IDX`` 指数，``FD`` 基金，``None`` "
+#~ "表示不限定资产。每种类型的详细说明、对应数据表及列见 ``get_dtype_map()`` 返回的 ``description`` 与 "
+#~ "``kwargs``。"
 #~ msgstr ""
-#~ "Dans le tableau ci-dessus, les "
-#~ "valeurs courantes pour `freq` sont : "
-#~ "`D` pour les graphiques quotidiens, "
-#~ "`1min`/`5min` pour les graphiques en "
-#~ "minutes et `None` pour les graphiques"
-#~ " sans rapport avec la fréquence (par"
-#~ " exemple, informations de base). "
-#~ "`asset_type` : `E` pour les actions, "
-#~ "`IDX` pour les indices, `FD` pour "
-#~ "les fonds et `None` pour les "
-#~ "graphiques sans restrictions d'actifs. Pour"
-#~ " des descriptions détaillées, les tableaux"
-#~ " de données correspondants et les "
-#~ "colonnes pour chaque type, voir les "
-#~ "`description` et `kwargs` renvoyés par "
-#~ "`get_dtype_map()`."
-
+#~ "Dans le tableau ci-dessus, les valeurs courantes pour `freq` sont : `D` pour"
+#~ " les graphiques quotidiens, `1min`/`5min` pour les graphiques en minutes et "
+#~ "`None` pour les graphiques sans rapport avec la fréquence (par exemple, "
+#~ "informations de base). `asset_type` : `E` pour les actions, `IDX` pour les "
+#~ "indices, `FD` pour les fonds et `None` pour les graphiques sans restrictions"
+#~ " d'actifs. Pour des descriptions détaillées, les tableaux de données "
+#~ "correspondants et les colonnes pour chaque type, voir les `description` et "
+#~ "`kwargs` renvoyés par `get_dtype_map()`."

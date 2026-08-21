@@ -35,7 +35,6 @@ msgid "创建日期: 2019, July, 16"
 msgstr "作成日：2019年7月16日"
 
 #: ../../source/about.md:7
-#, fuzzy
 msgid "最新版本: `2.6.4`"
 msgstr "最新バージョン: `2.5.1`"
 

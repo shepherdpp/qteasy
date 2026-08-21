@@ -365,7 +365,6 @@ msgid "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
 msgstr "Ampliar el corredor: ``live_trading/4-broker-adapter-and-integration.md``"
 
 #: ../../source/api/api_reference.rst:51
-#, fuzzy
 msgid ""
 "XtQuant/MiniQMT 契约 v1（英文）：``live_trading/4a-xtquant-broker-adapter-"
 "contract-v1.md``"

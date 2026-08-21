@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: ja\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/02-data-layer.md:1
@@ -66,23 +66,23 @@ msgstr ""
 #: ../../source/design/02-data-layer.md:16
 msgid "**多引擎支持**：可配置为 file（csv/hdf/fth）或 db（mysql 等），满足不同部署需求。"
 msgstr ""
-"**マルチエンジンのサポート**: さまざまな導入ニーズに合わせて、ファイル (csv/hdf/fth) またはデータベース (MySQL など)"
-" として構成できます。"
+"**マルチエンジンのサポート**: さまざまな導入ニーズに合わせて、ファイル (csv/hdf/fth) またはデータベース (MySQL など) "
+"として構成できます。"
 
 #: ../../source/design/02-data-layer.md:17
 msgid ""
-"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 "
-"DataSource。"
+"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 DataSource。"
 msgstr ""
 "**積極的にデータを取得しません**: DataSource "
 "は、ローカルに既に存在するデータの読み取りと書き込みのみを担当します。ネットワークからの取得と更新は、ユーザーまたはスケジュールされたタスクによってデータ"
 " インターフェイスを呼び出し、DataSource に書き込まれます。"
 
 #: ../../source/design/02-data-layer.md:19
-msgid "因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
+msgid ""
+"因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
 msgstr ""
-"したがって、データ層の設計では「フェッチ」と「ストレージ」が分離されています。フェッチから取得されたデータはクリーニング後に DataSource"
-" に書き込まれ、戦略とバックテストは DataSource にすでに存在するデータのみを消費します。"
+"したがって、データ層の設計では「フェッチ」と「ストレージ」が分離されています。フェッチから取得されたデータはクリーニング後に DataSource "
+"に書き込まれ、戦略とバックテストは DataSource にすでに存在するデータのみを消費します。"
 
 #: ../../source/design/02-data-layer.md:21
 msgid "3. 数据表"
@@ -100,8 +100,8 @@ msgstr ""
 #: ../../source/design/02-data-layer.md:24
 msgid ""
 "**表结构与 DataType 的对应关系**：一种“可被策略引用的信息”往往对应某张表的某列（或若干列经计算得到）。DataType 的 "
-"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id**"
-" 声明需求，无需关心具体表名或列名。"
+"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id** "
+"声明需求，无需关心具体表名或列名。"
 msgstr ""
 "**テーブル スキーマと DataType** 間のマッピング: 「戦略が参照できる情報」は、多くの場合、テーブル内の列 (または計算後の 1 "
 "つ以上の列) に対応します。 DataType の **name** (および頻度、asset_type) からデータ "
@@ -124,7 +124,7 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/design/02-data-layer.md
 msgid "形状"
@@ -140,7 +140,7 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`history`"
-msgstr ""
+msgstr "`history`"
 
 #: ../../source/design/02-data-layer.md
 msgid "时间 × 标的"
@@ -152,11 +152,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_history_data` / `get_kline`"
-msgstr ""
+msgstr "`get_history_data` / `get_kline`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`reference`"
-msgstr ""
+msgstr "`reference`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅时间"
@@ -168,11 +168,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_reference_data`"
-msgstr ""
+msgstr "`get_reference_data`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`static`"
-msgstr ""
+msgstr "`static`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅标的"
@@ -180,11 +180,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`industry`、`list_date`"
-msgstr ""
+msgstr "`industry`、`list_date`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_static_data`"
-msgstr ""
+msgstr "`get_static_data`"
 
 #: ../../source/design/02-data-layer.md:38
 msgid ""
@@ -194,7 +194,6 @@ msgid ""
 msgstr ""
 
 #: ../../source/design/02-data-layer.md:40
-#, fuzzy
 msgid "4.2 name、freq、asset_type 与 dtype_id"
 msgstr "4.1 name、freq、asset_type、および dtype_id"
 
@@ -233,13 +232,13 @@ msgstr "4.2 組み込みの DataType とデータ テーブル/列間のマッ�
 #, fuzzy
 msgid ""
 "系统内置大量 "
-"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息"
-" ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
+"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
+"ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
 "システムには、大規模な組み込み DataType セットが付属しており、それぞれが異なるデータ "
-"テーブルの列または派生列にマップされます。特定のテーブル名、列名、およびそれらの取得方法については、*財務履歴データのダウンロードと管理* および"
-" API ドキュメントの「データ型とデータ テーブル」ドキュメントを参照してください。このシリーズでは、**戦略は DataType "
-"(dtype_id) 経由でのみデータを参照し、テーブル スキーマに直接依存しない** "
+"テーブルの列または派生列にマップされます。特定のテーブル名、列名、およびそれらの取得方法については、*財務履歴データのダウンロードと管理* および "
+"API ドキュメントの「データ型とデータ テーブル」ドキュメントを参照してください。このシリーズでは、**戦略は DataType (dtype_id)"
+" 経由でのみデータを参照し、テーブル スキーマに直接依存しない** "
 "ことのみを強調します。こうすることで、スキーマが進化したときに、戦略コードを変更することなく、マッピングを調整するだけで済みます。"
 
 #: ../../source/design/02-data-layer.md:51
@@ -273,13 +272,10 @@ msgstr ""
 #~ msgstr "**freq**: データテーブルの時間粒度またはリサンプリング方法に関連するデータ周波数 (例: d/w/m/q)。"
 
 #~ msgid ""
-#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与"
-#~ " DataType 一一对应，便于维护与扩展。"
+#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。"
 #~ msgstr ""
-#~ "**統合インターフェイス**: すべての戦略は、`get_data(dtype_id)` "
-#~ "を介してデータを取得します。各 dtype_id は DataType と 1"
-#~ " 対 1 に対応するため、メンテナンスと拡張が容易になります。"
+#~ "**統合インターフェイス**: すべての戦略は、`get_data(dtype_id)` を介してデータを取得します。各 dtype_id は "
+#~ "DataType と 1 対 1 に対応するため、メンテナンスと拡張が容易になります。"
 
 #~ msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
 #~ msgstr "データ構成と API の使用方法の詳細については、*財務履歴データのダウンロードと管理* および API リファレンスを参照してください。"
-

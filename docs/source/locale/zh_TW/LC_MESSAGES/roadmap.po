@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/roadmap.rst:2
@@ -119,6 +119,8 @@ msgid ""
 "✅ 从 ``akshare`` 获取历史与实时数据（25 张表 + 实时，详见数据通道文档与 "
 "``tests/akshare_data_test_checklist.md``）"
 msgstr ""
+"✅ 從 ``akshare`` 獲取歷史與實時資料（25 張表 + 實時，詳見資料通道文件與 "
+"``tests/akshare_data_test_checklist.md``）"
 
 #: ../../source/roadmap.rst:38
 msgid "⬜ 从 ``baostock`` 获取数据"
@@ -322,14 +324,15 @@ msgstr "⬜ 產生交易信號後通過郵件/微信等方式發送通知"
 
 #: ../../source/roadmap.rst:109
 msgid "可选扩展"
-msgstr ""
+msgstr "可選擴展"
 
 #: ../../source/roadmap.rst:111
 msgid ""
 "✅ AI 自然语言编排外壳（**独立项目** `qteasy-ai <https://github.com/shepherdpp/qteasy-"
 "ai>`_，PyPI：``qteasy-ai``；依赖 qteasy 内核 API，不随 qteasy 版本发布）"
 msgstr ""
+"✅ AI 自然語言編排外殼（**獨立項目** `qteasy-ai <https://github.com/shepherdpp/qteasy-"
+"ai>`_，PyPI：``qteasy-ai``；依賴 qteasy 內核 API，不隨 qteasy 版本發佈）"
 
 #~ msgid "⬜ 从 ``akshare`` 获取数据"
 #~ msgstr "⬜ 從 ``akshare`` 獲取數據"
-

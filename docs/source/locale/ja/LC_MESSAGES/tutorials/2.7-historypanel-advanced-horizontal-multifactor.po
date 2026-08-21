@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:1
@@ -30,29 +30,29 @@ msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:5
 msgid ""
-"**关于本篇**：在**多只股票**上，按**同一交易日**的截面条件筛选标的，再聚合成动态篮子并与基准对比——这是 `HistoryPanel`"
-" 典型的**横截面选股研究**场景。"
+"**关于本篇**：在**多只股票**上，按**同一交易日**的截面条件筛选标的，再聚合成动态篮子并与基准对比——这是 `HistoryPanel` "
+"典型的**横截面选股研究**场景。"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:7
-#, fuzzy
 msgid ""
-"**研究链路**：多因子（横向）→ 截面 bool 条件 → ``where`` 掩码 → ``portfolio`` + benchmark →"
-" ``normalize`` / ``cum_return`` + CAGR → ``plot(highlight)`` 解释。"
+"**研究链路**：多因子（横向）→ 截面 bool 条件 → ``where`` 掩码 → ``portfolio`` + benchmark → "
+"``normalize`` / ``cum_return`` + CAGR → ``plot(highlight)`` 解释。"
 msgstr ""
-"このチュートリアルは、「最初に機能させてから強化する」というリズムに従って、このパイプラインを再利用可能な研究ワークフローに構築します: "
-"**多要素 (断面) -> 断面条件 -> `where` マスク -> `portfolio + benchmark` -> "
+"このチュートリアルは、「最初に機能させてから強化する」というリズムに従って、このパイプラインを再利用可能な研究ワークフローに構築します: **多要素 "
+"(断面) -> 断面条件 -> `where` マスク -> `portfolio + benchmark` -> "
 "`normalize/cum_return + CAGR` -> `plot/highlight` の説明。**"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:9
 msgid ""
 "**注**：``portfolio`` / ``cum_return`` 均为**研究向**粗聚合，**不含**完整回测语义；迁移至 "
-"``Operator`` 见 [2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径)。"
+"``Operator`` 见 [2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-"
+"研究到-strategy--operator迁移路径)。"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:11
-msgid "做横截面选股时，我们常遇到一种「很真实但很别扭」的情况：手里有一堆股票、也知道要用多个指标筛选（PE、PB、动量、波动率……），但写成代码后容易出现形状对不上、条件广播错了、筛出来的股票不稳定——最后只剩一条组合曲线，却说不清到底是哪几个条件在驱动收益差异。"
+msgid ""
+"做横截面选股时，我们常遇到一种「很真实但很别扭」的情况：手里有一堆股票、也知道要用多个指标筛选（PE、PB、动量、波动率……），但写成代码后容易出现形状对不上、条件广播错了、筛出来的股票不稳定——最后只剩一条组合曲线，却说不清到底是哪几个条件在驱动收益差异。"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:13
@@ -64,7 +64,8 @@ msgid "数据检查——跑通横截面筛选最小闭环"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:19
-msgid "我们先不追求因子多、也不追求参数精细；最小可跑只要做到两件事：多只股票能跑通横向筛选，且能画出组合曲线并与 ``000300.SH`` 对比。"
+msgid ""
+"我们先不追求因子多、也不追求参数精细；最小可跑只要做到两件事：多只股票能跑通横向筛选，且能画出组合曲线并与 ``000300.SH`` 对比。"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:43
@@ -91,8 +92,8 @@ msgstr ""
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:49
 #, fuzzy
 msgid ""
-"**选股是截面决策**：横向选股不是“对每只股票单独下判断”，而是“同一天从一堆股票里挑一批”。这意味着您的持仓集合每天都可能变：今天 10 "
-"只，明天 3 只，后天可能 0 只。如果您不把“每天入选篮子”显式固化下来（例如用 mask），您根本没法复盘“那天到底选了谁”。"
+"**选股是截面决策**：横向选股不是“对每只股票单独下判断”，而是“同一天从一堆股票里挑一批”。这意味着您的持仓集合每天都可能变：今天 10 只，明天 "
+"3 只，后天可能 0 只。如果您不把“每天入选篮子”显式固化下来（例如用 mask），您根本没法复盘“那天到底选了谁”。"
 msgstr ""
 "**銘柄選択は横断的な決定です**: "
 "横断的な選択とは、「各銘柄を個別に判断する」のではなく、「同じ日に多数の銘柄からサブセットを選択する」ことです。これは、保有株数が毎日変化する可能性があることを意味します。今日は"
@@ -109,7 +110,8 @@ msgstr ""
 "を参照として取り入れます。少なくとも、この画面はアルファを生み出しているのか、それとも広範な市場に従っているだけなのかという、最も重要な質問の答えになります。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:51
-msgid "**有收益没解释**：横向筛选很容易“只剩一条曲线”。但真正的研究需要解释：收益差异最大的那几天，是不是恰好发生了风格切换？是不是筛选条件把我们带到了高波动/高回撤的角落？能不能快速定位到“关键分化段”，再决定下一步该加强哪条因子？"
+msgid ""
+"**有收益没解释**：横向筛选很容易“只剩一条曲线”。但真正的研究需要解释：收益差异最大的那几天，是不是恰好发生了风格切换？是不是筛选条件把我们带到了高波动/高回撤的角落？能不能快速定位到“关键分化段”，再决定下一步该加强哪条因子？"
 msgstr ""
 "**説明なしの返品**: 断面スクリーニングでは、「カーブが 1 "
 "つだけ残っている」状態になることがよくあります。しかし、実際の研究には説明が必要です。リターンの差が最も大きかった日に、たまたまスタイルのローテーションが発生したのでしょうか?審査基準により、ボラティリティやドローダウンが大きくなるという窮地に追い込まれたのでしょうか？"
@@ -134,9 +136,8 @@ msgid ""
 "**一张组合曲线对比图**：`LONG / SHORT / 000300.SH`（或至少 `LONG / 000300.SH`）统一从 1.0 "
 "起点归一化，肉眼就能看出筛选规则在样本期内是否有区分度。"
 msgstr ""
-"**ポートフォリオ曲線比較表**: `LONG / SHORT / 000300.SH` (または少なくとも `LONG / "
-"000300.SH`) は 1.0 から始まるように正規化されているため、サンプル期間内でスクリーニング "
-"ルールに識別力があるかどうかが一目でわかります。"
+"**ポートフォリオ曲線比較表**: `LONG / SHORT / 000300.SH` (または少なくとも `LONG / 000300.SH`) は"
+" 1.0 から始まるように正規化されているため、サンプル期間内でスクリーニング ルールに識別力があるかどうかが一目でわかります。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:62
 msgid "**一张 CAGR 摘要表**：把累计收益折算成年化口径，方便不同区间横向比较。"
@@ -223,7 +224,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:95
 #, fuzzy
-msgid "所以我们建议先把样例控制在 30~80 只以内（实际您可以替换成自己的股票池）。   本节只做一件事：把数据拿到手并确认 `close` 存在。"
+msgid ""
+"所以我们建议先把样例控制在 30~80 只以内（实际您可以替换成自己的股票池）。   本节只做一件事：把数据拿到手并确认 `close` 存在。"
 msgstr ""
 "したがって、最初はサンプルを 30 ～ 80 株以内に保つことをお勧めします (実際には、独自の株プールに置き換えることができます)。   "
 "このセクションで行うことは 1 つだけです。データを取得し、`close` が存在することを確認することです。"
@@ -263,7 +265,8 @@ msgid "多因子构造（两条路线并列）：固定阈值代理版 + 可选�
 msgstr "3. 多要素構築 (2 つのトラックを並列): 固定しきい値プロキシ バージョン + オプションの真の評価バージョン"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:144
-msgid "这一步我们要得到的是：**能够直接组合成筛选条件的因子矩阵**。   在“横向截面”里，我们希望每一个因子最终都能落到同一个形状：`(M, L)`。"
+msgid ""
+"这一步我们要得到的是：**能够直接组合成筛选条件的因子矩阵**。   在“横向截面”里，我们希望每一个因子最终都能落到同一个形状：`(M, L)`。"
 msgstr ""
 "このステップで必要なのは、**スクリーニング条件に直接組み合わせることができる因子行列**です。   「断面図」では、各要素が最終的に同じ形状 "
 "(`(M, L)`) に到達するようにします。"
@@ -346,7 +349,8 @@ msgstr "ここで「研究慣例における誠実さ」の 2 つの点を強調
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:177
 msgid "这些都是**代理**，不是财务意义上的“真估值”。它们的价值在于：**人人都能从行情数据派生出来**，并且在某些风格下确实能形成分层效果。"
-msgstr "これらはすべて**代理**であり、財務的な意味での「真の評価」ではありません。その価値は次のとおりです。**誰もが市場データからそれらを導き出すことができ**、特定のスタイルの下では実際に層化効果を生み出すことができます。"
+msgstr ""
+"これらはすべて**代理**であり、財務的な意味での「真の評価」ではありません。その価値は次のとおりです。**誰もが市場データからそれらを導き出すことができ**、特定のスタイルの下では実際に層化効果を生み出すことができます。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:178
 msgid ""
@@ -416,8 +420,7 @@ msgstr "最終的に `(M, L)` `cond_long/cond_short` になる限り、残りの
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:262
 #, fuzzy
 msgid ""
-"如果您发现自己本地根本没有这些字段，也没关系：这正是我们把“代理因子版”放在正文主线的原因。路线 B "
-"作为增强分支存在，但不依赖它也能完整跑通研究闭环。"
+"如果您发现自己本地根本没有这些字段，也没关系：这正是我们把“代理因子版”放在正文主线的原因。路线 B 作为增强分支存在，但不依赖它也能完整跑通研究闭环。"
 msgstr ""
 "ローカル データにこれらのフィールドが単に含まれていないことがわかったとしても、それは問題ありません。まさにそれが、メインのナラティブ "
 "パスに「プロキシ要素バージョン」を配置する理由です。ルート B は拡張ブランチとして存在しますが、ルート B に依存せずに完全なリサーチ "
@@ -465,7 +468,8 @@ msgstr "`portfolio` は取引執行ではなく、大まかな調査集計用で
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:301
 msgid "`benchmark_output='tag_along'` 会把基准行追加进输出，便于同图对比"
-msgstr "`benchmark_output='tag_along'` は出力にベンチマーク行を追加し、同じチャート上で簡単に比較できるようにします。"
+msgstr ""
+"`benchmark_output='tag_along'` は出力にベンチマーク行を追加し、同じチャート上で簡単に比較できるようにします。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:303
 #, fuzzy
@@ -485,7 +489,8 @@ msgstr "6. `normalize / cum_return` + CAGR: 比較可能な年間概要表を提
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:341
 msgid "我们既想“看曲线”，也想“有一个能复用的数字总结”。   所以我们做两件事："
-msgstr "私たちは、「曲線を確認する」ことと、「再利用可能な数値の概要を取得する」ことの両方を望んでいます。   そこで、次の 2 つのことを行います。"
+msgstr ""
+"私たちは、「曲線を確認する」ことと、「再利用可能な数値の概要を取得する」ことの両方を望んでいます。   そこで、次の 2 つのことを行います。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:344
 msgid "`normalize`：统一起点，便于目视"
@@ -515,7 +520,8 @@ msgstr "7. 視覚化と解釈: `plot(highlight=...)` を使用して「重要な
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:402
 msgid "横向截面研究做到最后，最需要解释的一类问题是：   **long 和 benchmark 差异最大的一段，到底发生了什么？**"
-msgstr "横断的な調査を最後まで行うと、最も説明が必要な質問は次のとおりです。**ロングとベンチマークが最も乖離しているストレッチで、正確に何が起こったのか?**"
+msgstr ""
+"横断的な調査を最後まで行うと、最も説明が必要な質問は次のとおりです。**ロングとベンチマークが最も乖離しているストレッチで、正確に何が起こったのか?**"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:405
 #, fuzzy
@@ -529,13 +535,13 @@ msgid ""
 "highlight 支持 `'max'/'min'` 的简写，也支持 1D bool 条件。   "
 "为了让教程稳定，我们先演示简写版（最不容易踩坑），后续再给 1D bool 的写法。"
 msgstr ""
-"ハイライトは短縮表現 `'max'/'min'` をサポートし、1D ブール条件もサポートします。   "
-"チュートリアルの安定性を保つために、最初に短縮版 (つまずく可能性が最も低い) を示し、その後 1D bool 形式を提供します。"
+"ハイライトは短縮表現 `'max'/'min'` をサポートし、1D ブール条件もサポートします。   チュートリアルの安定性を保つために、最初に短縮版"
+" (つまずく可能性が最も低い) を示し、その後 1D bool 形式を提供します。"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:419
 msgid ""
-"预期效果：图上会把 LONG 组合曲线的最大点（或某类图表定义的最大点）标出来。   在横向研究里，我们通常把这当成一个“提醒”：最大点附近往往是"
-" long 相对市场最顺风的一段，值得回头看当时筛选条件是否把我们带进了某种风格（例如强趋势、低波动等）。"
+"预期效果：图上会把 LONG 组合曲线的最大点（或某类图表定义的最大点）标出来。   在横向研究里，我们通常把这当成一个“提醒”：最大点附近往往是 "
+"long 相对市场最顺风的一段，值得回头看当时筛选条件是否把我们带进了某种风格（例如强趋势、低波动等）。"
 msgstr ""
 "期待される結果: チャートは、LONG ポートフォリオ曲線の最大点 (または、特定のチャートで定義された最大点) をマークします。   "
 "クロスセクション調査では通常、これを「リマインダー」として扱います。最大点付近は、長い間市場に対して最も強い追い風が吹いていた時期であることが多く、スクリーニング基準が特定のスタイル（強いトレンド、低いボラティリティなど）に導いたかどうかを振り返る価値があります。"
@@ -546,8 +552,8 @@ msgid ""
 "如果您想更贴近“long vs benchmark 的分化”，可以用一个更实用的做法：先算超额曲线（long 与 benchmark "
 "的差值），再把超额曲线的最大点位置提出来，做成 1D bool 的 highlight 条件。（这里作为可选增强，不强制您在正文主线展开。）"
 msgstr ""
-"「ロングとベンチマークの乖離」をより厳密に一致させたい場合は、より実用的なアプローチを使用できます。まず超過収益曲線 (ロングとベンチマークの差)"
-" を計算し、次にその超過曲線上の最大点の位置を抽出して、1D ブール ハイライト条件に変換します。 "
+"「ロングとベンチマークの乖離」をより厳密に一致させたい場合は、より実用的なアプローチを使用できます。まず超過収益曲線 (ロングとベンチマークの差) "
+"を計算し、次にその超過曲線上の最大点の位置を抽出して、1D ブール ハイライト条件に変換します。 "
 "(これはオプションの拡張機能であり、メインの物語で拡張する必要はありません。)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:426
@@ -582,8 +588,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:596
 msgid ""
-"读到这里，您应已跑通「横截面多因子选股」的研究闭环：代理因子（或可选估值因子）→ 截面条件 → ``where`` → ``portfolio``"
-" + benchmark → CAGR → ``plot(highlight)``。"
+"读到这里，您应已跑通「横截面多因子选股」的研究闭环：代理因子（或可选估值因子）→ 截面条件 → ``where`` → ``portfolio`` + "
+"benchmark → CAGR → ``plot(highlight)``。"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:598
@@ -599,14 +605,14 @@ msgid "**纵向择时**：[2.6 纵向择时因子](2.6-historypanel-advanced-ver
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:603
-msgid "**事件型形态**：[2.8 K 线形态因子](2.8-historypanel-advanced-event-kline-pattern.md)"
+msgid ""
+"**事件型形态**：[2.8 K 线形态因子](2.8-historypanel-advanced-event-kline-pattern.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:604
 msgid ""
-"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径) 或 [教程 3](3"
-"-start-first-strategy.md)"
+"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-研究到-"
+"strategy--operator迁移路径) 或 [教程 3](3-start-first-strategy.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:606
@@ -636,9 +642,8 @@ msgid "您将看到什么"
 msgstr "何が見えるか"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
-#, fuzzy
 msgid "`3.2_minimal_run.png`"
-msgstr "`img/3.2_minimal_run.png`"
+msgstr "`3.2_minimal_run.png`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
 msgid "§0"
@@ -649,9 +654,8 @@ msgid "多 shares 的最小可跑出图"
 msgstr "より多くのシェアを備えた最小限の実行可能なチャート"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
-#, fuzzy
 msgid "`3.2_pf_compare.png`"
-msgstr "`img/3.2_pf_compare.png`"
+msgstr "`3.2_pf_compare.png`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
 msgid "§0.5 或 §6"
@@ -662,9 +666,8 @@ msgid "`LONG/SHORT/000300.SH` 归一化曲线对比"
 msgstr "`LONG/SHORT/000300.SH`の正規化曲線の比較"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
-#, fuzzy
 msgid "`3.2_highlight_key_day.png`"
-msgstr "`img/3.2_highlight_key_day.png`"
+msgstr "`3.2_highlight_key_day.png`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
 msgid "§7"
@@ -682,11 +685,12 @@ msgstr "「キーポイント」（最大ポイントなど）を強調表示す
 
 #~ msgid "我们手里明明有一堆股票（几十只、上百只），也知道要用多个指标做筛选（PE、PB、EBITDA、动量、波动率……）"
 #~ msgstr ""
-#~ "私たちは明らかに多数の銘柄 (数十、数百) を保有しており、スクリーニングには複数の指標 "
-#~ "(PE、PB、EBITDA、モメンタム、ボラティリティなど) を使用する必要があることもわかっています。"
+#~ "私たちは明らかに多数の銘柄 (数十、数百) を保有しており、スクリーニングには複数の指標 (PE、PB、EBITDA、モメンタム、ボラティリティなど) "
+#~ "を使用する必要があることもわかっています。"
 
 #~ msgid "但一旦把条件写成代码，很容易出现“形状对不上”“条件广播错了”“筛出来的股票不稳定”"
-#~ msgstr "しかし、条件をコードに記述すると、「形状が一致しない」「条件ブロードキャストが間違っている」「スクリーニングされた銘柄が不安定」という問題が発生しやすくなります。"
+#~ msgstr ""
+#~ "しかし、条件をコードに記述すると、「形状が一致しない」「条件ブロードキャストが間違っている」「スクリーニングされた銘柄が不安定」という問題が発生しやすくなります。"
 
 #~ msgid "最后得到一条组合曲线，却说不清楚：到底是哪几个条件在驱动收益差异"
 #~ msgstr "最終的には 1 つのポートフォリオ曲線が得られますが、どの条件が実際にリターンの差を引き起こしているのかを明確に説明することはできません。"
@@ -696,13 +700,12 @@ msgstr "「キーポイント」（最大ポイントなど）を強調表示す
 
 #~ msgid "0. 开场：先跑通一个“横向筛选 -> 组合曲线对比”的最小版本"
 #~ msgstr ""
-#~ "0. オープニング: まず、エンドツーエンドで実行される「横断的スクリーニング -> "
-#~ "ポートフォリオ曲線比較」の最小限のバージョンを取得します。"
+#~ "0. オープニング: まず、エンドツーエンドで実行される「横断的スクリーニング -> ポートフォリオ曲線比較」の最小限のバージョンを取得します。"
 
 #~ msgid "我们先不追求因子多、也不追求参数精细。   最小可跑证明只要做到两件事："
 #~ msgstr ""
-#~ "現時点では、多くの要素を追求したり、パラメータを微調整したりするつもりはありません。   最小限の実行可能な証明では、次の"
-#~ " 2 つのことだけを実行する必要があります。"
+#~ "現時点では、多くの要素を追求したり、パラメータを微調整したりするつもりはありません。   最小限の実行可能な証明では、次の 2 "
+#~ "つのことだけを実行する必要があります。"
 
 #~ msgid "多 shares 能跑通横向筛选；"
 #~ msgstr "複数の株式を使用すると、横断的なスクリーニングを実行できます。"
@@ -765,16 +768,14 @@ msgstr "「キーポイント」（最大ポイントなど）を強調表示す
 #~ msgstr "9. 概要と限界"
 
 #~ msgid ""
-#~ "到这里，我们已经把“横向截面多因子选股”的研究闭环跑通了。   需要再次强调：`portfolio/cum_return`"
-#~ " 是研究向粗聚合，不含真实交易执行语义。   如果你要把这个筛选逻辑迁移到策略回测，建议把条件/因子输出成策略信号，并交给"
-#~ " `Operator/Backtester` 去处理交易层细节。"
+#~ "到这里，我们已经把“横向截面多因子选股”的研究闭环跑通了。   需要再次强调：`portfolio/cum_return` "
+#~ "是研究向粗聚合，不含真实交易执行语义。   如果你要把这个筛选逻辑迁移到策略回测，建议把条件/因子输出成策略信号，并交给 "
+#~ "`Operator/Backtester` 去处理交易层细节。"
 #~ msgstr ""
 #~ "この時点で、「横断的な多要素銘柄選択」のリサーチループが完了しました。   もう一度強調する必要があります: "
-#~ "`portfolio/cum_return` は研究指向の粗い集計であり、実際の取引実行セマンティクスは含まれていません。"
-#~ "   このスクリーニング "
+#~ "`portfolio/cum_return` は研究指向の粗い集計であり、実際の取引実行セマンティクスは含まれていません。   このスクリーニング "
 #~ "ロジックを戦略バックテストに移行する場合は、条件/要因を戦略シグナルとして出力し、取引レイヤーの詳細を処理するために "
 #~ "`Operator/Backtester` に渡すことをお勧めします。"
 
 #~ msgid "插图"
 #~ msgstr "図"
-

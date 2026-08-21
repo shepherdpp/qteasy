@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/api_reference.rst:2
@@ -32,9 +32,9 @@ msgstr "顯示qt當前的配置變量，"
 
 #: ../../source/api/api_reference.rst of qteasy.configure.configuration
 #: qteasy.configure.configure qteasy.configure.get_config
-#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.set_config
-#: qteasy.configure.update_start_up_setting
+#: qteasy.configure.get_configurations
+#: qteasy.configure.remove_start_up_setting qteasy.configure.reset_config
+#: qteasy.configure.set_config qteasy.configure.update_start_up_setting
 msgid "参数"
 msgstr "參數"
 
@@ -42,13 +42,13 @@ msgstr "參數"
 #: qteasy.configure.get_configurations:3
 msgid ""
 "需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名 "
-"可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名 以下两种方式等价： 'local_data_source,"
-" local_data_file_type, local_data_file_path' ['local_data_source', "
+"可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名 以下两种方式等价： 'local_data_source, "
+"local_data_file_type, local_data_file_path' ['local_data_source', "
 "'local_data_file_type', 'local_data_file_path']"
 msgstr ""
 "需要顯示的配置變量名稱，如果不給出任何名稱，則按level，up_to等方式顯示所有的匹配的變量名 "
-"可以以逗號分隔字符串的形式給出一個或多個變量名，也可以list形式給出一個或多個變量名 以下兩種方式等價： 'local_data_source,"
-" local_data_file_type, local_data_file_path' ['local_data_source', "
+"可以以逗號分隔字符串的形式給出一個或多個變量名，也可以list形式給出一個或多個變量名 以下兩種方式等價： 'local_data_source, "
+"local_data_file_type, local_data_file_path' ['local_data_source', "
 "'local_data_file_type', 'local_data_file_path']"
 
 #: of qteasy.configure.configuration:9 qteasy.configure.get_config:9
@@ -59,11 +59,11 @@ msgstr "需要顯示的配置變量的級別。 如果給出了config，則忽�
 #: of qteasy.configure.configuration:12 qteasy.configure.get_config:12
 #: qteasy.configure.get_configurations:12
 msgid ""
-"需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 "
-"会显示级别在0～2之间的所有配置变量 如果给出了config，则忽略此参数"
+"需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 会显示级别在0～2之间的所有配置变量 "
+"如果给出了config，则忽略此参数"
 msgstr ""
-"需要顯示的配置變量的級別上限，需要配合level設置。 例如，當level == 0, up_to == 2時 "
-"會顯示級別在0～2之間的所有配置變量 如果給出了config，則忽略此參數"
+"需要顯示的配置變量的級別上限，需要配合level設置。 例如，當level == 0, up_to == 2時 會顯示級別在0～2之間的所有配置變量 "
+"如果給出了config，則忽略此參數"
 
 #: of qteasy.configure.configuration:17 qteasy.configure.get_config:17
 #: qteasy.configure.get_configurations:17
@@ -77,9 +77,10 @@ msgstr "是否顯示完整說明資訊，如果True，會同時顯示配置變�
 
 #: ../../source/api/api_reference.rst of qteasy.configure.configuration
 #: qteasy.configure.configure qteasy.configure.get_config
-#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.set_config
-#: qteasy.configure.start_up_settings qteasy.configure.update_start_up_setting
+#: qteasy.configure.get_configurations
+#: qteasy.configure.remove_start_up_setting qteasy.configure.reset_config
+#: qteasy.configure.set_config qteasy.configure.start_up_settings
+#: qteasy.configure.update_start_up_setting
 msgid "返回类型"
 msgstr "返回類型"
 
@@ -229,8 +230,10 @@ msgid "将配置信息写入文件:"
 msgstr "將配置資訊寫入文件:"
 
 #: of qteasy.configure.save_config:1
-msgid "将config保存为一个文件 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()"
-msgstr "將config保存爲一個文件 尚未實現的功能：如果initial_config爲True，則將配置更新到初始化配置文件qteasy.cfg中()"
+msgid ""
+"将config保存为一个文件 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()"
+msgstr ""
+"將config保存爲一個文件 尚未實現的功能：如果initial_config爲True，則將配置更新到初始化配置文件qteasy.cfg中()"
 
 #: of qteasy.configure.save_config:4
 msgid "一个config对象或者包含配配置变量的dict，如果为None，则保存qt.QT_CONFIG"
@@ -246,12 +249,12 @@ msgstr "默認True，覆蓋重名文件，如果爲False，當保存的文件已
 
 #: of qteasy.configure.save_config:10
 msgid ""
-"保存配置变量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已经存在配置变量，则覆盖对应变量。 TODO: "
-"实现将配置变量写入 qteasy.cfg 初始配置文件的功能。 由于目前使用 pickle 写入对象为二进制文件，而 qteasy.cfg "
+"保存配置变量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已经存在配置变量，则覆盖对应变量。 TODO: 实现将配置变量写入 "
+"qteasy.cfg 初始配置文件的功能。 由于目前使用 pickle 写入对象为二进制文件，而 qteasy.cfg "
 "是文本文件，所以需要实现新的写入方式。"
 msgstr ""
-"保存配置變量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已經存在配置變量，則覆蓋對應變量。 TODO: "
-"實現將配置變量寫入 qteasy.cfg 初始配置文件的功能。 由於目前使用 pickle 寫入對象爲二進制文件，而 qteasy.cfg "
+"保存配置變量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已經存在配置變量，則覆蓋對應變量。 TODO: 實現將配置變量寫入 "
+"qteasy.cfg 初始配置文件的功能。 由於目前使用 pickle 寫入對象爲二進制文件，而 qteasy.cfg "
 "是文本文件，所以需要實現新的寫入方式。"
 
 #: of qteasy.configure.save_config:15
@@ -263,8 +266,10 @@ msgid "qteasy的所有配置变量"
 msgstr "qteasy的所有配置變量"
 
 #: ../../source/api/api_reference.rst:41
-msgid "下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。"
-msgstr "下面是qteasy的配置變量，可以通過qteasy.get_config()函數查看當前的配置資訊，也可以通過qteasy.configure()函數修改配置資訊。"
+msgid ""
+"下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。"
+msgstr ""
+"下面是qteasy的配置變量，可以通過qteasy.get_config()函數查看當前的配置資訊，也可以通過qteasy.configure()函數修改配置資訊。"
 
 #: ../../source/api/api_reference.rst:45
 msgid "关于 S1.3 完成后的模拟实盘文档入口（按使用目标）："
@@ -287,11 +292,12 @@ msgid "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
 msgstr "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
 
 #: ../../source/api/api_reference.rst:51
-#, fuzzy
 msgid ""
 "XtQuant/MiniQMT 契约 v1（英文）：``live_trading/4a-xtquant-broker-adapter-"
 "contract-v1.md``"
-msgstr "扩展 Broker：``live_trading/4-broker-adapter-and-integration.md``"
+msgstr ""
+"XtQuant/MiniQMT 契約 v1（英文）：``live_trading/4a-xtquant-broker-adapter-"
+"contract-v1.md``"
 
 #: ../../source/api/api_reference.rst:52
 msgid "排错复盘：``live_trading/5-artifacts-and-troubleshooting.md``"
@@ -361,7 +367,8 @@ msgstr "``mode``"
 msgid "0"
 msgstr "0"
 
-#: ../../source/api/api_reference.rst:73 ../../source/api/api_reference.rst:480
+#: ../../source/api/api_reference.rst:73
+#: ../../source/api/api_reference.rst:480
 #: ../../source/api/api_reference.rst:501
 #: ../../source/api/api_reference.rst:632
 #: ../../source/api/api_reference.rst:642
@@ -392,7 +399,8 @@ msgstr "3: 統計預測模式"
 msgid "``time_zone``"
 msgstr "``time_zone``"
 
-#: ../../source/api/api_reference.rst:80 ../../source/api/api_reference.rst:166
+#: ../../source/api/api_reference.rst:80
+#: ../../source/api/api_reference.rst:166
 #: ../../source/api/api_reference.rst:207
 #: ../../source/api/api_reference.rst:211
 #: ../../source/api/api_reference.rst:215
@@ -479,7 +487,8 @@ msgstr "etc."
 msgid "``asset_pool``"
 msgstr "``asset_pool``"
 
-#: ../../source/api/api_reference.rst:97 ../../source/api/api_reference.rst:317
+#: ../../source/api/api_reference.rst:97
+#: ../../source/api/api_reference.rst:317
 msgid "``000300.SH``"
 msgstr "``000300.SH``"
 
@@ -718,9 +727,8 @@ msgid "tushare  - 通过tushare获取实时价格(需要自行开通权限)"
 msgstr "tushare  - 通過tushare獲取實時價格(需要自行開通權限)"
 
 #: ../../source/api/api_reference.rst
-#, fuzzy
 msgid "akshare  - 通过AKShare获取实时价格(部分表已实现，详见数据通道文档)"
-msgstr "tushare  - 通過tushare獲取實時價格(需要自行開通權限)"
+msgstr "akshare  - 通過AKShare獲取實時價格(部分表已實現，詳見資料通道文件)"
 
 #: ../../source/api/api_reference.rst:156
 msgid "``live_price_acquire_freq``"
@@ -1190,12 +1198,16 @@ msgstr ""
 "的保留天數；默認 **3**。"
 
 #: ../../source/api/api_reference.rst
-msgid "在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。"
-msgstr "在 **進程加載 qteasy 模塊後** 對當前 ``trade_log_file_path`` 目錄執行一次按天清理（非每次回測寫文件前）。"
+msgid ""
+"在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。"
+msgstr ""
+"在 **進程加載 qteasy 模塊後** 對當前 ``trade_log_file_path`` 目錄執行一次按天清理（非每次回測寫文件前）。"
 
 #: ../../source/api/api_reference.rst
-msgid "设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。"
-msgstr "設爲 ``None`` 或 **小於等於 0** 可關閉自動刪除；需要時可調用 ``qt.rotate_trade_logs()`` 手動清理。"
+msgid ""
+"设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。"
+msgstr ""
+"設爲 ``None`` 或 **小於等於 0** 可關閉自動刪除；需要時可調用 ``qt.rotate_trade_logs()`` 手動清理。"
 
 #: ../../source/api/api_reference.rst:310
 msgid "``trade_log``"
@@ -2231,4 +2243,3 @@ msgstr "策略參數優化後輸出的最優參數數量"
 
 #~ msgid "akshare  - Not Implemented: 从akshare获取实时价格"
 #~ msgstr "akshare  - Not Implemented: 從akshare獲取實時價格"
-

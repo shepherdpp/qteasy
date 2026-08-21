@@ -3,99 +3,101 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: zh_TW\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
+"Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/_generated/composition.md:6
 msgid "指数成分与权重"
-msgstr ""
+msgstr "指數成分與權重"
 
 #: ../../source/references/datatypes/_generated/composition.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **1** 条。"
 msgstr ""
+"本分冊由 `docs/scripts/generate_datatype_catalog.py` 從 "
+"`qteasy.datatypes.get_dtype_map()` 按**業務類別**生成，共 **1** 條。"
 
 #: ../../source/references/datatypes/_generated/composition.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"請勿手改；更新內置類型後請重跑生成腳本。列含義與推薦讀法見 [清單入口](../index.md)。`acquisition_type` / "
+"`table_name` 僅供對照 refill。"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "name"
-msgstr ""
+msgstr "name"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "freq"
-msgstr ""
+msgstr "freq"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "asset_type"
-msgstr ""
+msgstr "asset_type"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "description"
-msgstr ""
+msgstr "description"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "usable_in"
-msgstr ""
+msgstr "usable_in"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "acquisition_type"
-msgstr ""
+msgstr "acquisition_type"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "table_name"
-msgstr ""
+msgstr "table_name"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "wt_idx|%"
-msgstr ""
+msgstr "wt_idx|%"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "m"
-msgstr ""
+msgstr "m"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "股票在指数中所占权重 - %"
-msgstr ""
+msgstr "股票在指數中所佔權重 - %"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "history"
-msgstr ""
+msgstr "history"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "history_panel,strategy,universe"
-msgstr ""
+msgstr "history_panel,strategy,universe"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "composition"
-msgstr ""
+msgstr "composition"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "index_weight"
-msgstr ""
-
+msgstr "index_weight"

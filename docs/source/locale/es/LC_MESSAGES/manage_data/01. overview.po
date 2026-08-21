@@ -206,7 +206,6 @@ msgid ""
 msgstr ""
 
 #: ../../source/manage_data/01. overview.md:49
-#, fuzzy
 msgid "**2.5. HistoryPanel**——多标的、多指标、时间对齐的三维容器（只吃 History）"
 msgstr ""
 "**2.5. HistoryPanel (Panel de datos históricos)**: un contenedor "

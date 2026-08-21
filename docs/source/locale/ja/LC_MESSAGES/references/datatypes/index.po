@@ -3,20 +3,19 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: ja\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/index.md:1
@@ -56,7 +55,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`name`"
-msgstr ""
+msgstr "`name`"
 
 #: ../../source/references/datatypes/index.md
 msgid "数据类型名称（宽匹配名，如 `close`、`pe`）"
@@ -64,7 +63,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`freq`"
-msgstr ""
+msgstr "`freq`"
 
 #: ../../source/references/datatypes/index.md
 msgid "原生频率（如 `d` / `w` / `m` / `q` / `1min`；`None` 表示与频率无关）"
@@ -72,7 +71,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`asset_type`"
-msgstr ""
+msgstr "`asset_type`"
 
 #: ../../source/references/datatypes/index.md
 msgid "资产类型（`E` 股票、`IDX` 指数、`FD` 基金、`FT` 期货、`OPT` 期权、`None` / `Any` 等）"
@@ -80,7 +79,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`description`"
-msgstr ""
+msgstr "`description`"
 
 #: ../../source/references/datatypes/index.md
 msgid "中文用途简述"
@@ -88,7 +87,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`kind`"
-msgstr ""
+msgstr "`kind`"
 
 #: ../../source/references/datatypes/index.md
 msgid "消费形状：`history`（时间×标的）/ `reference`（仅时间）/ `static`（仅标的）"
@@ -96,7 +95,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`usable_in`"
-msgstr ""
+msgstr "`usable_in`"
 
 #: ../../source/references/datatypes/index.md
 msgid ""
@@ -106,7 +105,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`acquisition_type`"
-msgstr ""
+msgstr "`acquisition_type`"
 
 #: ../../source/references/datatypes/index.md
 msgid "内部获取方式（直读、复权、事件等），**仅供对照 refill，不是用户主分类**"
@@ -114,7 +113,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/index.md
 msgid "`table_name`"
-msgstr ""
+msgstr "`table_name`"
 
 #: ../../source/references/datatypes/index.md
 msgid "底层数据表（来自映射 kwargs；部分类型可能为空或多表逻辑）"
@@ -155,6 +154,8 @@ msgid ""
 "`/opt/anaconda3/envs/py39/bin/python "
 "docs/scripts/generate_datatype_catalog.py`"
 msgstr ""
+"`/opt/anaconda3/envs/py39/bin/python "
+"docs/scripts/generate_datatype_catalog.py`"
 
 #: ../../source/references/datatypes/index.md:49
 msgid "[分册统计与链接（catalog_index）](_generated/catalog_index.md)"
@@ -205,4 +206,3 @@ msgstr ""
 #, python-format
 msgid "数据表（存储层，≠ DataType）：[数据表章节](../../manage_data/04.%20data_tables_10.md)"
 msgstr ""
-

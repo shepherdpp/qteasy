@@ -146,7 +146,6 @@ msgid ""
 msgstr ""
 
 #: ../../source/CONTRIBUTING.md:27
-#, fuzzy
 msgid ""
 "**官方长文、教程与 `examples/` 可运行脚本**：请按照下面的 Fork/Clone/Pull Request "
 "工作流程提交，我会尽快给予反馈。"

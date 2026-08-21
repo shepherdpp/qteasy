@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/RELEASE_HISTORY.md:1
@@ -31,63 +31,72 @@ msgstr ""
 "遷移指南](qteasy_2_migration_guide.md)。"
 
 #: ../../source/RELEASE_HISTORY.md:5
-#, fuzzy
 msgid "2.6.4 (2026-08-20)"
-msgstr "2.4.4 (2026-05-08)"
+msgstr "2.6.4 (2026-08-20)"
 
 #: ../../source/RELEASE_HISTORY.md:7
 msgid "**完善 `DataType` 类的取数API，完善数据体验叙事**"
-msgstr ""
+msgstr "**完善 `DataType` 類的取數API，完善資料體驗敘事**"
 
 #: ../../source/RELEASE_HISTORY.md:8
 msgid ""
 "**Reference 入口** `get_reference_data`：宏观、利率、资金流等仅时间序列，以及把单标的行情抽成基准的写法（如 "
 "`close-000300.SH`）；无需传入股票池。"
 msgstr ""
+"**Reference 入口** `get_reference_data`：宏觀、利率、資金流等僅時間序列，以及把單標的行情抽成基準的寫法（如 "
+"`close-000300.SH`）；無需傳入股票池。"
 
 #: ../../source/RELEASE_HISTORY.md:9
 msgid ""
-"**Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 "
-"HistoryPanel。"
+"**Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 HistoryPanel。"
 msgstr ""
+"**Static 入口** `get_static_data`：行業、上市日等僅標的截面屬性；返回按證券程式碼索引的表，不編入 "
+"HistoryPanel。"
 
 #: ../../source/RELEASE_HISTORY.md:10
 msgid ""
 "**History 入口收紧** `get_history_data` / `get_kline`：只接受时间 × 标的的 "
 "History；误传宏观/基准/行业等会提示改用上述入口。"
 msgstr ""
+"**History 入口收緊** `get_history_data` / `get_kline`：只接受時間 × 標的的 "
+"History；誤傳宏觀/基準/行業等會提示改用上述入口。"
 
 #: ../../source/RELEASE_HISTORY.md:11
 msgid ""
 "**字符串信息 ID**：宽匹配名（如 `close`）与完整 id（如 `close_E_d`）均可解析；策略 `data_types` "
 "可直接写字符串；行业等 Static **不能**写进策略声明。"
 msgstr ""
+"**字符串資訊 ID**：寬匹配名（如 `close`）與完整 id（如 `close_E_d`）均可解析；策略 `data_types` "
+"可直接寫字符串；行業等 Static **不能**寫進策略聲明。"
 
 #: ../../source/RELEASE_HISTORY.md:12
 msgid ""
 "**检索与可用性**：`find_history_data` 会标出形状与推荐入口；完整清单按业务分册并标注是否可进面板/策略；部分文本型 "
 "History 会标为暂无一等用法。"
 msgstr ""
+"**檢索與可用性**：`find_history_data` 會標出形狀與推薦入口；完整清單按業務分冊並標註是否可進面板/策略；部分文本型 "
+"History 會標爲暫無一等用法。"
 
 #: ../../source/RELEASE_HISTORY.md:13
 msgid ""
 "**行为提示（升级时请留意）**   若您曾用 `get_history_data`「顺便」取 GDP、行业或 `close-某代码`，请改为 "
-"`get_reference_data` / `get_static_data`。宽名在多种资产类型间歧义时，请改用完整 id "
-"或显式指定资产类型。"
+"`get_reference_data` / `get_static_data`。宽名在多种资产类型间歧义时，请改用完整 id 或显式指定资产类型。"
 msgstr ""
+"**行爲提示（升級時請留意）**   若您曾用 `get_history_data`「順便」取 GDP、行業或 `close-某程式碼`，請改爲 "
+"`get_reference_data` / `get_static_data`。寬名在多種資產類型間歧義時，請改用完整 id 或顯式指定資產類型。"
 
 #: ../../source/RELEASE_HISTORY.md:15
 msgid "**文档更新**   概念章、API、教程与 FAQ 已按「策略 / 研究面板 / 宏观基准 / 证券属性」四条路径改写，并与上述入口对齐。"
 msgstr ""
+"**文件更新**   概念章、API、教程與 FAQ 已按「策略 / 研究面板 / 宏觀基準 / 證券屬性」四條路徑改寫，並與上述入口對齊。"
 
 #: ../../source/RELEASE_HISTORY.md:18
-#, fuzzy
 msgid "2.6.3 (2026-08-16)"
-msgstr "2.4.3 (2026-05-06)"
+msgstr "2.6.3 (2026-08-16)"
 
 #: ../../source/RELEASE_HISTORY.md:20
 msgid "**HistoryPanel 与因子研究能力扩展，新增下列API**"
-msgstr ""
+msgstr "**HistoryPanel 與因子研究能力擴展，新增下列API**"
 
 #: ../../source/RELEASE_HISTORY.md:21
 msgid ""
@@ -95,148 +104,197 @@ msgid ""
 "摘要、分位组合与多空收益等模块级函数，便于在面板上做粗验而不必先搭完整回测；**不会**隐式构造前瞻收益，须由您事先用时序位移等准备好收益列。正式回测仍请使用"
 " Strategy / Operator。"
 msgstr ""
+"**因子研究模組** `qteasy.research`：提供截面 IC、IC "
+"摘要、分位組合與多空報酬等模組級函數，便於在面板上做粗驗而不必先搭完整回測；**不會**隱式構造前瞻報酬，須由您事先用時序位移等準備好報酬列。正式回測仍請使用"
+" Strategy / Operator。"
 
 #: ../../source/RELEASE_HISTORY.md:22
 msgid ""
-"**相关 / 协方差** `corr` / `cov`：对指定指标计算标的两两时序相关或协方差矩阵，便于快速查看共动结构（与逐日截面 IC "
-"语义不同）。"
+"**相关 / 协方差** `corr` / `cov`：对指定指标计算标的两两时序相关或协方差矩阵，便于快速查看共动结构（与逐日截面 IC 语义不同）。"
 msgstr ""
+"**相關 / 協方差** `corr` / `cov`：對指定指標計算標的兩兩時序相關或協方差矩陣，便於快速查看共動結構（與逐日截面 IC 語義不同）。"
 
 #: ../../source/RELEASE_HISTORY.md:23
 msgid ""
 "**文档与示例更新**   教程与 API 说明已补充上述能力；导出到 pandas 时推荐使用 `to_df_dict` / "
 "`to_multi_index_dataframe`（旧别名仍可用）；新增可跟跑示例演示 IC → 分位组合 → 多空及时序相关矩阵。"
 msgstr ""
+"**文件與示例更新**   教程與 API 說明已補充上述能力；導出到 pandas 時推薦使用 `to_df_dict` / "
+"`to_multi_index_dataframe`（舊別名仍可用）；新增可跟跑示例演示 IC → 分位組合 → 多空及時序相關矩陣。"
 
 #: ../../source/RELEASE_HISTORY.md:26
-#, fuzzy
 msgid "2.6.2 (2026-08-14)"
-msgstr "2.4.2 (2026-04-19)"
+msgstr "2.6.2 (2026-08-14)"
 
 #: ../../source/RELEASE_HISTORY.md:28 ../../source/RELEASE_HISTORY.md:37
 msgid "**HistoryPanel 数据操作能力扩展，新增下列API**"
-msgstr ""
+msgstr "**HistoryPanel 資料操作能力擴展，新增下列API**"
 
 #: ../../source/RELEASE_HISTORY.md:29
 msgid ""
 "**结构操作** `drop` / "
 "`rename`：可按指标或标的删除列、映射式重命名标签，并始终返回新面板，便于安全整理研究用数据结构；整轴原地重赋仍可用既有接口。"
 msgstr ""
+"**結構操作** `drop` / "
+"`rename`：可按指標或標的刪除列、映射式重命名標籤，並始終返回新面板，便於安全整理研究用資料結構；整軸原地重賦仍可用既有介面。"
 
 #: ../../source/RELEASE_HISTORY.md:30
 msgid ""
-"**统计聚合** `sum` / `median` / `var` / `quantile`：与既有均值、标准差等同一用法，沿时间轴压成按标的 ×"
-" 指标的汇总表，便于快速查看截面摘要。"
+"**统计聚合** `sum` / `median` / `var` / `quantile`：与既有均值、标准差等同一用法，沿时间轴压成按标的 × "
+"指标的汇总表，便于快速查看截面摘要。"
 msgstr ""
+"**統計聚合** `sum` / `median` / `var` / `quantile`：與既有均值、標準差等同一用法，沿時間軸壓成按標的 × "
+"指標的彙總表，便於快速查看截面摘要。"
 
 #: ../../source/RELEASE_HISTORY.md:31
 msgid "**兼容别名弃用提示**：旧切片与绘图别名仍可用，但会提示改用推荐的子面板/时间索引/绘图接口，便于逐步迁移而不中断现有脚本。"
-msgstr ""
+msgstr "**相容別名棄用提示**：舊切片與繪圖別名仍可用，但會提示改用推薦的子面板/時間索引/繪圖介面，便於逐步遷移而不中斷現有腳本。"
 
 #: ../../source/RELEASE_HISTORY.md:32
 msgid ""
 "**文档更新**   教程与 HistoryPanel API "
 "说明已补充上述能力、可变性约定及弃用迁移建议；并修正取数返回类型等说明文案，便于对照示例上手。"
 msgstr ""
+"**文件更新**   教程與 HistoryPanel API "
+"說明已補充上述能力、可變性約定及棄用遷移建議；並修正取數返回類型等說明文案，便於對照示例上手。"
 
 #: ../../source/RELEASE_HISTORY.md:35
-#, fuzzy
 msgid "2.6.1 (2026-08-13)"
-msgstr "2.5.1 (2026-05-18)"
+msgstr "2.6.1 (2026-08-13)"
 
 #: ../../source/RELEASE_HISTORY.md:38
 msgid ""
 "**时序变换** `shift` / `diff` / "
 "`pct_change`：可对任意列沿时间轴做位移、差分与百分比变化，便于自行构造滞后特征与前瞻收益列，而不必先导出到 pandas。"
 msgstr ""
+"**時序變換** `shift` / `diff` / "
+"`pct_change`：可對任意列沿時間軸做位移、差分與百分比變化，便於自行構造滯後特徵與前瞻報酬列，而不必先導出到 pandas。"
 
 #: ../../source/RELEASE_HISTORY.md:39
 msgid ""
 "**缺失值处理** `bfill` / "
 "`dropna`：新增后向填充与按轴丢弃缺失切片；既有填充接口支持显式选择是否原地修改，默认行为与以往一致，便于安全地链式整理面板。"
 msgstr ""
+"**缺失值處理** `bfill` / "
+"`dropna`：新增後向填充與按軸丟棄缺失切片；既有填充介面支持顯式選擇是否原地修改，預設行爲與以往一致，便於安全地鏈式整理面板。"
 
 #: ../../source/RELEASE_HISTORY.md:40
 msgid ""
 "**列表达式** "
 "`expr`：可用受限算术表达式由现有列名直接派生新列（如高低点均值），语法限定为标识符列名与四则/`**`，复权等非标识符列名请继续用赋值方式生成。"
 msgstr ""
+"**列表達式** "
+"`expr`：可用受限算術表達式由現有列名直接派生新列（如高低點均值），語法限定爲標識符列名與四則/`**`，復權等非標識符列名請繼續用賦值方式生成。"
 
 #: ../../source/RELEASE_HISTORY.md:41
 msgid "**文档更新**   教程与 HistoryPanel API 说明已补充上述能力与可变性约定，便于对照示例上手。"
-msgstr ""
+msgstr "**文件更新**   教程與 HistoryPanel API 說明已補充上述能力與可變性約定，便於對照示例上手。"
 
 #: ../../source/RELEASE_HISTORY.md:44
-#, fuzzy
 msgid "2.6.0 (2026-06-01)"
-msgstr "2.5.0 (2026-05-17)"
+msgstr "2.6.0 (2026-06-01)"
 
 #: ../../source/RELEASE_HISTORY.md:46
 #, python-format
 msgid ""
-"**数据通道（AKShare）**   历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` "
-"并联网）。在无 Tushare Pro token "
+"**数据通道（AKShare）**   历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` 并联网）。在无 "
+"Tushare Pro token "
 "或希望换源时，可拉取股票/指数/基金日线与多档分钟线、周月线、交易日历、股票/指数/基金列表、复权因子，以及停复牌、资金流向、分红、新股与上市公司简介等表（当前内置"
-" **25** 张表；各通道支持范围见 [数据通道](manage_data/10.%20data_channels.md) "
-"文档）。实时行情仍可通过 AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。"
+" **25** 张表；各通道支持范围见 [数据通道](manage_data/10.%20data_channels.md) 文档）。实时行情仍可通过 "
+"AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。"
 msgstr ""
+"**資料通道（AKShare）**   歷史資料下載現支持 **`channel='akshare'`**（需安裝 `akshare` 並聯網）。在無 "
+"Tushare Pro token "
+"或希望換源時，可拉取股票/指數/基金日線與多檔分鐘線、周月線、交易日曆、股票/指數/基金列表、復權因子，以及停復牌、資金流向、分紅、新股與上市公司簡介等表（當前內置"
+" **25** 張表；各通道支持範圍見 [資料通道](manage_data/10.%20data_channels.md) 文件）。實時行情仍可通過 "
+"AKShare 通道獲取自選報價與日內 K 線（與既有實時介面一致）。"
 
 #: ../../source/RELEASE_HISTORY.md:48
 msgid ""
 "**四通道统一**   **`refill_data_source`**、实盘自动补数及配置项 "
-"**`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** "
-"均支持 **`tushare`**、**`akshare`**、**`eastmoney`**（别名 "
-"`emoney`）、**`sina`**；未指定 `channel` 时 refill 仍默认 "
+"**`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** 均支持 "
+"**`tushare`**、**`akshare`**、**`eastmoney`**（别名 `emoney`）、**`sina`**；未指定 "
+"`channel` 时 refill 仍默认 "
 "**`tushare`**。各通道可下载的表范围不同，某表在当前通道无映射或拉取失败时会跳过该表并继续其余表。"
 msgstr ""
+"**四通道統一**   **`refill_data_source`**、實盤自動補數及設定項 "
+"**`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** 均支持 "
+"**`tushare`**、**`akshare`**、**`eastmoney`**（別名 `emoney`）、**`sina`**；未指定 "
+"`channel` 時 refill 仍預設 "
+"**`tushare`**。各通道可下載的表範圍不同，某表在當前通道無映射或拉取失敗時會跳過該表並繼續其餘表。"
 
 #: ../../source/RELEASE_HISTORY.md:50
 msgid ""
 "**基础信息表更新**   使用 **`refill_data_source(..., merge_type='update')`** "
 "更新股票/指数/基金等**基础信息表**时：若下载源（如 "
 "AKShare）只带代码、简称等索引字段，而行业、地域、上市日期等为空，**不再用空值冲掉本地已有内容**，便于先用 Tushare "
-"补全基本面，再用其他通道拉行情时顺带刷新代码列表。通过 AKShare 更新股票列表时，缺失的上市/退市日期在数据库中记为 "
-"**NULL**，避免在 MySQL 等库中因空日期写入失败。"
+"补全基本面，再用其他通道拉行情时顺带刷新代码列表。通过 AKShare 更新股票列表时，缺失的上市/退市日期在数据库中记为 **NULL**，避免在 "
+"MySQL 等库中因空日期写入失败。"
 msgstr ""
+"**基礎資訊表更新**   使用 **`refill_data_source(..., merge_type='update')`** "
+"更新股票/指數/基金等**基礎資訊表**時：若下載源（如 "
+"AKShare）只帶程式碼、簡稱等索引字段，而行業、地域、上市日期等爲空，**不再用空值沖掉本地已有內容**，便於先用 Tushare "
+"補全基本面，再用其他通道拉行情時順帶刷新程式碼列表。通過 AKShare 更新股票列表時，缺失的上市/退市日期在資料庫中記爲 **NULL**，避免在 "
+"MySQL 等庫中因空日期寫入失敗。"
 
 #: ../../source/RELEASE_HISTORY.md:52
 msgid ""
 "**数据下载与按行业选股**   修复从 Tushare 下载**期货合约基本信息**时，个别合约「交易时间说明」过长导致 MySQL "
 "无法入库的问题；新建库已放宽相关说明字段容量，**已有 MySQL "
 "库**可在备份后执行发行包中的列类型升级脚本（`docs/scripts/migrate_schema_text_p0_p1.sql`）。修复基础表中行业等字段被清空后，**`filter_stocks`"
-" / `filter_stock_codes`** 按行业筛选时可能报错的问题。未传 **`start_date` / `end_date`** "
-"却指定 **`tables='basics'`**（含 IPO "
+" / `filter_stock_codes`** 按行业筛选时可能报错的问题。未传 **`start_date` / `end_date`** 却指定"
+" **`tables='basics'`**（含 IPO "
 "新股表）时，现会默认从该表最早可用日下载至当天并分块执行，不再因未填日期而中断；该方式任务较多、耗时较长，不需要 IPO "
 "数据时可只填具体表名或收窄日期范围。"
 msgstr ""
+"**資料下載與按行業選股**   修復從 Tushare 下載**期貨合約基本資訊**時，個別合約「交易時間說明」過長導致 MySQL "
+"無法入庫的問題；新建庫已放寬相關說明字段容量，**已有 MySQL "
+"庫**可在備份後執行發行包中的列類型升級腳本（`docs/scripts/migrate_schema_text_p0_p1.sql`）。修復基礎表中行業等字段被清空後，**`filter_stocks`"
+" / `filter_stock_codes`** 按行業篩選時可能報錯的問題。未傳 **`start_date` / `end_date`** 卻指定"
+" **`tables='basics'`**（含 IPO "
+"新股表）時，現會預設從該表最早可用日下載至當天並分塊執行，不再因未填日期而中斷；該方式任務較多、耗時較長，不需要 IPO "
+"資料時可只填具體表名或收窄日期範圍。"
 
 #: ../../source/RELEASE_HISTORY.md:54
 #, python-format
 msgid ""
-"**文档与示例**   [数据通道](manage_data/10.%20data_channels.md) "
-"教程补充四通道能力对照、AKShare 使用说明、基础表更新时空值不覆盖规则与未传日期的默认行为；入门教程「获取数据」改为多通道表述。新增示例 "
-"**`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 "
-"AKShare 不再标注为未实现。"
+"**文档与示例**   [数据通道](manage_data/10.%20data_channels.md) 教程补充四通道能力对照、AKShare "
+"使用说明、基础表更新时空值不覆盖规则与未传日期的默认行为；入门教程「获取数据」改为多通道表述。新增示例 "
+"**`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 AKShare"
+" 不再标注为未实现。"
 msgstr ""
+"**文件與示例**   [資料通道](manage_data/10.%20data_channels.md) 教程補充四通道能力對照、AKShare "
+"使用說明、基礎表更新時空值不覆蓋規則與未傳日期的預設行爲；入門教程「獲取資料」改爲多通道表述。新增示例 "
+"**`examples/akshare_refill_minimal.py`**（短區間 `stock_daily` 下載）。設定幫助中 AKShare"
+" 不再標註爲未實現。"
 
 #: ../../source/RELEASE_HISTORY.md:57
-#, fuzzy
 msgid "2.5.2 (2026-05-24)"
-msgstr "2.5.1 (2026-05-18)"
+msgstr "2.5.2 (2026-05-24)"
 
 #: ../../source/RELEASE_HISTORY.md:59
 msgid ""
 "**Trader Shell CLI 可用性**   **`orders`** 列表现显示本地订单 "
 "ID（`id`）与券商委托号（`broker_id`，若有），便于对照 **`cancel ORDER_ID`** "
 "撤单或排障。**`history`** 仅展示确有成交的记录，未成交或已取消且无成交量的订单不再混入列表。**`task -l`** "
-"默认列出排队中的任务（`queued`），**`task -l -s all`** 与 **`tasks`** 以与 **`schedule`**"
-" 一致的表格展示任务 ID、名称、状态与参数；仍可用 **`task TASK_ID`** 查看详情、**`task TASK_ID -c`** "
+"默认列出排队中的任务（`queued`），**`task -l -s all`** 与 **`tasks`** 以与 **`schedule`** "
+"一致的表格展示任务 ID、名称、状态与参数；仍可用 **`task TASK_ID`** 查看详情、**`task TASK_ID -c`** "
 "取消排队任务。**`broker`**、**`gate`**、**`reconcile`**、**`liveconfig`** "
-"改为分段键值可读输出（风格接近 **`overview`** / **`config`**），布尔项以颜色区分；程序化集成请直接调用 Trader"
-" API。**`rotatelogs`** 执行前预览待删文件并提示确认，非交互环境须加 **`--yes` / `-y`**；别名 "
+"改为分段键值可读输出（风格接近 **`overview`** / **`config`**），布尔项以颜色区分；程序化集成请直接调用 Trader "
+"API。**`rotatelogs`** 执行前预览待删文件并提示确认，非交互环境须加 **`--yes` / `-y`**；别名 "
 "**`rotatelog`**、**`rotate-logs`** 仍可用。从命令模式回到 **dashboard** 时，**`-r`** "
 "回放的系统日志条数与设定一致（按逻辑日志条目计数）；非 DEBUG 模式下不再因先截物理行再过滤 DEBUG 而明显变少。"
 msgstr ""
+"**Trader Shell CLI 可用性**   **`orders`** 列表現顯示本地訂單 "
+"ID（`id`）與券商委託號（`broker_id`，若有），便於對照 **`cancel ORDER_ID`** "
+"撤單或排障。**`history`** 僅展示確有成交的記錄，未成交或已取消且無成交量的訂單不再混入列表。**`task -l`** "
+"預設列出排隊中的任務（`queued`），**`task -l -s all`** 與 **`tasks`** 以與 **`schedule`** "
+"一致的表格展示任務 ID、名稱、狀態與參數；仍可用 **`task TASK_ID`** 查看詳情、**`task TASK_ID -c`** "
+"取消排隊任務。**`broker`**、**`gate`**、**`reconcile`**、**`liveconfig`** "
+"改爲分段鍵值可讀輸出（風格接近 **`overview`** / **`config`**），布爾項以顏色區分；程式化集成請直接調用 Trader "
+"API。**`rotatelogs`** 執行前預覽待刪文件並提示確認，非交互環境須加 **`--yes` / `-y`**；別名 "
+"**`rotatelog`**、**`rotate-logs`** 仍可用。從命令模式回到 **dashboard** 時，**`-r`** "
+"回放的系統日誌條數與設定一致（按邏輯日誌條目計數）；非 DEBUG 模式下不再因先截物理行再過濾 DEBUG 而明顯變少。"
 
 #: ../../source/RELEASE_HISTORY.md:61
 msgid ""
@@ -244,13 +302,17 @@ msgid ""
 "项为可选真实柜台委托号。内置模拟券商仍使用 4 元组，与 2.5.1 兼容。修复分段成交时误将本笔成交量当作订单总量校验的问题；5 "
 "元组委托号可写入成交结果，供实盘对账与撤单映射。"
 msgstr ""
+"**券商成交回報（Broker）**   券商 **`transaction()`** 回報現支持 **4 元組或 5 元組**：第 5 "
+"項爲可選真實櫃檯委託號。內置模擬券商仍使用 4 元組，與 2.5.1 相容。修復分段成交時誤將本筆成交量當作訂單總量校驗的問題；5 "
+"元組委託號可寫入成交結果，供實盤對賬與撤單映射。"
 
 #: ../../source/RELEASE_HISTORY.md:63
 msgid ""
 "**实盘配置（XtQuant 协作）**   **`live_trade_broker_type`** 与 "
-"**`qt.configure(...)`** 现允许取值 "
-"**`xtquant`**（须安装并注册扩展包后方可实际接入；未注册时可能回落为模拟券商）。"
+"**`qt.configure(...)`** 现允许取值 **`xtquant`**（须安装并注册扩展包后方可实际接入；未注册时可能回落为模拟券商）。"
 msgstr ""
+"**實盤設定（XtQuant 協作）**   **`live_trade_broker_type`** 與 "
+"**`qt.configure(...)`** 現允許取值 **`xtquant`**（須安裝並註冊擴展包後方可實際接入；未註冊時可能回落爲模擬券商）。"
 
 #: ../../source/RELEASE_HISTORY.md:65
 msgid ""
@@ -258,6 +320,9 @@ msgid ""
 "v1](live_trading/4a-xtquant-broker-adapter-contract-v1.md)，说明受理、轮询成交与 5 "
 "元组语义及禁止对 QMT 双重下单。"
 msgstr ""
+"**文件**   新增英文契約 [XtQuant / MiniQMT Broker Adapter Contract "
+"v1](live_trading/4a-xtquant-broker-adapter-contract-v1.md)，說明受理、輪詢成交與 5 "
+"元組語義及禁止對 QMT 雙重下單。"
 
 #: ../../source/RELEASE_HISTORY.md:68
 msgid "2.5.1 (2026-05-18)"
@@ -292,12 +357,12 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:76
 msgid ""
 "**收盘 `post_close` 与 `created` 订单**   修复收盘任务对仍为 `created` 的订单误用撤单逻辑导致 "
-"`post_close` 失败的问题。收盘后此类未报单订单将置为 **`rejected`**（视同未受理）；已报单的 `submitted` /"
-" `partial-filled` 仍按原规则撤单为 **`canceled`**。"
+"`post_close` 失败的问题。收盘后此类未报单订单将置为 **`rejected`**（视同未受理）；已报单的 `submitted` / "
+"`partial-filled` 仍按原规则撤单为 **`canceled`**。"
 msgstr ""
 "**收盤 `post_close` 與 `created` 訂單**   修復收盤任務對仍爲 `created` 的訂單誤用撤單邏輯導致 "
-"`post_close` 失敗的問題。收盤後此類未報單訂單將置爲 **`rejected`**（視同未受理）；已報單的 `submitted` /"
-" `partial-filled` 仍按原規則撤單爲 **`canceled`**。"
+"`post_close` 失敗的問題。收盤後此類未報單訂單將置爲 **`rejected`**（視同未受理）；已報單的 `submitted` / "
+"`partial-filled` 仍按原規則撤單爲 **`canceled`**。"
 
 #: ../../source/RELEASE_HISTORY.md:79
 msgid "2.5.0 (2026-05-17)"
@@ -317,32 +382,32 @@ msgstr ""
 msgid ""
 "**券商受理、对账与恢复诊断**   "
 "柜台受理成功后，本地订单可关联券商委托号，便于对账与排障。模拟盘支持可配置的受理随机拒单（默认一定比例，便于验证拒单路径；示例与测试可设为 0 "
-"以保持结果确定）。开盘、收盘后会在日志中输出对账检查点摘要（现金、持仓、在途单计数等），便于检索。在 **DEBUG** 模式下，可通过 `run"
-" --task diagnose_pending_orders` 或在 Shell "
+"以保持结果确定）。开盘、收盘后会在日志中输出对账检查点摘要（现金、持仓、在途单计数等），便于检索。在 **DEBUG** 模式下，可通过 `run "
+"--task diagnose_pending_orders` 或在 Shell "
 "中等价方式做在途单只读诊断（本地与柜台差异摘要），**不包含**自动改单或自动补偿。周期性自动对账任务与差异自动修复仍属后续演进项。"
 msgstr ""
 "**券商受理、對賬與恢復診斷**   "
 "櫃檯受理成功後，本地訂單可關聯券商委託號，便於對賬與排障。模擬盤支持可配置的受理隨機拒單（默認一定比例，便於驗證拒單路徑；示例與測試可設爲 0 "
-"以保持結果確定）。開盤、收盤後會在日誌中輸出對賬檢查點摘要（現金、持倉、在途單計數等），便於檢索。在 **DEBUG** 模式下，可通過 `run"
-" --task diagnose_pending_orders` 或在 Shell "
+"以保持結果確定）。開盤、收盤後會在日誌中輸出對賬檢查點摘要（現金、持倉、在途單計數等），便於檢索。在 **DEBUG** 模式下，可通過 `run "
+"--task diagnose_pending_orders` 或在 Shell "
 "中等價方式做在途單隻讀診斷（本地與櫃檯差異摘要），**不包含**自動改單或自動補償。週期性自動對賬任務與差異自動修復仍屬後續演進項。"
 
 #: ../../source/RELEASE_HISTORY.md:85
 msgid ""
 "**Trader Shell：运维命令与 dashboard**   在 Trader 提示符下无需退出即可查看实盘产物路径、有效 live "
 "配置摘要、任务队列与取消排队任务、手动运行启动检查、打印对账快照 JSON、轮换过期交易/风控日志、查看券商连接状态等；`run --task` "
-"支持按帮助说明运行开盘/收盘/诊断等任务；`sync` / `pull-state` 预留给后续 QMT 集成，当前会给出明确提示。启动后默认进入"
-" **dashboard**，单行刷新下一任务倒计时、监视列表行情与系统消息；按 **Ctrl+C** 打开选单：**1** 命令模式、**2**"
-" dashboard、**3** 退出；数字键无需按 Enter，5 秒无输入自动恢复中断前模式，选单等待期间再按 **Ctrl+C** 与选 "
-"**3** 相同并正常退出。修复从命令模式回到 dashboard 时日志重复、状态行残留、关闭 debug "
+"支持按帮助说明运行开盘/收盘/诊断等任务；`sync` / `pull-state` 预留给后续 QMT 集成，当前会给出明确提示。启动后默认进入 "
+"**dashboard**，单行刷新下一任务倒计时、监视列表行情与系统消息；按 **Ctrl+C** 打开选单：**1** 命令模式、**2** "
+"dashboard、**3** 退出；数字键无需按 Enter，5 秒无输入自动恢复中断前模式，选单等待期间再按 **Ctrl+C** 与选 **3**"
+" 相同并正常退出。修复从命令模式回到 dashboard 时日志重复、状态行残留、关闭 debug "
 "时仍显示调试日志等问题；主循环发生意外错误时可选择回到 dashboard 继续观察或退出关停。"
 msgstr ""
 "**Trader Shell：運維命令與 dashboard**   在 Trader 提示符下無需退出即可查看實盤產物路徑、有效 live "
 "配置摘要、任務隊列與取消排隊任務、手動運行啓動檢查、列印對賬快照 JSON、輪換過期交易/風控日誌、查看券商連接狀態等；`run --task` "
-"支持按幫助說明運行開盤/收盤/診斷等任務；`sync` / `pull-state` 預留給後續 QMT 集成，當前會給出明確提示。啓動後默認進入"
-" **dashboard**，單行刷新下一任務倒計時、監視列表行情與系統消息；按 **Ctrl+C** 打開選單：**1** 命令模式、**2**"
-" dashboard、**3** 退出；數字鍵無需按 Enter，5 秒無輸入自動恢復中斷前模式，選單等待期間再按 **Ctrl+C** 與選 "
-"**3** 相同並正常退出。修復從命令模式回到 dashboard 時日誌重複、狀態行殘留、關閉 debug "
+"支持按幫助說明運行開盤/收盤/診斷等任務；`sync` / `pull-state` 預留給後續 QMT 集成，當前會給出明確提示。啓動後默認進入 "
+"**dashboard**，單行刷新下一任務倒計時、監視列表行情與系統消息；按 **Ctrl+C** 打開選單：**1** 命令模式、**2** "
+"dashboard、**3** 退出；數字鍵無需按 Enter，5 秒無輸入自動恢復中斷前模式，選單等待期間再按 **Ctrl+C** 與選 **3**"
+" 相同並正常退出。修復從命令模式回到 dashboard 時日誌重複、狀態行殘留、關閉 debug "
 "時仍顯示調試日誌等問題；主循環發生意外錯誤時可選擇回到 dashboard 繼續觀察或退出關停。"
 
 #: ../../source/RELEASE_HISTORY.md:87
@@ -355,12 +420,12 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:89
 msgid ""
-"**模拟/实盘文档**   扩充 `live_trading` 系列：配置与运行、券商接入、快照与启动门禁、产物与排障、手工冒烟清单，并新增 "
-"CLI 能力矩阵（已实现 vs 预留）；补充 dashboard / 命令模式与 Ctrl+C "
+"**模拟/实盘文档**   扩充 `live_trading` 系列：配置与运行、券商接入、快照与启动门禁、产物与排障、手工冒烟清单，并新增 CLI "
+"能力矩阵（已实现 vs 预留）；补充 dashboard / 命令模式与 Ctrl+C "
 "选单说明（§7.1）；区分本地风控拒单与柜台受理拒单，便于按清单做冒烟测试与问题定位。"
 msgstr ""
-"**模擬/實盤文檔**   擴充 `live_trading` 系列：配置與運行、券商接入、快照與啓動門禁、產物與排障、手工冒煙清單，並新增 "
-"CLI 能力矩陣（已實現 vs 預留）；補充 dashboard / 命令模式與 Ctrl+C "
+"**模擬/實盤文檔**   擴充 `live_trading` 系列：配置與運行、券商接入、快照與啓動門禁、產物與排障、手工冒煙清單，並新增 CLI "
+"能力矩陣（已實現 vs 預留）；補充 dashboard / 命令模式與 Ctrl+C "
 "選單說明（§7.1）；區分本地風控拒單與櫃檯受理拒單，便於按清單做冒煙測試與問題定位。"
 
 #: ../../source/RELEASE_HISTORY.md:92
@@ -379,21 +444,19 @@ msgstr ""
 msgid ""
 "**示例与文档**   `examples/live_grid.py`、`examples/live_grid_multi.py` 统一采用 "
 "`get_pars` / `update_par_values` "
-"写法；策略基类文档明确：分标的参数须用**字典**（键为代码），元组表示全池共用一组参数，兜底键为 **`default`**（非 "
-"`others`）。"
+"写法；策略基类文档明确：分标的参数须用**字典**（键为代码），元组表示全池共用一组参数，兜底键为 **`default`**（非 `others`）。"
 msgstr ""
 "**示例與文檔**   `examples/live_grid.py`、`examples/live_grid_multi.py` 統一採用 "
 "`get_pars` / `update_par_values` "
-"寫法；策略基類文檔明確：分標的參數須用**字典**（鍵爲代碼），元組表示全池共用一組參數，兜底鍵爲 **`default`**（非 "
-"`others`）。"
+"寫法；策略基類文檔明確：分標的參數須用**字典**（鍵爲代碼），元組表示全池共用一組參數，兜底鍵爲 **`default`**（非 `others`）。"
 
 #: ../../source/RELEASE_HISTORY.md:98
 msgid ""
-"**Trader CLI 策略列表**   简要列表模式下，带 `multi_pars` 的策略会提示运行 **`strategies -d`**"
-" 查看完整分标的参数。"
+"**Trader CLI 策略列表**   简要列表模式下，带 `multi_pars` 的策略会提示运行 **`strategies -d`** "
+"查看完整分标的参数。"
 msgstr ""
-"**Trader CLI 策略列表**   簡要列表模式下，帶 `multi_pars` 的策略會提示運行 **`strategies -d`**"
-" 查看完整分標的參數。"
+"**Trader CLI 策略列表**   簡要列表模式下，帶 `multi_pars` 的策略會提示運行 **`strategies -d`** "
+"查看完整分標的參數。"
 
 #: ../../source/RELEASE_HISTORY.md:101
 msgid "2.4.4 (2026-05-08)"
@@ -401,11 +464,11 @@ msgstr "2.4.4 (2026-05-08)"
 
 #: ../../source/RELEASE_HISTORY.md:103
 msgid ""
-"**东方财富行情与盘中任务**   修复 2.4.3 回归：东方财富 HTTPS "
-"行情请求在部分环境下失败、盘中追赶任务入队格式错误导致主循环报错、实时 K 线日期解析异常等问题，恢复自选价与盘中启动后的正常调度。"
+"**东方财富行情与盘中任务**   修复 2.4.3 回归：东方财富 HTTPS 行情请求在部分环境下失败、盘中追赶任务入队格式错误导致主循环报错、实时"
+" K 线日期解析异常等问题，恢复自选价与盘中启动后的正常调度。"
 msgstr ""
-"**東方財富行情與盤中任務**   修復 2.4.3 迴歸：東方財富 HTTPS "
-"行情請求在部分環境下失敗、盤中追趕任務入隊格式錯誤導致主循環報錯、實時 K 線日期解析異常等問題，恢復自選價與盤中啓動後的正常調度。"
+"**東方財富行情與盤中任務**   修復 2.4.3 迴歸：東方財富 HTTPS 行情請求在部分環境下失敗、盤中追趕任務入隊格式錯誤導致主循環報錯、實時"
+" K 線日期解析異常等問題，恢復自選價與盤中啓動後的正常調度。"
 
 #: ../../source/RELEASE_HISTORY.md:105
 msgid "**示例脚本**   修正 `live_grid_multi` 示例中的配置与用法，避免执行时不必要的 refill 干扰。"
@@ -432,12 +495,16 @@ msgid "2.4.2 (2026-04-19)"
 msgstr "2.4.2 (2026-04-19)"
 
 #: ../../source/RELEASE_HISTORY.md:119
-msgid "**异步回放与持仓同步**   模拟券商异步回放时，脚本可可靠等待队列订单与在途成交处理完毕，避免仅凭队列是否为空判断完成而导致持仓滞后、重复下单。"
-msgstr "**異步回放與持倉同步**   模擬券商異步回放時，腳本可可靠等待隊列訂單與在途成交處理完畢，避免僅憑隊列是否爲空判斷完成而導致持倉滯後、重複下單。"
+msgid ""
+"**异步回放与持仓同步**   模拟券商异步回放时，脚本可可靠等待队列订单与在途成交处理完毕，避免仅凭队列是否为空判断完成而导致持仓滞后、重复下单。"
+msgstr ""
+"**異步回放與持倉同步**   模擬券商異步回放時，腳本可可靠等待隊列訂單與在途成交處理完畢，避免僅憑隊列是否爲空判斷完成而導致持倉滯後、重複下單。"
 
 #: ../../source/RELEASE_HISTORY.md:121
-msgid "**实盘数据源刷新**   分钟/小时级实时 K 线按资产类型写入对应数据表，不再一律写入股票表，基金/指数/期货等 live 数据落表正确。"
-msgstr "**實盤數據源刷新**   分鐘/小時級實時 K 線按資產類型寫入對應數據表，不再一律寫入股票表，基金/指數/期貨等 live 數據落表正確。"
+msgid ""
+"**实盘数据源刷新**   分钟/小时级实时 K 线按资产类型写入对应数据表，不再一律写入股票表，基金/指数/期货等 live 数据落表正确。"
+msgstr ""
+"**實盤數據源刷新**   分鐘/小時級實時 K 線按資產類型寫入對應數據表，不再一律寫入股票表，基金/指數/期貨等 live 數據落表正確。"
 
 #: ../../source/RELEASE_HISTORY.md:123
 msgid "**分钟策略数据链路**   修复实盘分钟级策略可能拿不到足够日内数据的一连串问题，盘中信号生成更稳定。"
@@ -471,11 +538,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:135
 msgid ""
-"**文档**   新增独立 live_trading 文档系列（概览、配置运行、风控与订单、券商适配、排障）；教程含股票与 ETF "
-"双路径模拟示例及 S1.3 设计说明；首页与 API 交叉链接便于找到 live 指引。"
+"**文档**   新增独立 live_trading 文档系列（概览、配置运行、风控与订单、券商适配、排障）；教程含股票与 ETF 双路径模拟示例及 "
+"S1.3 设计说明；首页与 API 交叉链接便于找到 live 指引。"
 msgstr ""
-"**文檔**   新增獨立 live_trading 文檔系列（概覽、配置運行、風控與訂單、券商適配、排障）；教程含股票與 ETF "
-"雙路徑模擬示例及 S1.3 設計說明；首頁與 API 交叉鏈接便於找到 live 指引。"
+"**文檔**   新增獨立 live_trading 文檔系列（概覽、配置運行、風控與訂單、券商適配、排障）；教程含股票與 ETF 雙路徑模擬示例及 "
+"S1.3 設計說明；首頁與 API 交叉鏈接便於找到 live 指引。"
 
 #: ../../source/RELEASE_HISTORY.md:138
 msgid "2.3.1 (2026-04-11)"
@@ -483,12 +550,12 @@ msgstr "2.3.1 (2026-04-11)"
 
 #: ../../source/RELEASE_HISTORY.md:140
 msgid ""
-"**交易日志保留**   默认 `trade_log_keep_days` 改为 **3**（原 0）：每次新 Python 进程导入 "
-"qteasy 时，会在 `trade_log_file_path` 下清理超龄 CSV；设为 `None` 或 **0 及以下** "
+"**交易日志保留**   默认 `trade_log_keep_days` 改为 **3**（原 0）：每次新 Python 进程导入 qteasy "
+"时，会在 `trade_log_file_path` 下清理超龄 CSV；设为 `None` 或 **0 及以下** "
 "可关闭自动删除。文档已与「启动时清理、非每次回测前清理」的行为对齐。"
 msgstr ""
-"**交易日誌保留**   默認 `trade_log_keep_days` 改爲 **3**（原 0）：每次新 Python 進程導入 "
-"qteasy 時，會在 `trade_log_file_path` 下清理超齡 CSV；設爲 `None` 或 **0 及以下** "
+"**交易日誌保留**   默認 `trade_log_keep_days` 改爲 **3**（原 0）：每次新 Python 進程導入 qteasy "
+"時，會在 `trade_log_file_path` 下清理超齡 CSV；設爲 `None` 或 **0 及以下** "
 "可關閉自動刪除。文檔已與「啓動時清理、非每次回測前清理」的行爲對齊。"
 
 #: ../../source/RELEASE_HISTORY.md:142
@@ -501,7 +568,8 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:144
 msgid "**数据补齐 API**   仅在显式传入数据类型名时才做类型推断；仅传表名与 `asset_types`（如盘前 refill）不再报错。"
-msgstr "**數據補齊 API**   僅在顯式傳入數據類型名時才做類型推斷；僅傳表名與 `asset_types`（如盤前 refill）不再報錯。"
+msgstr ""
+"**數據補齊 API**   僅在顯式傳入數據類型名時才做類型推斷；僅傳表名與 `asset_types`（如盤前 refill）不再報錯。"
 
 #: ../../source/RELEASE_HISTORY.md:147
 msgid "2.3.0 (2026-04-08)"
@@ -509,15 +577,15 @@ msgstr "2.3.0 (2026-04-08)"
 
 #: ../../source/RELEASE_HISTORY.md:149
 msgid ""
-"**文档与教程**   教程结构重组，学习路径更清晰；HistoryPanel "
-"与包级用法从研究探索延伸到回测工作流；示例刷新，常见端到端路径更易跟做。"
+"**文档与教程**   教程结构重组，学习路径更清晰；HistoryPanel 与包级用法从研究探索延伸到回测工作流；示例刷新，常见端到端路径更易跟做。"
 msgstr ""
-"**文檔與教程**   教程結構重組，學習路徑更清晰；HistoryPanel "
-"與包級用法從研究探索延伸到回測工作流；示例刷新，常見端到端路徑更易跟做。"
+"**文檔與教程**   教程結構重組，學習路徑更清晰；HistoryPanel 與包級用法從研究探索延伸到回測工作流；示例刷新，常見端到端路徑更易跟做。"
 
 #: ../../source/RELEASE_HISTORY.md:151
-msgid "**HistoryPanel 高亮**   可用与标的、日期对齐的二维布尔掩码驱动高亮，多标的视图下同一逻辑条件可一致强调，无需逐序列手工接线。"
-msgstr "**HistoryPanel 高亮**   可用與標的、日期對齊的二維布爾掩碼驅動高亮，多標的視圖下同一邏輯條件可一致強調，無需逐序列手工接線。"
+msgid ""
+"**HistoryPanel 高亮**   可用与标的、日期对齐的二维布尔掩码驱动高亮，多标的视图下同一逻辑条件可一致强调，无需逐序列手工接线。"
+msgstr ""
+"**HistoryPanel 高亮**   可用與標的、日期對齊的二維布爾掩碼驅動高亮，多標的視圖下同一邏輯條件可一致強調，無需逐序列手工接線。"
 
 #: ../../source/RELEASE_HISTORY.md:154
 msgid "2.2.9 (2026-03-31)"
@@ -540,8 +608,10 @@ msgstr ""
 "analysis](tutorials/2.5-historypanel-data-analysis.md)。"
 
 #: ../../source/RELEASE_HISTORY.md:158
-msgid "**运算符语义**   算术运算符返回新面板而非原地修改；`copy(deep=True)` 默认为深拷贝，`deep=False` 共享底层数据。"
-msgstr "**運算符語義**   算術運算符返回新面板而非原地修改；`copy(deep=True)` 默認爲深拷貝，`deep=False` 共享底層數據。"
+msgid ""
+"**运算符语义**   算术运算符返回新面板而非原地修改；`copy(deep=True)` 默认为深拷贝，`deep=False` 共享底层数据。"
+msgstr ""
+"**運算符語義**   算術運算符返回新面板而非原地修改；`copy(deep=True)` 默認爲深拷貝，`deep=False` 共享底層數據。"
 
 #: ../../source/RELEASE_HISTORY.md:161
 msgid "2.2.8 (2026-03-30)"
@@ -603,11 +673,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:185
 msgid ""
-"**交互图 X 轴**   HTML 嵌入图保留 Q03 的 X 轴 clamp 与最小可见 bar 宽度；FigureWidget 多行图监听主"
-" X 轴并同步写入各 `xaxis*`，平移越界不再留下半屏空白。"
+"**交互图 X 轴**   HTML 嵌入图保留 Q03 的 X 轴 clamp 与最小可见 bar 宽度；FigureWidget 多行图监听主 X "
+"轴并同步写入各 `xaxis*`，平移越界不再留下半屏空白。"
 msgstr ""
-"**交互圖 X 軸**   HTML 嵌入圖保留 Q03 的 X 軸 clamp 與最小可見 bar 寬度；FigureWidget 多行圖監聽主"
-" X 軸並同步寫入各 `xaxis*`，平移越界不再留下半屏空白。"
+"**交互圖 X 軸**   HTML 嵌入圖保留 Q03 的 X 軸 clamp 與最小可見 bar 寬度；FigureWidget 多行圖監聽主 X "
+"軸並同步寫入各 `xaxis*`，平移越界不再留下半屏空白。"
 
 #: ../../source/RELEASE_HISTORY.md:188
 msgid "2.2.3 (2026-03-22)"
@@ -623,11 +693,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:192
 msgid ""
-"**`plotly_backend_app`**   `interactive=True` 时可指定 `auto`（默认，先试 "
-"FigureWidget 再 HTML）、`FigureWidget` 或 `html`。"
+"**`plotly_backend_app`**   `interactive=True` 时可指定 `auto`（默认，先试 FigureWidget"
+" 再 HTML）、`FigureWidget` 或 `html`。"
 msgstr ""
-"**`plotly_backend_app`**   `interactive=True` 時可指定 `auto`（默認，先試 "
-"FigureWidget 再 HTML）、`FigureWidget` 或 `html`。"
+"**`plotly_backend_app`**   `interactive=True` 時可指定 `auto`（默認，先試 FigureWidget"
+" 再 HTML）、`FigureWidget` 或 `html`。"
 
 #: ../../source/RELEASE_HISTORY.md:195
 msgid "2.2.2 (2026-03-20)"
@@ -683,11 +753,11 @@ msgstr "**回測評價**   修正回測報告中 `oper_count` 表；大規模回
 
 #: ../../source/RELEASE_HISTORY.md:222
 msgid ""
-"**数据类型与历史取数**   修正若干内置类型定义；`get_history_data` 对 `(dtype, freq, "
-"asset_type)` 组合解析更稳健，同名多定义安全合并，避免空数据或重复列错误。"
+"**数据类型与历史取数**   修正若干内置类型定义；`get_history_data` 对 `(dtype, freq, asset_type)` "
+"组合解析更稳健，同名多定义安全合并，避免空数据或重复列错误。"
 msgstr ""
-"**數據類型與歷史取數**   修正若干內置類型定義；`get_history_data` 對 `(dtype, freq, "
-"asset_type)` 組合解析更穩健，同名多定義安全合併，避免空數據或重複列錯誤。"
+"**數據類型與歷史取數**   修正若干內置類型定義；`get_history_data` 對 `(dtype, freq, asset_type)` "
+"組合解析更穩健，同名多定義安全合併，避免空數據或重複列錯誤。"
 
 #: ../../source/RELEASE_HISTORY.md:225
 msgid "2.1.3 (2026-03-09)"
@@ -699,13 +769,11 @@ msgstr "**生成文件名**   交易日誌、系統日誌、數據導出等文�
 
 #: ../../source/RELEASE_HISTORY.md:229
 msgid ""
-"**净值曲线**   `trade_log=True` 时完整净值曲线另存为 "
-"`value_curve_{name}_{datetime}.csv`，与 trade_log / trade_summary 同目录并按 "
-"`trade_log_keep_days` 轮换。"
+"**净值曲线**   `trade_log=True` 时完整净值曲线另存为 `value_curve_{name}_{datetime}.csv`，与"
+" trade_log / trade_summary 同目录并按 `trade_log_keep_days` 轮换。"
 msgstr ""
-"**淨值曲線**   `trade_log=True` 時完整淨值曲線另存爲 "
-"`value_curve_{name}_{datetime}.csv`，與 trade_log / trade_summary 同目錄並按 "
-"`trade_log_keep_days` 輪換。"
+"**淨值曲線**   `trade_log=True` 時完整淨值曲線另存爲 `value_curve_{name}_{datetime}.csv`，與"
+" trade_log / trade_summary 同目錄並按 `trade_log_keep_days` 輪換。"
 
 #: ../../source/RELEASE_HISTORY.md:231
 msgid "**回测结果与报告**   回测结果补充价格信息，报告展示更清晰，结果分析更省力。"
@@ -728,8 +796,10 @@ msgstr ""
 "僅在顯式傳入時覆蓋 `htype_names`。"
 
 #: ../../source/RELEASE_HISTORY.md:240
-msgid "**回测结果图标题**   图表标题含 Operator 名称与回测时间，便于与 trade_log / trade_summary 文件对应。"
-msgstr "**回測結果圖標題**   圖表標題含 Operator 名稱與回測時間，便於與 trade_log / trade_summary 文件對應。"
+msgid ""
+"**回测结果图标题**   图表标题含 Operator 名称与回测时间，便于与 trade_log / trade_summary 文件对应。"
+msgstr ""
+"**回測結果圖標題**   圖表標題含 Operator 名稱與回測時間，便於與 trade_log / trade_summary 文件對應。"
 
 #: ../../source/RELEASE_HISTORY.md:242
 msgid "**错误信息**   修正 DataType 缺列提示中的拼写错误。"
@@ -741,11 +811,11 @@ msgstr "2.1.1 (2026-03-07)"
 
 #: ../../source/RELEASE_HISTORY.md:247
 msgid ""
-"**回测报告手续费**   修复日频评价下报告「Total operation fee」恒为 0：`total_fee` 现与 trade_log"
-" 逐笔费用之和一致。"
+"**回测报告手续费**   修复日频评价下报告「Total operation fee」恒为 0：`total_fee` 现与 trade_log "
+"逐笔费用之和一致。"
 msgstr ""
-"**回測報告手續費**   修復日頻評價下報告「Total operation fee」恆爲 0：`total_fee` 現與 trade_log"
-" 逐筆費用之和一致。"
+"**回測報告手續費**   修復日頻評價下報告「Total operation fee」恆爲 0：`total_fee` 現與 trade_log "
+"逐筆費用之和一致。"
 
 #: ../../source/RELEASE_HISTORY.md:249
 msgid ""
@@ -786,8 +856,10 @@ msgstr ""
 "遷移指南](qteasy_2_migration_guide.md)。"
 
 #: ../../source/RELEASE_HISTORY.md:262
-msgid "**pandas 频率别名**   兼容 pandas 2.2 前后频率别名（如 `M/ME`、`H/h`），减少跨版本 freq 不匹配警告。"
-msgstr "**pandas 頻率別名**   兼容 pandas 2.2 前後頻率別名（如 `M/ME`、`H/h`），減少跨版本 freq 不匹配警告。"
+msgid ""
+"**pandas 频率别名**   兼容 pandas 2.2 前后频率别名（如 `M/ME`、`H/h`），减少跨版本 freq 不匹配警告。"
+msgstr ""
+"**pandas 頻率別名**   兼容 pandas 2.2 前後頻率別名（如 `M/ME`、`H/h`），減少跨版本 freq 不匹配警告。"
 
 #: ../../source/RELEASE_HISTORY.md:265
 msgid "2.0.1 (2026-03-05)"
@@ -810,8 +882,10 @@ msgid "**回测成交价与调度**   修复部分场景成交价获取失败；
 msgstr "**回測成交價與調度**   修復部分場景成交價獲取失敗；小時/分鐘回測默認運行時間表不再包含開盤時刻；成交價與評價價復權方式統一。"
 
 #: ../../source/RELEASE_HISTORY.md:275
-msgid "**PT / PS / VS 语义**   PT 在 T+0 现金交割下尽量复用同步卖出现金调仓；PS/VS 保持朴素订单语义，资源不足则放弃该笔。"
-msgstr "**PT / PS / VS 語義**   PT 在 T+0 現金交割下儘量複用同步賣出現金調倉；PS/VS 保持樸素訂單語義，資源不足則放棄該筆。"
+msgid ""
+"**PT / PS / VS 语义**   PT 在 T+0 现金交割下尽量复用同步卖出现金调仓；PS/VS 保持朴素订单语义，资源不足则放弃该笔。"
+msgstr ""
+"**PT / PS / VS 語義**   PT 在 T+0 現金交割下儘量複用同步賣出現金調倉；PS/VS 保持樸素訂單語義，資源不足則放棄該筆。"
 
 #: ../../source/RELEASE_HISTORY.md:278
 msgid "2.0.0 (2026-02-27)"
@@ -841,12 +915,10 @@ msgstr "**DataType**   支持資產類型 `ANY`；`StgData` 簡化策略數據�
 
 #: ../../source/RELEASE_HISTORY.md:286
 msgid ""
-"**移除配置项**   "
-"`maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
+"**移除配置项**   `maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
 "已移除，逻辑由执行流与 `benchmark_asset` 推断，迁移见指南。"
 msgstr ""
-"**移除配置項**   "
-"`maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
+"**移除配置項**   `maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
 "已移除，邏輯由執行流與 `benchmark_asset` 推斷，遷移見指南。"
 
 #: ../../source/RELEASE_HISTORY.md:289
@@ -856,15 +928,15 @@ msgstr "1.4.11 (2026-02-14)"
 #: ../../source/RELEASE_HISTORY.md:291
 msgid ""
 "**2.0 弃用预告**   对将在 2.0 移除或变更的 API 发出 "
-"FutureWarning，便于提前迁移：`get_history_data(htypes=...)` → `htype_names` 与后缀（如"
-" `close:b`）；`print_trade_log` / `print_backtest_log` → "
+"FutureWarning，便于提前迁移：`get_history_data(htypes=...)` → `htype_names` 与后缀（如 "
+"`close:b`）；`print_trade_log` / `print_backtest_log` → "
 "`trade_log`；`get_table_map()` → `get_table_master()`；broker `random` → "
 "`simulator`；Trader `info(verbose=...)` → `detail`；以及 "
 "`Operator.op_type`、`op_data_freq`、`get_share_idx()` 等变更提示。"
 msgstr ""
 "**2.0 棄用預告**   對將在 2.0 移除或變更的 API 發出 "
-"FutureWarning，便於提前遷移：`get_history_data(htypes=...)` → `htype_names` 與後綴（如"
-" `close:b`）；`print_trade_log` / `print_backtest_log` → "
+"FutureWarning，便於提前遷移：`get_history_data(htypes=...)` → `htype_names` 與後綴（如 "
+"`close:b`）；`print_trade_log` / `print_backtest_log` → "
 "`trade_log`；`get_table_map()` → `get_table_master()`；broker `random` → "
 "`simulator`；Trader `info(verbose=...)` → `detail`；以及 "
 "`Operator.op_type`、`op_data_freq`、`get_share_idx()` 等變更提示。"
@@ -921,11 +993,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:315
 msgid ""
-"**稳定性**   修复交易模式下配置偶被覆盖、`DataSource.all_basic_tables` 返回不正确、CLI "
-"`schedule` 无法打印当前任务等问题。"
+"**稳定性**   修复交易模式下配置偶被覆盖、`DataSource.all_basic_tables` 返回不正确、CLI `schedule` "
+"无法打印当前任务等问题。"
 msgstr ""
-"**穩定性**   修復交易模式下配置偶被覆蓋、`DataSource.all_basic_tables` 返回不正確、CLI "
-"`schedule` 無法列印當前任務等問題。"
+"**穩定性**   修復交易模式下配置偶被覆蓋、`DataSource.all_basic_tables` 返回不正確、CLI `schedule` "
+"無法列印當前任務等問題。"
 
 #: ../../source/RELEASE_HISTORY.md:318
 msgid "1.4.6 (2025-02-19)"
@@ -993,7 +1065,8 @@ msgstr "1.4.0 (2025-02-05)"
 
 #: ../../source/RELEASE_HISTORY.md:356
 msgid "**DataType 体系**   新 DataType 类简化本地数据取用；名称可用 `|` 参数（如 `close|b` 后复权收盘）。"
-msgstr "**DataType 體系**   新 DataType 類簡化本地數據取用；名稱可用 `|` 參數（如 `close|b` 後復權收盤）。"
+msgstr ""
+"**DataType 體系**   新 DataType 類簡化本地數據取用；名稱可用 `|` 參數（如 `close|b` 後復權收盤）。"
 
 #: ../../source/RELEASE_HISTORY.md:358
 msgid "**数据渠道**   新 `data_channel` 模块，支持多在线源；更多预定义数据表与实时价 API。"
@@ -1037,11 +1110,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:377
 msgid ""
-"**启动配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live "
-"trader 帮助信息。"
+"**启动配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live trader"
+" 帮助信息。"
 msgstr ""
-"**啓動配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live "
-"trader 幫助資訊。"
+"**啓動配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live trader"
+" 幫助資訊。"
 
 #: ../../source/RELEASE_HISTORY.md:380
 msgid "1.3.9 (2024-09-01)"
@@ -1049,11 +1122,11 @@ msgstr "1.3.9 (2024-09-01)"
 
 #: ../../source/RELEASE_HISTORY.md:382
 msgid ""
-"**启动配置**   `update_start_up_setting()` 对 qt "
-"配置键做合法性校验；`start_up_settings()` 输出与返回值改进；写文件时保留说明头。"
+"**启动配置**   `update_start_up_setting()` 对 qt 配置键做合法性校验；`start_up_settings()` "
+"输出与返回值改进；写文件时保留说明头。"
 msgstr ""
-"**啓動配置**   `update_start_up_setting()` 對 qt "
-"配置鍵做合法性校驗；`start_up_settings()` 輸出與返回值改進；寫文件時保留說明頭。"
+"**啓動配置**   `update_start_up_setting()` 對 qt 配置鍵做合法性校驗；`start_up_settings()` "
+"輸出與返回值改進；寫文件時保留說明頭。"
 
 #: ../../source/RELEASE_HISTORY.md:385
 msgid "1.3.8 (2024-09-01)"
@@ -1159,11 +1232,11 @@ msgstr "**示例運行**   `-r` 清除訂單時可指定賬戶，而非清空全
 
 #: ../../source/RELEASE_HISTORY.md:441
 msgid ""
-"**交割与日志**   卖出现金交割记录更清晰；修复 trade log 现金/持仓记录错误、买入交割异常、空数据提取及 CLI `CHANGE`"
-" 若干边界问题。"
+"**交割与日志**   卖出现金交割记录更清晰；修复 trade log 现金/持仓记录错误、买入交割异常、空数据提取及 CLI `CHANGE` "
+"若干边界问题。"
 msgstr ""
-"**交割與日誌**   賣出現金交割記錄更清晰；修復 trade log 現金/持倉記錄錯誤、買入交割異常、空數據提取及 CLI `CHANGE`"
-" 若干邊界問題。"
+"**交割與日誌**   賣出現金交割記錄更清晰；修復 trade log 現金/持倉記錄錯誤、買入交割異常、空數據提取及 CLI `CHANGE` "
+"若干邊界問題。"
 
 #: ../../source/RELEASE_HISTORY.md:444
 msgid "1.2.15 (2024-07-28)"
@@ -1187,11 +1260,11 @@ msgstr "1.2.13 (2024-06-19)"
 
 #: ../../source/RELEASE_HISTORY.md:456
 msgid ""
-"**内置策略查询**   `built_ins()` 恒返回 id→类型 dict，错误 id 时模糊匹配；`built_in_list()` /"
-" `built_in_strategies()` 行为对齐；新增 `built_in_doc()` 返回策略 docstring。"
+"**内置策略查询**   `built_ins()` 恒返回 id→类型 dict，错误 id 时模糊匹配；`built_in_list()` / "
+"`built_in_strategies()` 行为对齐；新增 `built_in_doc()` 返回策略 docstring。"
 msgstr ""
-"**內置策略查詢**   `built_ins()` 恆返回 id→類型 dict，錯誤 id 時模糊匹配；`built_in_list()` /"
-" `built_in_strategies()` 行爲對齊；新增 `built_in_doc()` 返回策略 docstring。"
+"**內置策略查詢**   `built_ins()` 恆返回 id→類型 dict，錯誤 id 時模糊匹配；`built_in_list()` / "
+"`built_in_strategies()` 行爲對齊；新增 `built_in_doc()` 返回策略 docstring。"
 
 #: ../../source/RELEASE_HISTORY.md:459
 msgid "1.2.12 (2024-06-12)"
@@ -1242,8 +1315,10 @@ msgid "**UI 选择**   命令行 `-u` 须显式指定 `tui` 或 `cli`。"
 msgstr "**UI 選擇**   命令行 `-u` 須顯式指定 `tui` 或 `cli`。"
 
 #: ../../source/RELEASE_HISTORY.md:487
-msgid "**账户配置**   `live_trade_account` 重命名为 `live_trade_account_name`，帮助信息更完整。"
-msgstr "**賬戶配置**   `live_trade_account` 重命名爲 `live_trade_account_name`，幫助資訊更完整。"
+msgid ""
+"**账户配置**   `live_trade_account` 重命名为 `live_trade_account_name`，帮助信息更完整。"
+msgstr ""
+"**賬戶配置**   `live_trade_account` 重命名爲 `live_trade_account_name`，幫助資訊更完整。"
 
 #: ../../source/RELEASE_HISTORY.md:489
 msgid "**qt.candle**   未安装 TA-Lib 时仍可生成 K 线。"
@@ -1433,23 +1508,25 @@ msgstr "1.1.0 (2024-03-08)"
 msgid ""
 "**Trader Shell 参数解析**   全命令支持 `--parameter` / `-p` 风格及 "
 "`-h`/`--help`；错误提示与用法说明改进。`watch` 支持 `-r` 移除、`-c` 清空；`buy`/`sell` 用 `-p` "
-"价格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 "
-"status/time/side/type 过滤；`config` 支持 `-s` 设置与 `-l` 层级；`strategies` 支持 "
-"`--set-par`；`run` 支持 `--args` 传任务参数。"
+"价格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 status/time/side/type"
+" 过滤；`config` 支持 `-s` 设置与 `-l` 层级；`strategies` 支持 `--set-par`；`run` 支持 "
+"`--args` 传任务参数。"
 msgstr ""
 "**Trader Shell 參數解析**   全命令支持 `--parameter` / `-p` 風格及 "
 "`-h`/`--help`；錯誤提示與用法說明改進。`watch` 支持 `-r` 移除、`-c` 清空；`buy`/`sell` 用 `-p` "
-"價格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 "
-"status/time/side/type 過濾；`config` 支持 `-s` 設置與 `-l` 層級；`strategies` 支持 "
-"`--set-par`；`run` 支持 `--args` 傳任務參數。"
+"價格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 status/time/side/type"
+" 過濾；`config` 支持 `-s` 設置與 `-l` 層級；`strategies` 支持 `--set-par`；`run` 支持 "
+"`--args` 傳任務參數。"
 
 #: ../../source/RELEASE_HISTORY.md:594
 msgid "1.0.27 (2024-03-05)"
 msgstr "1.0.27 (2024-03-05)"
 
 #: ../../source/RELEASE_HISTORY.md:596
-msgid "**数据库读取**   移除通过 pandas SQL 读库路径，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
-msgstr "**數據庫讀取**   移除通過 pandas SQL 讀庫路徑，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
+msgid ""
+"**数据库读取**   移除通过 pandas SQL 读库路径，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
+msgstr ""
+"**數據庫讀取**   移除通過 pandas SQL 讀庫路徑，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
 
 #: ../../source/RELEASE_HISTORY.md:599
 msgid "1.0.26 (2024-02-29)"
@@ -1512,8 +1589,10 @@ msgid "1.0.20 (2024-02-08)"
 msgstr "1.0.20 (2024-02-08)"
 
 #: ../../source/RELEASE_HISTORY.md:631
-msgid "**免 TA-Lib 指标**   修正 EMA、MACD、TRIX、DEMA 在无 ta-lib 时的实现，结果与 talib 版略有差异但可用。"
-msgstr "**免 TA-Lib 指標**   修正 EMA、MACD、TRIX、DEMA 在無 ta-lib 時的實現，結果與 talib 版略有差異但可用。"
+msgid ""
+"**免 TA-Lib 指标**   修正 EMA、MACD、TRIX、DEMA 在无 ta-lib 时的实现，结果与 talib 版略有差异但可用。"
+msgstr ""
+"**免 TA-Lib 指標**   修正 EMA、MACD、TRIX、DEMA 在無 ta-lib 時的實現，結果與 talib 版略有差異但可用。"
 
 #: ../../source/RELEASE_HISTORY.md:634
 msgid "1.0.19 (2024-02-07)"
@@ -1529,11 +1608,9 @@ msgstr "1.0.18 (2024-02-05)"
 
 #: ../../source/RELEASE_HISTORY.md:641
 msgid ""
-"**Trader Shell 消息**   订单成交展示含股数与现金变化；INFO/OVERVIEW 默认不再打印系统信息；numpy "
-"版本要求更新。"
+"**Trader Shell 消息**   订单成交展示含股数与现金变化；INFO/OVERVIEW 默认不再打印系统信息；numpy 版本要求更新。"
 msgstr ""
-"**Trader Shell 消息**   訂單成交展示含股數與現金變化；INFO/OVERVIEW 默認不再列印系統資訊；numpy "
-"版本要求更新。"
+"**Trader Shell 消息**   訂單成交展示含股數與現金變化；INFO/OVERVIEW 默認不再列印系統資訊；numpy 版本要求更新。"
 
 #: ../../source/RELEASE_HISTORY.md:644
 msgid "1.0.17 (2024-01-29)"
@@ -1557,11 +1634,9 @@ msgstr "**信號無法下單提示**   live 模式現金/持倉不足無法轉�
 
 #: ../../source/RELEASE_HISTORY.md:655
 msgid ""
-"**成交与成本**   修复重复处理成交导致可用量/现金错误、成本计算错误、history "
-"命令多标的成本错误；修复非交易日意外填数据（#85）等问题。"
+"**成交与成本**   修复重复处理成交导致可用量/现金错误、成本计算错误、history 命令多标的成本错误；修复非交易日意外填数据（#85）等问题。"
 msgstr ""
-"**成交與成本**   修復重複處理成交導致可用量/現金錯誤、成本計算錯誤、history "
-"命令多標的成本錯誤；修復非交易日意外填數據（#85）等問題。"
+"**成交與成本**   修復重複處理成交導致可用量/現金錯誤、成本計算錯誤、history 命令多標的成本錯誤；修復非交易日意外填數據（#85）等問題。"
 
 #: ../../source/RELEASE_HISTORY.md:658
 msgid "1.0.15 (2023-12-29)"
@@ -1678,4 +1753,3 @@ msgstr "1.0.0 (2023-09-19)"
 #: ../../source/RELEASE_HISTORY.md:722
 msgid "**首次 PyPI 发布**   qteasy 首个可在 PyPI 安装使用的正式版本。"
 msgstr "**首次 PyPI 發佈**   qteasy 首個可在 PyPI 安裝使用的正式版本。"
-

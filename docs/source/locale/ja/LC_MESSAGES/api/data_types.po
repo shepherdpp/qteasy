@@ -19,7 +19,6 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/data_types.rst:2
-#, fuzzy
 msgid "数据类型与消费入口——DataType"
 msgstr "履歴データ型 — DataType オブジェクト"
 

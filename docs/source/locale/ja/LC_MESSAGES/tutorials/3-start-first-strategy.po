@@ -359,7 +359,6 @@ msgid "`sell_batch_size=0.01`： 卖出资产时最小交易批量，最小允�
 msgstr "`sell_batch_size=0.01`: 資産を売却する際の最小取引ロットサイズ。許可される最小値は `0.01` です。"
 
 #: ../../source/tutorials/3-start-first-strategy.md:221
-#, fuzzy
 msgid ""
 "`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-"
 "cn/latest/)。"

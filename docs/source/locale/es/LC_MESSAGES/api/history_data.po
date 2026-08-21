@@ -23,7 +23,6 @@ msgid "历史数据获取和管理"
 msgstr "Adquirir y gestionar datos"
 
 #: ../../source/api/history_data.rst:4
-#, fuzzy
 msgid "使用 qteasy 可以获取并管理大量金融数据。本地库涵盖股票、基金、指数、期货等，种类包含价格、技术指标、宏观、财报等。"
 msgstr ""
 "Puede adquirir y gestionar una gran cantidad de datos históricos "

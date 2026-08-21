@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/live_trading/index.rst:2
@@ -25,8 +25,8 @@ msgstr "Trading en direct simulé"
 #: ../../source/live_trading/index.rst:4
 msgid "亲爱的用户，欢迎阅读 qteasy 的**模拟实盘**文档。"
 msgstr ""
-"Cher utilisateur, bienvenue pour lire le document qteasy **trading en "
-"direct simulé**."
+"Cher utilisateur, bienvenue pour lire le document qteasy **trading en direct"
+" simulé**."
 
 #: ../../source/live_trading/index.rst:6
 msgid ""
@@ -34,18 +34,17 @@ msgid ""
 "``mode=0``）则让策略在**真实时间**里运行——像真的在盯盘一样按日程算信号、下单、记日志，但成交通常由本地**模拟券商**完成，不涉及真实资金。"
 " > 这样您可以在投入真钱之前，先体验「回测之外、实盘之前」的那一段路，并尽量与回测使用**同一套**策略逻辑，减少「回测很好、实盘走样」的落差。"
 msgstr ""
-"**Qu'est-ce que le trading en direct simulé ?** Le backtesting consiste à"
-" utiliser des données historiques pour « avancer rapidement » et valider "
-"une stratégie ; le trading en direct simulé (configuré avec `mode=0`) "
-"permet à la stratégie de s'exécuter en **temps réel** : calcul des "
-"signaux, placement d'ordres et journalisation selon un calendrier, tout "
-"comme la surveillance réelle du marché. Cependant, l'exécution est "
-"généralement réalisée par une **courtage simulé** local, sans impliquer "
-"de fonds réels. Cela vous permet de découvrir le chemin \"avant le "
-"backtesting et avant le trading en direct\" avant d'investir de l'argent "
-"réel, et d'utiliser le **même ensemble de** logique stratégique que le "
-"backtesting, réduisant ainsi l'écart entre \"un excellent backtesting et "
-"un trading en direct déformé\"."
+"**Qu'est-ce que le trading en direct simulé ?** Le backtesting consiste à "
+"utiliser des données historiques pour « avancer rapidement » et valider une "
+"stratégie ; le trading en direct simulé (configuré avec `mode=0`) permet à "
+"la stratégie de s'exécuter en **temps réel** : calcul des signaux, placement"
+" d'ordres et journalisation selon un calendrier, tout comme la surveillance "
+"réelle du marché. Cependant, l'exécution est généralement réalisée par une "
+"**courtage simulé** local, sans impliquer de fonds réels. Cela vous permet "
+"de découvrir le chemin \"avant le backtesting et avant le trading en "
+"direct\" avant d'investir de l'argent réel, et d'utiliser le **même ensemble"
+" de** logique stratégique que le backtesting, réduisant ainsi l'écart entre "
+"\"un excellent backtesting et un trading en direct déformé\"."
 
 #: ../../source/live_trading/index.rst:10
 msgid ""
@@ -68,8 +67,8 @@ msgstr "Comment configurer et démarrer une simulation de trading en direct"
 #: ../../source/live_trading/index.rst:15
 msgid "风控与订单从提交到成交的全过程"
 msgstr ""
-"Maîtrise des risques et tout le processus depuis la passation de la "
-"commande jusqu'à son achèvement."
+"Maîtrise des risques et tout le processus depuis la passation de la commande"
+" jusqu'à son achèvement."
 
 #: ../../source/live_trading/index.rst:16
 msgid "日志与产物在哪里、出问题先查什么"
@@ -80,8 +79,8 @@ msgstr ""
 #: ../../source/live_trading/index.rst:17
 msgid "（进阶）如何扩展券商适配、如何做运维冒烟"
 msgstr ""
-"(Avancé) Comment étendre la compatibilité du courtage et comment "
-"effectuer une analyse de fumée de maintenance."
+"(Avancé) Comment étendre la compatibilité du courtage et comment effectuer "
+"une analyse de fumée de maintenance."
 
 #: ../../source/live_trading/index.rst:20
 msgid "读者分层"
@@ -105,6 +104,9 @@ msgid ""
 "**准备对接真实柜台（如 QMT）**：阅读 :doc:`4a-xtquant-broker-adapter-contract-v1`（英文契约 "
 "v1），再读 :doc:`4-broker-adapter-and-integration`。"
 msgstr ""
+"**Préparez-vous à vous connecter à de vrais compteurs (tels que QMT)** : "
+"Lisez :doc:`4a-xtquant-broker-adapter-contract-v1` (contrat anglais v1), "
+"puis lisez :doc:`4-broker-adapter-and-integration`."
 
 #: ../../source/live_trading/index.rst:27
 msgid "建议阅读顺序"
@@ -116,7 +118,8 @@ msgstr "L'ordre doit correspondre à la table des matières ci-dessous :"
 
 #: ../../source/live_trading/index.rst:31
 msgid ":doc:`1-overview` — 总览与术语速查"
-msgstr ":doc:`1-overview` — Présentation et référence rapide de la terminologie"
+msgstr ""
+":doc:`1-overview` — Présentation et référence rapide de la terminologie"
 
 #: ../../source/live_trading/index.rst:32
 msgid ":doc:`2-configuration-and-run` — 配置与启动"
@@ -131,18 +134,21 @@ msgstr ""
 #: ../../source/live_trading/index.rst:34
 msgid ":doc:`5-artifacts-and-troubleshooting` — 产物与排错（建议先于 Broker 集成阅读）"
 msgstr ""
-":doc:`5-artifacts-and-troubleshooting` — Artefacts et dépannage "
-"(recommandé de lire avant l'intégration du courtier)"
+":doc:`5-artifacts-and-troubleshooting` — Artefacts et dépannage (recommandé "
+"de lire avant l'intégration du courtier)"
 
 #: ../../source/live_trading/index.rst:35
 msgid ":doc:`4-broker-adapter-and-integration` — 券商适配（进阶）"
-msgstr ":doc:`4-broker-adapter-and-integration` — Adaptation du courtage (avancé)"
+msgstr ""
+":doc:`4-broker-adapter-and-integration` — Adaptation du courtage (avancé)"
 
 #: ../../source/live_trading/index.rst:36
 msgid ""
 ":doc:`4a-xtquant-broker-adapter-contract-v1` — XtQuant/MiniQMT 契约 "
 "v1（英文，协作必读）"
 msgstr ""
+":doc:`4a-xtquant-broker-adapter-contract-v1` — XtQuant/MiniQMT Contract v1 "
+"(anglais, lecture obligatoire pour la collaboration)"
 
 #: ../../source/live_trading/index.rst:37
 msgid ":doc:`6-trader-snapshot-gate` — 策略快照与启动门禁"
@@ -153,14 +159,14 @@ msgstr ""
 #: ../../source/live_trading/index.rst:38
 msgid ":doc:`7-manual-smoke-live-grid-roadmap` — 手工冒烟清单"
 msgstr ""
-":doc:`7-manual-smoke-live-grid-roadmap` — Liste de contrôle manuelle de "
-"la fumée"
+":doc:`7-manual-smoke-live-grid-roadmap` — Liste de contrôle manuelle de la "
+"fumée"
 
 #: ../../source/live_trading/index.rst:39
 msgid ":doc:`8-cli-trader-capability-matrix` — CLI 能力对照表"
 msgstr ""
-":doc:`8-cli-trader-capability-matrix` — Tableau de comparaison des "
-"capacités CLI"
+":doc:`8-cli-trader-capability-matrix` — Tableau de comparaison des capacités"
+" CLI"
 
 #~ msgid "本模块面向已经完成策略开发、准备进入模拟实盘运行的用户，集中介绍："
 #~ msgstr ""
@@ -197,8 +203,5 @@ msgstr ""
 
 #~ msgid "**准备对接真实柜台（如 QMT）**：在第 4 章阅读 Broker 适配说明。"
 #~ msgstr ""
-#~ "**Préparer l'interface avec un vrai "
-#~ "courtier (tel que QMT) :** Lisez "
-#~ "les notes d'adaptation du courtier au"
-#~ " chapitre 4."
-
+#~ "**Préparer l'interface avec un vrai courtier (tel que QMT) :** Lisez les "
+#~ "notes d'adaptation du courtier au chapitre 4."

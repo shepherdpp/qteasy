@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/RELEASE_HISTORY.md:1
@@ -32,9 +32,8 @@ msgstr ""
 "移行ガイド](qteasy_2_migration_guide.md) を参照してください。"
 
 #: ../../source/RELEASE_HISTORY.md:5
-#, fuzzy
 msgid "2.6.4 (2026-08-20)"
-msgstr "2.4.4 (2026-05-08)"
+msgstr "2.6.4 (2026-08-20)"
 
 #: ../../source/RELEASE_HISTORY.md:7
 msgid "**完善 `DataType` 类的取数API，完善数据体验叙事**"
@@ -48,8 +47,7 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:9
 msgid ""
-"**Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 "
-"HistoryPanel。"
+"**Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 HistoryPanel。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:10
@@ -73,8 +71,7 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:13
 msgid ""
 "**行为提示（升级时请留意）**   若您曾用 `get_history_data`「顺便」取 GDP、行业或 `close-某代码`，请改为 "
-"`get_reference_data` / `get_static_data`。宽名在多种资产类型间歧义时，请改用完整 id "
-"或显式指定资产类型。"
+"`get_reference_data` / `get_static_data`。宽名在多种资产类型间歧义时，请改用完整 id 或显式指定资产类型。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:15
@@ -82,9 +79,8 @@ msgid "**文档更新**   概念章、API、教程与 FAQ 已按「策略 / 研�
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:18
-#, fuzzy
 msgid "2.6.3 (2026-08-16)"
-msgstr "2.4.3 (2026-05-06)"
+msgstr "2.6.3 (2026-08-16)"
 
 #: ../../source/RELEASE_HISTORY.md:20
 msgid "**HistoryPanel 与因子研究能力扩展，新增下列API**"
@@ -99,8 +95,7 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:22
 msgid ""
-"**相关 / 协方差** `corr` / `cov`：对指定指标计算标的两两时序相关或协方差矩阵，便于快速查看共动结构（与逐日截面 IC "
-"语义不同）。"
+"**相关 / 协方差** `corr` / `cov`：对指定指标计算标的两两时序相关或协方差矩阵，便于快速查看共动结构（与逐日截面 IC 语义不同）。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:23
@@ -110,9 +105,8 @@ msgid ""
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:26
-#, fuzzy
 msgid "2.6.2 (2026-08-14)"
-msgstr "2.4.2 (2026-04-19)"
+msgstr "2.6.2 (2026-08-14)"
 
 #: ../../source/RELEASE_HISTORY.md:28 ../../source/RELEASE_HISTORY.md:37
 msgid "**HistoryPanel 数据操作能力扩展，新增下列API**"
@@ -126,8 +120,8 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:30
 msgid ""
-"**统计聚合** `sum` / `median` / `var` / `quantile`：与既有均值、标准差等同一用法，沿时间轴压成按标的 ×"
-" 指标的汇总表，便于快速查看截面摘要。"
+"**统计聚合** `sum` / `median` / `var` / `quantile`：与既有均值、标准差等同一用法，沿时间轴压成按标的 × "
+"指标的汇总表，便于快速查看截面摘要。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:31
@@ -141,9 +135,8 @@ msgid ""
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:35
-#, fuzzy
 msgid "2.6.1 (2026-08-13)"
-msgstr "2.5.1 (2026-05-18)"
+msgstr "2.6.1 (2026-08-13)"
 
 #: ../../source/RELEASE_HISTORY.md:38
 msgid ""
@@ -168,26 +161,25 @@ msgid "**文档更新**   教程与 HistoryPanel API 说明已补充上述能力
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:44
-#, fuzzy
 msgid "2.6.0 (2026-06-01)"
-msgstr "Version 2.5.0 (May 17, 2026)"
+msgstr "2.6.0 (2026-06-01)"
 
 #: ../../source/RELEASE_HISTORY.md:46
 #, python-format
 msgid ""
-"**数据通道（AKShare）**   历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` "
-"并联网）。在无 Tushare Pro token "
+"**数据通道（AKShare）**   历史数据下载现支持 **`channel='akshare'`**（需安装 `akshare` 并联网）。在无 "
+"Tushare Pro token "
 "或希望换源时，可拉取股票/指数/基金日线与多档分钟线、周月线、交易日历、股票/指数/基金列表、复权因子，以及停复牌、资金流向、分红、新股与上市公司简介等表（当前内置"
-" **25** 张表；各通道支持范围见 [数据通道](manage_data/10.%20data_channels.md) "
-"文档）。实时行情仍可通过 AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。"
+" **25** 张表；各通道支持范围见 [数据通道](manage_data/10.%20data_channels.md) 文档）。实时行情仍可通过 "
+"AKShare 通道获取自选报价与日内 K 线（与既有实时接口一致）。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:48
 msgid ""
 "**四通道统一**   **`refill_data_source`**、实盘自动补数及配置项 "
-"**`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** "
-"均支持 **`tushare`**、**`akshare`**、**`eastmoney`**（别名 "
-"`emoney`）、**`sina`**；未指定 `channel` 时 refill 仍默认 "
+"**`live_trade_data_refill_channel`** / **`live_price_acquire_channel`** 均支持 "
+"**`tushare`**、**`akshare`**、**`eastmoney`**（别名 `emoney`）、**`sina`**；未指定 "
+"`channel` 时 refill 仍默认 "
 "**`tushare`**。各通道可下载的表范围不同，某表在当前通道无映射或拉取失败时会跳过该表并继续其余表。"
 msgstr ""
 
@@ -196,8 +188,8 @@ msgid ""
 "**基础信息表更新**   使用 **`refill_data_source(..., merge_type='update')`** "
 "更新股票/指数/基金等**基础信息表**时：若下载源（如 "
 "AKShare）只带代码、简称等索引字段，而行业、地域、上市日期等为空，**不再用空值冲掉本地已有内容**，便于先用 Tushare "
-"补全基本面，再用其他通道拉行情时顺带刷新代码列表。通过 AKShare 更新股票列表时，缺失的上市/退市日期在数据库中记为 "
-"**NULL**，避免在 MySQL 等库中因空日期写入失败。"
+"补全基本面，再用其他通道拉行情时顺带刷新代码列表。通过 AKShare 更新股票列表时，缺失的上市/退市日期在数据库中记为 **NULL**，避免在 "
+"MySQL 等库中因空日期写入失败。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:52
@@ -205,8 +197,8 @@ msgid ""
 "**数据下载与按行业选股**   修复从 Tushare 下载**期货合约基本信息**时，个别合约「交易时间说明」过长导致 MySQL "
 "无法入库的问题；新建库已放宽相关说明字段容量，**已有 MySQL "
 "库**可在备份后执行发行包中的列类型升级脚本（`docs/scripts/migrate_schema_text_p0_p1.sql`）。修复基础表中行业等字段被清空后，**`filter_stocks`"
-" / `filter_stock_codes`** 按行业筛选时可能报错的问题。未传 **`start_date` / `end_date`** "
-"却指定 **`tables='basics'`**（含 IPO "
+" / `filter_stock_codes`** 按行业筛选时可能报错的问题。未传 **`start_date` / `end_date`** 却指定"
+" **`tables='basics'`**（含 IPO "
 "新股表）时，现会默认从该表最早可用日下载至当天并分块执行，不再因未填日期而中断；该方式任务较多、耗时较长，不需要 IPO "
 "数据时可只填具体表名或收窄日期范围。"
 msgstr ""
@@ -214,27 +206,26 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:54
 #, python-format
 msgid ""
-"**文档与示例**   [数据通道](manage_data/10.%20data_channels.md) "
-"教程补充四通道能力对照、AKShare 使用说明、基础表更新时空值不覆盖规则与未传日期的默认行为；入门教程「获取数据」改为多通道表述。新增示例 "
-"**`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 "
-"AKShare 不再标注为未实现。"
+"**文档与示例**   [数据通道](manage_data/10.%20data_channels.md) 教程补充四通道能力对照、AKShare "
+"使用说明、基础表更新时空值不覆盖规则与未传日期的默认行为；入门教程「获取数据」改为多通道表述。新增示例 "
+"**`examples/akshare_refill_minimal.py`**（短区间 `stock_daily` 下载）。配置帮助中 AKShare"
+" 不再标注为未实现。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:57
-#, fuzzy
 msgid "2.5.2 (2026-05-24)"
-msgstr "2.5.1 (2026-05-18)"
+msgstr "2.5.2 (2026-05-24)"
 
 #: ../../source/RELEASE_HISTORY.md:59
 msgid ""
 "**Trader Shell CLI 可用性**   **`orders`** 列表现显示本地订单 "
 "ID（`id`）与券商委托号（`broker_id`，若有），便于对照 **`cancel ORDER_ID`** "
 "撤单或排障。**`history`** 仅展示确有成交的记录，未成交或已取消且无成交量的订单不再混入列表。**`task -l`** "
-"默认列出排队中的任务（`queued`），**`task -l -s all`** 与 **`tasks`** 以与 **`schedule`**"
-" 一致的表格展示任务 ID、名称、状态与参数；仍可用 **`task TASK_ID`** 查看详情、**`task TASK_ID -c`** "
+"默认列出排队中的任务（`queued`），**`task -l -s all`** 与 **`tasks`** 以与 **`schedule`** "
+"一致的表格展示任务 ID、名称、状态与参数；仍可用 **`task TASK_ID`** 查看详情、**`task TASK_ID -c`** "
 "取消排队任务。**`broker`**、**`gate`**、**`reconcile`**、**`liveconfig`** "
-"改为分段键值可读输出（风格接近 **`overview`** / **`config`**），布尔项以颜色区分；程序化集成请直接调用 Trader"
-" API。**`rotatelogs`** 执行前预览待删文件并提示确认，非交互环境须加 **`--yes` / `-y`**；别名 "
+"改为分段键值可读输出（风格接近 **`overview`** / **`config`**），布尔项以颜色区分；程序化集成请直接调用 Trader "
+"API。**`rotatelogs`** 执行前预览待删文件并提示确认，非交互环境须加 **`--yes` / `-y`**；别名 "
 "**`rotatelog`**、**`rotate-logs`** 仍可用。从命令模式回到 **dashboard** 时，**`-r`** "
 "回放的系统日志条数与设定一致（按逻辑日志条目计数）；非 DEBUG 模式下不再因先截物理行再过滤 DEBUG 而明显变少。"
 msgstr ""
@@ -249,8 +240,7 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:63
 msgid ""
 "**实盘配置（XtQuant 协作）**   **`live_trade_broker_type`** 与 "
-"**`qt.configure(...)`** 现允许取值 "
-"**`xtquant`**（须安装并注册扩展包后方可实际接入；未注册时可能回落为模拟券商）。"
+"**`qt.configure(...)`** 现允许取值 **`xtquant`**（须安装并注册扩展包后方可实际接入；未注册时可能回落为模拟券商）。"
 msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:65
@@ -295,13 +285,12 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:76
 msgid ""
 "**收盘 `post_close` 与 `created` 订单**   修复收盘任务对仍为 `created` 的订单误用撤单逻辑导致 "
-"`post_close` 失败的问题。收盘后此类未报单订单将置为 **`rejected`**（视同未受理）；已报单的 `submitted` /"
-" `partial-filled` 仍按原规则撤单为 **`canceled`**。"
+"`post_close` 失败的问题。收盘后此类未报单订单将置为 **`rejected`**（视同未受理）；已报单的 `submitted` / "
+"`partial-filled` 仍按原规则撤单为 **`canceled`**。"
 msgstr ""
 "**注文のクローズ (post_close) と作成されたオーダー** この更新により、クローズ タスクがまだ `created` "
-"状態にある注文のキャンセル ロジックを誤って使用し、`post_close` "
-"が失敗する問題が修正されます。市場が終了した後、これらの未送信の注文は `rejected` (未処理とみなされます) "
-"としてマークされます。送信された `submitted` / `partial-filled` "
+"状態にある注文のキャンセル ロジックを誤って使用し、`post_close` が失敗する問題が修正されます。市場が終了した後、これらの未送信の注文は "
+"`rejected` (未処理とみなされます) としてマークされます。送信された `submitted` / `partial-filled` "
 "の注文は、元のルールに従ってキャンセルされ、`canceled` としてマークされます。"
 
 #: ../../source/RELEASE_HISTORY.md:79
@@ -326,38 +315,38 @@ msgstr ""
 msgid ""
 "**券商受理、对账与恢复诊断**   "
 "柜台受理成功后，本地订单可关联券商委托号，便于对账与排障。模拟盘支持可配置的受理随机拒单（默认一定比例，便于验证拒单路径；示例与测试可设为 0 "
-"以保持结果确定）。开盘、收盘后会在日志中输出对账检查点摘要（现金、持仓、在途单计数等），便于检索。在 **DEBUG** 模式下，可通过 `run"
-" --task diagnose_pending_orders` 或在 Shell "
+"以保持结果确定）。开盘、收盘后会在日志中输出对账检查点摘要（现金、持仓、在途单计数等），便于检索。在 **DEBUG** 模式下，可通过 `run "
+"--task diagnose_pending_orders` 或在 Shell "
 "中等价方式做在途单只读诊断（本地与柜台差异摘要），**不包含**自动改单或自动补偿。周期性自动对账任务与差异自动修复仍属后续演进项。"
 msgstr ""
 "**仲介受入れ、調整、回復診断** "
 "カウンター受理が成功した後、ローカル注文を仲介業者の注文番号に関連付けることで、調整やトラブルシューティングが容易になります。デモ "
 "アカウントは、構成可能なランダム注文拒否をサポートしています "
 "(拒否パスの検証を容易にするために、デフォルトで特定の割合が設定されています。一貫した結果を保証するために、例とテストを 0 "
-"に設定できます)。照合チェックポイントの概要 (現金、保有高、未決注文数など) "
-"は、簡単に検索できるように、市場の開始後と終了後にログに出力されます。 **DEBUG** モードでは、保留中の注文 "
-"(ローカルおよびカウンターの差分サマリー) の読み取り専用診断を、`run --task diagnose_pending_orders` "
-"経由またはシェルで実行できます。** 自動注文変更や補償は除きます。定期的な自動調整タスクと自動差異修復は今後の開発予定です。"
+"に設定できます)。照合チェックポイントの概要 (現金、保有高、未決注文数など) は、簡単に検索できるように、市場の開始後と終了後にログに出力されます。 "
+"**DEBUG** モードでは、保留中の注文 (ローカルおよびカウンターの差分サマリー) の読み取り専用診断を、`run --task "
+"diagnose_pending_orders` 経由またはシェルで実行できます。** "
+"自動注文変更や補償は除きます。定期的な自動調整タスクと自動差異修復は今後の開発予定です。"
 
 #: ../../source/RELEASE_HISTORY.md:85
 msgid ""
 "**Trader Shell：运维命令与 dashboard**   在 Trader 提示符下无需退出即可查看实盘产物路径、有效 live "
 "配置摘要、任务队列与取消排队任务、手动运行启动检查、打印对账快照 JSON、轮换过期交易/风控日志、查看券商连接状态等；`run --task` "
-"支持按帮助说明运行开盘/收盘/诊断等任务；`sync` / `pull-state` 预留给后续 QMT 集成，当前会给出明确提示。启动后默认进入"
-" **dashboard**，单行刷新下一任务倒计时、监视列表行情与系统消息；按 **Ctrl+C** 打开选单：**1** 命令模式、**2**"
-" dashboard、**3** 退出；数字键无需按 Enter，5 秒无输入自动恢复中断前模式，选单等待期间再按 **Ctrl+C** 与选 "
-"**3** 相同并正常退出。修复从命令模式回到 dashboard 时日志重复、状态行残留、关闭 debug "
+"支持按帮助说明运行开盘/收盘/诊断等任务；`sync` / `pull-state` 预留给后续 QMT 集成，当前会给出明确提示。启动后默认进入 "
+"**dashboard**，单行刷新下一任务倒计时、监视列表行情与系统消息；按 **Ctrl+C** 打开选单：**1** 命令模式、**2** "
+"dashboard、**3** 退出；数字键无需按 Enter，5 秒无输入自动恢复中断前模式，选单等待期间再按 **Ctrl+C** 与选 **3**"
+" 相同并正常退出。修复从命令模式回到 dashboard 时日志重复、状态行残留、关闭 debug "
 "时仍显示调试日志等问题；主循环发生意外错误时可选择回到 dashboard 继续观察或退出关停。"
 msgstr ""
 "**Trader シェル: 運用およびメンテナンスのコマンドとダッシュボード** Trader "
 "プロンプトを終了せずに、ライブ取引出力パス、有効なライブ構成概要、タスクキューとキューから外されたタスクの表示、スタートアップチェックの手動実行、調整スナップショット"
-" JSON の印刷、期限切れのトランザクション/リスク制御ログのローテーション、ブローカー接続ステータスの表示などができます。 `run "
-"--task` は、ヘルプの指示に従ってオープン/クローズ/診断タスクの実行をサポートします。 `sync` / `pull-state` "
-"は将来の QMT 統合用に予約されており、現時点では明確にプロンプ​​トが表示されます。起動すると、デフォルトで **ダッシュボード** "
+" JSON の印刷、期限切れのトランザクション/リスク制御ログのローテーション、ブローカー接続ステータスの表示などができます。 `run --task`"
+" は、ヘルプの指示に従ってオープン/クローズ/診断タスクの実行をサポートします。 `sync` / `pull-state` は将来の QMT "
+"統合用に予約されており、現時点では明確にプロンプ​​トが表示されます。起動すると、デフォルトで **ダッシュボード** "
 "になり、次のタスクへのカウントダウン、監視リスト、およびシステム メッセージが 1 行で更新されます。 **Ctrl+C** "
 "を押してメニューを開きます: **1** コマンド モード、**2** ダッシュボード、**3** 終了;数字キーの Enter "
-"を押す必要はありません。5 秒間入力がないと、自動的に前のモードに戻ります。メニューの待機中にもう一度 **Ctrl+C** を押すと、**3**"
-" を選択したことと同じになり、正常に終了します。コマンド "
+"を押す必要はありません。5 秒間入力がないと、自動的に前のモードに戻ります。メニューの待機中にもう一度 **Ctrl+C** を押すと、**3** "
+"を選択したことと同じになり、正常に終了します。コマンド "
 "モードからダッシュボードに戻ったときのログの重複、ステータス行の残り、デバッグが無効になっているときにデバッグ "
 "ログが表示されたままになるなどの問題を修正しました。メインループで予期しないエラーが発生した場合は、ダッシュボードに戻って監視を続けるか、終了してシャットダウンするかを選択できます。"
 
@@ -372,14 +361,13 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:89
 msgid ""
-"**模拟/实盘文档**   扩充 `live_trading` 系列：配置与运行、券商接入、快照与启动门禁、产物与排障、手工冒烟清单，并新增 "
-"CLI 能力矩阵（已实现 vs 预留）；补充 dashboard / 命令模式与 Ctrl+C "
+"**模拟/实盘文档**   扩充 `live_trading` 系列：配置与运行、券商接入、快照与启动门禁、产物与排障、手工冒烟清单，并新增 CLI "
+"能力矩阵（已实现 vs 预留）；补充 dashboard / 命令模式与 Ctrl+C "
 "选单说明（§7.1）；区分本地风控拒单与柜台受理拒单，便于按清单做冒烟测试与问题定位。"
 msgstr ""
 "**シミュレーション/ライブ取引ドキュメント** `live_trading` シリーズを拡張します: "
-"構成と操作、仲介アクセス、スナップショットと起動アクセス制御、アーティファクトとトラブルシューティング、手動スモーク テスト "
-"チェックリスト、および CLI 機能マトリックス (実装対予約) を追加します。ダッシュボード/コマンド モードと Ctrl+C "
-"メニューの手順を補足します "
+"構成と操作、仲介アクセス、スナップショットと起動アクセス制御、アーティファクトとトラブルシューティング、手動スモーク テスト チェックリスト、および "
+"CLI 機能マトリックス (実装対予約) を追加します。ダッシュボード/コマンド モードと Ctrl+C メニューの手順を補足します "
 "(§7.1)。ローカルリスク管理拒否とカウンター受け入れ拒否を区別し、チェックリストに従ってスモークテストと問題の特定を容易にします。"
 
 #: ../../source/RELEASE_HISTORY.md:92
@@ -399,22 +387,20 @@ msgstr ""
 msgid ""
 "**示例与文档**   `examples/live_grid.py`、`examples/live_grid_multi.py` 统一采用 "
 "`get_pars` / `update_par_values` "
-"写法；策略基类文档明确：分标的参数须用**字典**（键为代码），元组表示全池共用一组参数，兜底键为 **`default`**（非 "
-"`others`）。"
+"写法；策略基类文档明确：分标的参数须用**字典**（键为代码），元组表示全池共用一组参数，兜底键为 **`default`**（非 `others`）。"
 msgstr ""
-"**例とドキュメント** `examples/live_grid.py` と `examples/live_grid_multi.py` "
-"は一貫して `get_pars` / `update_par_values` "
-"構文を使用します。ストラテジー基本クラスのドキュメントには、サブクラスのパラメーターは **辞書** (キーとしてコードを持つ) "
-"でなければならないこと、タプルはプール全体で共有される一連のパラメーターを表すこと、およびキャッチオール キーは **`default`** "
-"(`others` ではない) であることが明確に記載されています。"
+"**例とドキュメント** `examples/live_grid.py` と `examples/live_grid_multi.py` は一貫して "
+"`get_pars` / `update_par_values` 構文を使用します。ストラテジー基本クラスのドキュメントには、サブクラスのパラメーターは"
+" **辞書** (キーとしてコードを持つ) でなければならないこと、タプルはプール全体で共有される一連のパラメーターを表すこと、およびキャッチオール "
+"キーは **`default`** (`others` ではない) であることが明確に記載されています。"
 
 #: ../../source/RELEASE_HISTORY.md:98
 msgid ""
-"**Trader CLI 策略列表**   简要列表模式下，带 `multi_pars` 的策略会提示运行 **`strategies -d`**"
-" 查看完整分标的参数。"
+"**Trader CLI 策略列表**   简要列表模式下，带 `multi_pars` 的策略会提示运行 **`strategies -d`** "
+"查看完整分标的参数。"
 msgstr ""
-"**Trader CLI 戦略リスト** 簡易リスト モードでは、`multi_pars` を含む戦略では、**`strategies -d`**"
-" を実行して完全な解析パラメーターを表示するように求められます。"
+"**Trader CLI 戦略リスト** 簡易リスト モードでは、`multi_pars` を含む戦略では、**`strategies -d`** "
+"を実行して完全な解析パラメーターを表示するように求められます。"
 
 #: ../../source/RELEASE_HISTORY.md:101
 msgid "2.4.4 (2026-05-08)"
@@ -422,11 +408,11 @@ msgstr "2.4.4 (2026-05-08)"
 
 #: ../../source/RELEASE_HISTORY.md:103
 msgid ""
-"**东方财富行情与盘中任务**   修复 2.4.3 回归：东方财富 HTTPS "
-"行情请求在部分环境下失败、盘中追赶任务入队格式错误导致主循环报错、实时 K 线日期解析异常等问题，恢复自选价与盘中启动后的正常调度。"
+"**东方财富行情与盘中任务**   修复 2.4.3 回归：东方财富 HTTPS 行情请求在部分环境下失败、盘中追赶任务入队格式错误导致主循环报错、实时"
+" K 线日期解析异常等问题，恢复自选价与盘中启动后的正常调度。"
 msgstr ""
-"**Eastmoney マーケット データと日中タスク** バージョン 2.4.3 で修正された問題: Eastmoney HTTPS マーケット"
-" データ リクエストは一部の環境で失敗し、日内キャッチアップ タスク キューの形式が正しくなく、メイン ループがクラッシュし、リアルタイムの K "
+"**Eastmoney マーケット データと日中タスク** バージョン 2.4.3 で修正された問題: Eastmoney HTTPS マーケット "
+"データ リクエストは一部の環境で失敗し、日内キャッチアップ タスク キューの形式が正しくなく、メイン ループがクラッシュし、リアルタイムの K "
 "ライン日付解析が異常でした。ウォッチリストの価格と日中の起動の通常のスケジュールが復元されました。"
 
 #: ../../source/RELEASE_HISTORY.md:105
@@ -458,13 +444,15 @@ msgid "2.4.2 (2026-04-19)"
 msgstr "2.4.2 (2026-04-19)"
 
 #: ../../source/RELEASE_HISTORY.md:119
-msgid "**异步回放与持仓同步**   模拟券商异步回放时，脚本可可靠等待队列订单与在途成交处理完毕，避免仅凭队列是否为空判断完成而导致持仓滞后、重复下单。"
+msgid ""
+"**异步回放与持仓同步**   模拟券商异步回放时，脚本可可靠等待队列订单与在途成交处理完毕，避免仅凭队列是否为空判断完成而导致持仓滞后、重复下单。"
 msgstr ""
 "**非同期再生とポジションの同期** "
 "証券会社による非同期再生をシミュレートする場合、スクリプトはキューに入れられた注文と転送中のトランザクションが処理されるのを確実に待機することができ、キューが空かどうかのみに基づいて完了を判断することによって引き起こされるポジションの遅延や注文の重複を回避できます。"
 
 #: ../../source/RELEASE_HISTORY.md:121
-msgid "**实盘数据源刷新**   分钟/小时级实时 K 线按资产类型写入对应数据表，不再一律写入股票表，基金/指数/期货等 live 数据落表正确。"
+msgid ""
+"**实盘数据源刷新**   分钟/小时级实时 K 线按资产类型写入对应数据表，不再一律写入股票表，基金/指数/期货等 live 数据落表正确。"
 msgstr ""
 "**リアルタイム データ ソースの更新** 分/時間のリアルタイム "
 "ローソク足チャートは、株価テーブルに一律に書き込まれるのではなく、資産タイプごとに対応するデータ "
@@ -485,8 +473,8 @@ msgid ""
 "**盘中启动 Trader**   修复交易时段内启动 Trader 时，逾期的开盘/收盘类任务可能被逆序重放、状态机卡在 sleeping "
 "的问题；逾期任务现按时间顺序入队，盘中启动可正确追到当前市场状态并继续运行策略与行情任务。"
 msgstr ""
-"**日中 Trader 起動** 取引時間中に Trader を起動すると、期限を過ぎた開始/終了タスクが逆の順序で再生され、ステート "
-"マシンがスリープ "
+"**日中 Trader 起動** 取引時間中に Trader を起動すると、期限を過ぎた開始/終了タスクが逆の順序で再生され、ステート マシンがスリープ"
+" "
 "モードでスタックする問題を修正しました。期限を過ぎたタスクは時系列でキューに入れられるようになり、日中取引中に起動すると、現在の市場の状態に正しく追いつき、戦略と市場データのタスクの実行が継続されます。"
 
 #: ../../source/RELEASE_HISTORY.md:131
@@ -501,14 +489,14 @@ msgid ""
 msgstr ""
 "**シミュレーション/ライブ取引インフラストラクチャ (S1.3)** は、構成可能でテスト可能なライブ基盤を提供します。 "
 "`LiveTradeConfig` は実行時構成を検証します。プラグイン可能な `RiskManager` "
-"は、安全でない注文を送信前に傍受し、理由を提供します。また、仲介適応スケルトン (接続/注文発注/キャンセル/実行のためのポーリング) は、QMT"
-" および他のプラットフォームとの将来の統合に備えています。アーティファクト リスト (ログ/ブレークポイント/リスク制御ログ) と CLI/TUI"
-" 注文ライフサイクル表示がより明確になりました。"
+"は、安全でない注文を送信前に傍受し、理由を提供します。また、仲介適応スケルトン (接続/注文発注/キャンセル/実行のためのポーリング) は、QMT "
+"および他のプラットフォームとの将来の統合に備えています。アーティファクト リスト (ログ/ブレークポイント/リスク制御ログ) と CLI/TUI "
+"注文ライフサイクル表示がより明確になりました。"
 
 #: ../../source/RELEASE_HISTORY.md:135
 msgid ""
-"**文档**   新增独立 live_trading 文档系列（概览、配置运行、风控与订单、券商适配、排障）；教程含股票与 ETF "
-"双路径模拟示例及 S1.3 设计说明；首页与 API 交叉链接便于找到 live 指引。"
+"**文档**   新增独立 live_trading 文档系列（概览、配置运行、风控与订单、券商适配、排障）；教程含股票与 ETF 双路径模拟示例及 "
+"S1.3 设计说明；首页与 API 交叉链接便于找到 live 指引。"
 msgstr ""
 "**ドキュメント** 新しい独立した live_trading ドキュメント シリーズが追加されました "
 "(概要、構成と操作、リスク管理と注文、仲介業務の適応、トラブルシューティング)。チュートリアルには、株式とETFのデュアルパスシミュレーション例とS1.3設計仕様が含まれています。ホームページと"
@@ -520,12 +508,12 @@ msgstr "2.3.1 (2026-04-11)"
 
 #: ../../source/RELEASE_HISTORY.md:140
 msgid ""
-"**交易日志保留**   默认 `trade_log_keep_days` 改为 **3**（原 0）：每次新 Python 进程导入 "
-"qteasy 时，会在 `trade_log_file_path` 下清理超龄 CSV；设为 `None` 或 **0 及以下** "
+"**交易日志保留**   默认 `trade_log_keep_days` 改为 **3**（原 0）：每次新 Python 进程导入 qteasy "
+"时，会在 `trade_log_file_path` 下清理超龄 CSV；设为 `None` 或 **0 及以下** "
 "可关闭自动删除。文档已与「启动时清理、非每次回测前清理」的行为对齐。"
 msgstr ""
-"**取引ログの保持** デフォルト設定 `trade_log_keep_days` が **3** (元は 0) に変更されました。新しい "
-"Python プロセスが qteasy をインポートするたびに、`trade_log_file_path` にある期限切れの CSV "
+"**取引ログの保持** デフォルト設定 `trade_log_keep_days` が **3** (元は 0) に変更されました。新しい Python"
+" プロセスが qteasy をインポートするたびに、`trade_log_file_path` にある期限切れの CSV "
 "ファイルがクリーンアップされます。 `None` または **0 以下** "
 "に設定すると、自動削除が無効になります。ドキュメントは、「各バックテストの前ではなく、起動時にクリーンアップする」という動作に合わせて調整されました。"
 
@@ -551,15 +539,15 @@ msgstr "Version 2.3.0 (2026-04-08)"
 
 #: ../../source/RELEASE_HISTORY.md:149
 msgid ""
-"**文档与教程**   教程结构重组，学习路径更清晰；HistoryPanel "
-"与包级用法从研究探索延伸到回测工作流；示例刷新，常见端到端路径更易跟做。"
+"**文档与教程**   教程结构重组，学习路径更清晰；HistoryPanel 与包级用法从研究探索延伸到回测工作流；示例刷新，常见端到端路径更易跟做。"
 msgstr ""
 "**ドキュメントとチュートリアル** チュートリアルの構造が、より明確な学習パスのために再編成されました。 HistoryPanel "
 "とパッケージレベルのメソッドの使用は、調査と探索からワークフローのバックテストまで拡張されました。例が更新され、共通のエンドツーエンド "
 "パスをたどりやすくなりました。"
 
 #: ../../source/RELEASE_HISTORY.md:151
-msgid "**HistoryPanel 高亮**   可用与标的、日期对齐的二维布尔掩码驱动高亮，多标的视图下同一逻辑条件可一致强调，无需逐序列手工接线。"
+msgid ""
+"**HistoryPanel 高亮**   可用与标的、日期对齐的二维布尔掩码驱动高亮，多标的视图下同一逻辑条件可一致强调，无需逐序列手工接线。"
 msgstr ""
 "**HistoryPanel ハイライト表示**は、ターゲットと日付に合わせた 2 次元のブール "
 "マスクによって駆動できます。シーケンスごとに手動で配線する必要がなく、複数のターゲットを含むビューで同じ論理条件を一貫して強調できます。"
@@ -577,8 +565,8 @@ msgid ""
 "[HistoryPanel API](api/HistoryPanel.rst) 与教程 [2.5-historypanel-data-"
 "analysis](tutorials/2.5-historypanel-data-analysis.md)。"
 msgstr ""
-"**HistoryPanel リサーチオペレーター** 新機能には、累積リターン `cum_return()`、正規化 `normalize()`"
-" (マスクサポート付き)、ポートフォリオ `portfolio()` "
+"**HistoryPanel リサーチオペレーター** 新機能には、累積リターン `cum_return()`、正規化 `normalize()` "
+"(マスクサポート付き)、ポートフォリオ `portfolio()` "
 "(均等加重/重み付け/グループ化およびオプションのベンチマーク)、ローソク足チャートインジケーター "
 "`kline.*(inplace=)`、ワンクリックプリセット `research_preset()` およびページネーションが含まれます。 "
 "`plot()`、列レベルの DSL `assign()`、断面/時系列 `rank()` および "
@@ -588,10 +576,11 @@ msgstr ""
 "analysis.md) を参照してください。"
 
 #: ../../source/RELEASE_HISTORY.md:158
-msgid "**运算符语义**   算术运算符返回新面板而非原地修改；`copy(deep=True)` 默认为深拷贝，`deep=False` 共享底层数据。"
+msgid ""
+"**运算符语义**   算术运算符返回新面板而非原地修改；`copy(deep=True)` 默认为深拷贝，`deep=False` 共享底层数据。"
 msgstr ""
-"**Operator セマンティクス** 算術演算子は、元のデータを変更する代わりに、新しいパネルを返します。 `copy(deep=True)`"
-" はデフォルトでディープコピーになり、`deep=False` は基礎となるデータを共有します。"
+"**Operator セマンティクス** 算術演算子は、元のデータを変更する代わりに、新しいパネルを返します。 `copy(deep=True)` "
+"はデフォルトでディープコピーになり、`deep=False` は基礎となるデータを共有します。"
 
 #: ../../source/RELEASE_HISTORY.md:161
 msgid "2.2.8 (2026-03-30)"
@@ -603,9 +592,9 @@ msgid ""
 "`to_numpy`、列赋值、`where()` 掩码、只读 htype 属性（如 `panel.close`）、比较得 bool 数组以便链式 "
 "`where`、`loc` 时间轴选取。文档与教程说明与 pandas 的差异及使用边界。"
 msgstr ""
-"**HistoryPanel 調査とインデックス作成 (破壊的)** 角括弧インデックスはラベル付きのサブパネルを返します。 `subpanel`"
-" / `to_numpy`、列の割り当て、`where()` マスク、読み取り専用の htype 属性 (`panel.close` "
-"など)、チェーンされた `where` のブール配列との比較、および `loc` "
+"**HistoryPanel 調査とインデックス作成 (破壊的)** 角括弧インデックスはラベル付きのサブパネルを返します。 `subpanel` / "
+"`to_numpy`、列の割り当て、`where()` マスク、読み取り専用の htype 属性 (`panel.close` など)、チェーンされた "
+"`where` のブール配列との比較、および `loc` "
 "タイムライン選択をサポートします。ドキュメントとチュートリアルでは、パンダとの違いとその使用境界について説明しています。"
 
 #: ../../source/RELEASE_HISTORY.md:166
@@ -640,9 +629,8 @@ msgid ""
 "**交互图十字线**   Plotly 交互图点击任意 K 线可在主图显示实心十字线（bar 中点）；平移/缩放时指示器同步，bar "
 "滚出视口时自动隐藏。"
 msgstr ""
-"**インタラクティブ チャートの十字線** Plotly インタラクティブ チャートでは、ローソク足をクリックすると、メイン "
-"チャート上に実線の十字線 (バーの中央) "
-"が表示されます。インジケーターはパン/ズームと同期し、バーがビューポートからスクロールアウトすると自動的に非表示になります。"
+"**インタラクティブ チャートの十字線** Plotly インタラクティブ チャートでは、ローソク足をクリックすると、メイン チャート上に実線の十字線 "
+"(バーの中央) が表示されます。インジケーターはパン/ズームと同期し、バーがビューポートからスクロールアウトすると自動的に非表示になります。"
 
 #: ../../source/RELEASE_HISTORY.md:181
 msgid "2.2.4 (2026-03-22)"
@@ -655,16 +643,16 @@ msgid ""
 msgstr ""
 "**復元された OHLC ローソク足チャート (Q01)** `plot()` が `open|b` "
 "などの復元された列名を認識できず、ローソク足チャート "
-"エラーを引き起こす問題を修正しました。未処理の列と復元された列の両方が存在する場合、ローソク足チャートでは、既存の価格列の規則に従って、未処理の名前の"
-" OHLC が優先されます。"
+"エラーを引き起こす問題を修正しました。未処理の列と復元された列の両方が存在する場合、ローソク足チャートでは、既存の価格列の規則に従って、未処理の名前の "
+"OHLC が優先されます。"
 
 #: ../../source/RELEASE_HISTORY.md:185
 msgid ""
-"**交互图 X 轴**   HTML 嵌入图保留 Q03 的 X 轴 clamp 与最小可见 bar 宽度；FigureWidget 多行图监听主"
-" X 轴并同步写入各 `xaxis*`，平移越界不再留下半屏空白。"
+"**交互图 X 轴**   HTML 嵌入图保留 Q03 的 X 轴 clamp 与最小可见 bar 宽度；FigureWidget 多行图监听主 X "
+"轴并同步写入各 `xaxis*`，平移越界不再留下半屏空白。"
 msgstr ""
-"**インタラクティブ グラフ X 軸** HTML 埋め込みグラフは、Q03 の X 軸クランプと最小表示バー幅を保持します。 "
-"FigureWidget の複数線グラフはメインの X 軸をリッスンし、各 `xaxis*` "
+"**インタラクティブ グラフ X 軸** HTML 埋め込みグラフは、Q03 の X 軸クランプと最小表示バー幅を保持します。 FigureWidget"
+" の複数線グラフはメインの X 軸をリッスンし、各 `xaxis*` "
 "に同期して書き込みます。また、境界を越える変換によって画面半分の空白スペースが残されることはなくなりました。"
 
 #: ../../source/RELEASE_HISTORY.md:188
@@ -683,8 +671,8 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:192
 msgid ""
-"**`plotly_backend_app`**   `interactive=True` 时可指定 `auto`（默认，先试 "
-"FigureWidget 再 HTML）、`FigureWidget` 或 `html`。"
+"**`plotly_backend_app`**   `interactive=True` 时可指定 `auto`（默认，先试 FigureWidget"
+" 再 HTML）、`FigureWidget` 或 `html`。"
 msgstr ""
 "`plotly_backend_app` が `interactive=True` に設定されている場合、`auto` (デフォルト。最初に "
 "FigureWidget を試し、次に HTML を試します)、`FigureWidget`、または `html` を指定できます。"
@@ -698,8 +686,8 @@ msgid ""
 "**DataSource 兼容性**   缺少可选文件后端（如 `tables`/`pyarrow`）时不再失败；回退 `csv` "
 "时保证数据目录可用；`hdf5` 作为 `hdf` 别名；回退警告更易诊断。"
 msgstr ""
-"**DataSource 互換性** オプションのファイル バックエンド (`tables`/`pyarrow` など) "
-"の場合に失敗しなくなりました。 `csv` にロールバックするときにデータ ディレクトリの可用性を確保します。 `hdf5` は `hdf` "
+"**DataSource 互換性** オプションのファイル バックエンド (`tables`/`pyarrow` など) の場合に失敗しなくなりました。"
+" `csv` にロールバックするときにデータ ディレクトリの可用性を確保します。 `hdf5` は `hdf` "
 "のエイリアスとして使用されます。ロールバック警告は診断しやすくなります。"
 
 #: ../../source/RELEASE_HISTORY.md:200
@@ -709,9 +697,8 @@ msgstr "2.2.1 (2026-03-19)"
 #: ../../source/RELEASE_HISTORY.md:202
 msgid "**回测 NaN 价格**   修复价格为 NaN（停牌等）时污染信号解析与成交结果的问题；NaN 价位不再产生虚假成交或费用。"
 msgstr ""
-"**NaN 価格のバックテスト** 価格が (一時停止などにより) NaN "
-"だった場合にシグナル分析とトランザクション結果を汚染する問題を修正しました。 NaN "
-"価格レベルでは、誤ったトランザクションや手数料が発生しなくなりました。"
+"**NaN 価格のバックテスト** 価格が (一時停止などにより) NaN だった場合にシグナル分析とトランザクション結果を汚染する問題を修正しました。"
+" NaN 価格レベルでは、誤ったトランザクションや手数料が発生しなくなりました。"
 
 #: ../../source/RELEASE_HISTORY.md:205
 msgid "2.2.0 (2026-03-17)"
@@ -732,8 +719,8 @@ msgstr ""
 #: ../../source/RELEASE_HISTORY.md:211
 msgid "**`qt.candle` 升级**   底层接入新可视化管线，API 保持兼容；Renko 不再支持，旧交互 widget 视为遗留。"
 msgstr ""
-"**qt.candle のアップグレード:** 基礎となるレイヤーは、API の互換性を維持しながら、新しい視覚化パイプラインを統合します。 "
-"Renko はサポートされなくなり、古いインタラクティブ ウィジェットはレガシーとみなされます。"
+"**qt.candle のアップグレード:** 基礎となるレイヤーは、API の互換性を維持しながら、新しい視覚化パイプラインを統合します。 Renko"
+" はサポートされなくなり、古いインタラクティブ ウィジェットはレガシーとみなされます。"
 
 #: ../../source/RELEASE_HISTORY.md:213
 msgid "**日志与交易文件**   系统/交易日志与净值曲线 CSV 路径更可预期，旧文件按配置自动清理以节省磁盘。"
@@ -759,12 +746,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:222
 msgid ""
-"**数据类型与历史取数**   修正若干内置类型定义；`get_history_data` 对 `(dtype, freq, "
-"asset_type)` 组合解析更稳健，同名多定义安全合并，避免空数据或重复列错误。"
+"**数据类型与历史取数**   修正若干内置类型定义；`get_history_data` 对 `(dtype, freq, asset_type)` "
+"组合解析更稳健，同名多定义安全合并，避免空数据或重复列错误。"
 msgstr ""
-"**データ型と履歴データの取得** いくつかの組み込み型定義が修正されました。 `get_history_data` は、`(dtype, "
-"freq, asset_type)` "
-"の組み合わせのより堅牢な解析を提供し、同じ名前を持つ複数の定義を安全にマージし、空のデータや重複列などのエラーを回避します。"
+"**データ型と履歴データの取得** いくつかの組み込み型定義が修正されました。 `get_history_data` は、`(dtype, freq, "
+"asset_type)` の組み合わせのより堅牢な解析を提供し、同じ名前を持つ複数の定義を安全にマージし、空のデータや重複列などのエラーを回避します。"
 
 #: ../../source/RELEASE_HISTORY.md:225
 msgid "2.1.3 (2026-03-09)"
@@ -778,17 +764,17 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:229
 msgid ""
-"**净值曲线**   `trade_log=True` 时完整净值曲线另存为 "
-"`value_curve_{name}_{datetime}.csv`，与 trade_log / trade_summary 同目录并按 "
-"`trade_log_keep_days` 轮换。"
+"**净值曲线**   `trade_log=True` 时完整净值曲线另存为 `value_curve_{name}_{datetime}.csv`，与"
+" trade_log / trade_summary 同目录并按 `trade_log_keep_days` 轮换。"
 msgstr ""
 "**純資産価値曲線** `trade_log=True` の場合、完全な純資産価値曲線は trade_log / trade_summary "
-"と同じディレクトリに `value_curve_{name}_{datetime}.csv` "
-"として保存され、`trade_log_keep_days` によって回転されます。"
+"と同じディレクトリに `value_curve_{name}_{datetime}.csv` として保存され、`trade_log_keep_days`"
+" によって回転されます。"
 
 #: ../../source/RELEASE_HISTORY.md:231
 msgid "**回测结果与报告**   回测结果补充价格信息，报告展示更清晰，结果分析更省力。"
-msgstr "**バックテスト結果とレポート** バックテスト結果には補足的な価格情報が含まれるため、レポートの表示がより明確になり、結果の分析が容易になります。"
+msgstr ""
+"**バックテスト結果とレポート** バックテスト結果には補足的な価格情報が含まれるため、レポートの表示がより明確になり、結果の分析が容易になります。"
 
 #: ../../source/RELEASE_HISTORY.md:234
 msgid "2.1.2 (2026-03-08)"
@@ -809,7 +795,8 @@ msgstr ""
 "をリストします。非推奨のパラメータ `htypes` は、明示的に渡された場合にのみ `htype_names` をオーバーライドします。"
 
 #: ../../source/RELEASE_HISTORY.md:240
-msgid "**回测结果图标题**   图表标题含 Operator 名称与回测时间，便于与 trade_log / trade_summary 文件对应。"
+msgid ""
+"**回测结果图标题**   图表标题含 Operator 名称与回测时间，便于与 trade_log / trade_summary 文件对应。"
 msgstr ""
 "**バックテスト結果のチャート タイトル** チャート タイトルには、trade_log / trade_summary "
 "ファイルとの対応を容易にするために、Operator の名前とバックテスト時間が含まれています。"
@@ -824,8 +811,8 @@ msgstr "2.1.1 (2026-03-07)"
 
 #: ../../source/RELEASE_HISTORY.md:247
 msgid ""
-"**回测报告手续费**   修复日频评价下报告「Total operation fee」恒为 0：`total_fee` 现与 trade_log"
-" 逐笔费用之和一致。"
+"**回测报告手续费**   修复日频评价下报告「Total operation fee」恒为 0：`total_fee` 现与 trade_log "
+"逐笔费用之和一致。"
 msgstr ""
 "**バックテスト レポート手数料** 日次評価レポートの「合計操作手数料」が常に 0 になる問題を修正しました。 `total_fee` "
 "は、trade_log 内の各取引の手数料の合計と一致するようになりました。"
@@ -850,9 +837,8 @@ msgid ""
 "等访问运行时现金、持仓、成交等，无需在 `data_types` 中声明；回测与 live 注入一致，严格无前视。"
 msgstr ""
 "**プロセス データ API** 戦略を使用すると、`data_types` "
-"での宣言を必要とせずに、`get_data('proc.own_cash')` や "
-"`get_data('proc.trade_records')` などのメソッドを介して、`realize()` "
-"内の実行時の現金、保有物、およびトランザクションにアクセスできます。バックテストはライブ "
+"での宣言を必要とせずに、`get_data('proc.own_cash')` や `get_data('proc.trade_records')` "
+"などのメソッドを介して、`realize()` 内の実行時の現金、保有物、およびトランザクションにアクセスできます。バックテストはライブ "
 "インジェクションと一致しており、厳密には先読みはありません。"
 
 #: ../../source/RELEASE_HISTORY.md:256
@@ -873,12 +859,13 @@ msgid ""
 "**移除旧式 op_* 类型**   `op_cashes` 等 `op_*` DataType 已删除，请改用过程数据 API，详见 [2.0 "
 "迁移指南](qteasy_2_migration_guide.md)。"
 msgstr ""
-"**従来の op_* タイプの削除** `op_cashes` およびその他の `op_*` DataType "
-"は削除されました。代わりにプロシージャル データ API を使用してください。詳細については、[2.0 "
-"移行ガイド](qteasy_2_migration_guide.md) を参照してください。"
+"**従来の op_* タイプの削除** `op_cashes` およびその他の `op_*` DataType は削除されました。代わりにプロシージャル"
+" データ API を使用してください。詳細については、[2.0 移行ガイド](qteasy_2_migration_guide.md) "
+"を参照してください。"
 
 #: ../../source/RELEASE_HISTORY.md:262
-msgid "**pandas 频率别名**   兼容 pandas 2.2 前后频率别名（如 `M/ME`、`H/h`），减少跨版本 freq 不匹配警告。"
+msgid ""
+"**pandas 频率别名**   兼容 pandas 2.2 前后频率别名（如 `M/ME`、`H/h`），减少跨版本 freq 不匹配警告。"
 msgstr ""
 "**Pandas 周波数エイリアス** Pandas 2.2 前後の周波数エイリアス (`M/ME`、`H/h` など) "
 "と互換性があり、バージョン間の周波数不一致の警告が減少します。"
@@ -908,7 +895,8 @@ msgstr ""
 "一部のシナリオでトランザクション価格を取得できない問題を修正しました。時間/分バックテストのデフォルトの実行タイムテーブルには、開始時間が含まれなくなりました。取引価格と評価価格の調整方法を一本化しました。"
 
 #: ../../source/RELEASE_HISTORY.md:275
-msgid "**PT / PS / VS 语义**   PT 在 T+0 现金交割下尽量复用同步卖出现金调仓；PS/VS 保持朴素订单语义，资源不足则放弃该笔。"
+msgid ""
+"**PT / PS / VS 语义**   PT 在 T+0 现金交割下尽量复用同步卖出现金调仓；PS/VS 保持朴素订单语义，资源不足则放弃该笔。"
 msgstr ""
 "**PT / PS / VS セマンティクス** PT は、T+0 現金決済の下で可能な限り同期現金再配置を再利用します。 PS/VS "
 "は基本的な順序セマンティクスを維持し、リソースが不十分な場合は順序を放棄します。"
@@ -941,12 +929,10 @@ msgstr "**DataType** はアセットタイプ `ANY` をサポートします。 
 
 #: ../../source/RELEASE_HISTORY.md:286
 msgid ""
-"**移除配置项**   "
-"`maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
+"**移除配置项**   `maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
 "已移除，逻辑由执行流与 `benchmark_asset` 推断，迁移见指南。"
 msgstr ""
-"**設定項目の削除** "
-"`maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
+"**設定項目の削除** `maximize_cash_usage`、`benchmark_asset_type`、`benchmark_dtype` "
 "が削除されました。ロジックは実行フローと`benchmark_asset`から推測されます。移行の詳細については、ガイドを参照してください。"
 
 #: ../../source/RELEASE_HISTORY.md:289
@@ -956,18 +942,17 @@ msgstr "Version 1.4.11 (February 14, 2026)"
 #: ../../source/RELEASE_HISTORY.md:291
 msgid ""
 "**2.0 弃用预告**   对将在 2.0 移除或变更的 API 发出 "
-"FutureWarning，便于提前迁移：`get_history_data(htypes=...)` → `htype_names` 与后缀（如"
-" `close:b`）；`print_trade_log` / `print_backtest_log` → "
+"FutureWarning，便于提前迁移：`get_history_data(htypes=...)` → `htype_names` 与后缀（如 "
+"`close:b`）；`print_trade_log` / `print_backtest_log` → "
 "`trade_log`；`get_table_map()` → `get_table_master()`；broker `random` → "
 "`simulator`；Trader `info(verbose=...)` → `detail`；以及 "
 "`Operator.op_type`、`op_data_freq`、`get_share_idx()` 等变更提示。"
 msgstr ""
-"**2.0 非推奨の通知** 2.0 で削除または変更される API に対して FutureWarning が発行され、早期移行が容易になります:"
-" `get_history_data(htypes=...)` → `htype_names` およびサフィックス (例: `close:b`)。"
-" ⟦コード3⟧ / ⟦コード4⟧ → ⟦コード5⟧; ⟦コード6⟧ → ⟦コード7⟧;ブローカー `random` → `simulator`; "
+"**2.0 非推奨の通知** 2.0 で削除または変更される API に対して FutureWarning が発行され、早期移行が容易になります: "
+"`get_history_data(htypes=...)` → `htype_names` およびサフィックス (例: `close:b`)。 "
+"⟦コード3⟧ / ⟦コード4⟧ → ⟦コード5⟧; ⟦コード6⟧ → ⟦コード7⟧;ブローカー `random` → `simulator`; "
 "Trader `info(verbose=...)` → "
-"`detail`;そして、`Operator.op_type`、`op_data_freq`、`get_share_idx()` "
-"などに変更されます。"
+"`detail`;そして、`Operator.op_type`、`op_data_freq`、`get_share_idx()` などに変更されます。"
 
 #: ../../source/RELEASE_HISTORY.md:294
 msgid "1.4.10 (2025-12-19)"
@@ -975,7 +960,8 @@ msgstr "1.4.10 (2025-12-19)"
 
 #: ../../source/RELEASE_HISTORY.md:296
 msgid "**优化性能**   修复部分系统上优化算法 2 多进程运行时性能偏低的问题。"
-msgstr "**パフォーマンスの最適化** 一部のシステム上で複数のプロセスで実行するときにアルゴリズム 2 のパフォーマンスが低下する問題を修正しました。"
+msgstr ""
+"**パフォーマンスの最適化** 一部のシステム上で複数のプロセスで実行するときにアルゴリズム 2 のパフォーマンスが低下する問題を修正しました。"
 
 #: ../../source/RELEASE_HISTORY.md:299
 msgid "1.4.9 (2025-03-11)"
@@ -999,8 +985,8 @@ msgid ""
 "**Trader CLI refill**   新增 `refill` 命令及 `run --task refill`，可在 Shell "
 "内手动补齐数据源表。"
 msgstr ""
-"**Trader CLI リフィル** 新しい `refill` コマンドと `run --task refill` "
-"コマンドにより、シェル内でデータ ソース テーブルを手動で完了できます。"
+"**Trader CLI リフィル** 新しい `refill` コマンドと `run --task refill` コマンドにより、シェル内でデータ "
+"ソース テーブルを手動で完了できます。"
 
 #: ../../source/RELEASE_HISTORY.md:308
 msgid "**自动 refill**   修复 live 模式自动数据源补齐失败的问题。"
@@ -1022,11 +1008,11 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:315
 msgid ""
-"**稳定性**   修复交易模式下配置偶被覆盖、`DataSource.all_basic_tables` 返回不正确、CLI "
-"`schedule` 无法打印当前任务等问题。"
+"**稳定性**   修复交易模式下配置偶被覆盖、`DataSource.all_basic_tables` 返回不正确、CLI `schedule` "
+"无法打印当前任务等问题。"
 msgstr ""
-"**安定性** トランザクション モードで設定が上書きされる、`DataSource.all_basic_tables` が不正な値を返す、CLI"
-" `schedule` が現在のタスクを出力できないなどの問題が修正されました。"
+"**安定性** トランザクション モードで設定が上書きされる、`DataSource.all_basic_tables` が不正な値を返す、CLI "
+"`schedule` が現在のタスクを出力できないなどの問題が修正されました。"
 
 #: ../../source/RELEASE_HISTORY.md:318
 msgid "1.4.6 (2025-02-19)"
@@ -1068,8 +1054,7 @@ msgstr "1.4.3 (2025-02-11)"
 #: ../../source/RELEASE_HISTORY.md:337
 msgid "**live 行情渠道**   修复 Trader 偶从错误渠道取 live 价、无法写入数据源的问题。"
 msgstr ""
-"**ライブ市場データ チャネル** Trader が時々間違ったチャネルからライブ価格を取得し、データ "
-"ソースへの書き込みに失敗する問題を修正しました。"
+"**ライブ市場データ チャネル** Trader が時々間違ったチャネルからライブ価格を取得し、データ ソースへの書き込みに失敗する問題を修正しました。"
 
 #: ../../source/RELEASE_HISTORY.md:339
 msgid "**refill_data_source**   新增可选参数控制是否下载依赖表。"
@@ -1082,8 +1067,7 @@ msgstr "1.4.2 (2025-02-07)"
 #: ../../source/RELEASE_HISTORY.md:344
 msgid "**依赖**   `dbutil`、`pymysql` 改为必选依赖；缺少可选依赖时的警告展示修正。"
 msgstr ""
-"**依存関係** `dbutil` と `pymysql` "
-"は必須の依存関係になりました。オプションの依存関係が欠落している場合の警告が修正されました。"
+"**依存関係** `dbutil` と `pymysql` は必須の依存関係になりました。オプションの依存関係が欠落している場合の警告が修正されました。"
 
 #: ../../source/RELEASE_HISTORY.md:347
 msgid "1.4.1 (2025-02-06)"
@@ -1097,7 +1081,8 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:351
 msgid "**refill_data_source**   `channel` 与 `data_source` 可选并增加校验。"
-msgstr "**refill_data_source** `channel` と `data_source` はオプションであり、追加の検証が必要です。"
+msgstr ""
+"**refill_data_source** `channel` と `data_source` はオプションであり、追加の検証が必要です。"
 
 #: ../../source/RELEASE_HISTORY.md:354
 msgid "1.4.0 (2025-02-05)"
@@ -1106,8 +1091,8 @@ msgstr "Version 1.4.0 (2025-02-05)"
 #: ../../source/RELEASE_HISTORY.md:356
 msgid "**DataType 体系**   新 DataType 类简化本地数据取用；名称可用 `|` 参数（如 `close|b` 后复权收盘）。"
 msgstr ""
-"**DataType システム** 新しい DataType クラスは、ローカル データの取得を簡素化します。名前には `|` "
-"パラメータを使用できます (例: `close|b` の後に調整終値が続きます)。"
+"**DataType システム** 新しい DataType クラスは、ローカル データの取得を簡素化します。名前には `|` パラメータを使用できます"
+" (例: `close|b` の後に調整終値が続きます)。"
 
 #: ../../source/RELEASE_HISTORY.md:358
 msgid "**数据渠道**   新 `data_channel` 模块，支持多在线源；更多预定义数据表与实时价 API。"
@@ -1155,8 +1140,8 @@ msgstr ""
 
 #: ../../source/RELEASE_HISTORY.md:377
 msgid ""
-"**启动配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live "
-"trader 帮助信息。"
+"**启动配置 API**   新增 `get_start_up_settings()`、`start_up_config`；修正 live trader"
+" 帮助信息。"
 msgstr ""
 "**スタートアップ構成 API** `get_start_up_settings()` と `start_up_config` を追加しました。 "
 "Live Trader のヘルプ情報を修正しました。"
@@ -1167,8 +1152,8 @@ msgstr "Version 1.3.9 (2024-09-01)"
 
 #: ../../source/RELEASE_HISTORY.md:382
 msgid ""
-"**启动配置**   `update_start_up_setting()` 对 qt "
-"配置键做合法性校验；`start_up_settings()` 输出与返回值改进；写文件时保留说明头。"
+"**启动配置**   `update_start_up_setting()` 对 qt 配置键做合法性校验；`start_up_settings()` "
+"输出与返回值改进；写文件时保留说明头。"
 msgstr ""
 "**スタートアップ構成** `update_start_up_setting()` は、Qt 構成キーの有効性チェックを実行します。 "
 "`start_up_settings()` 出力と戻り値の改善。ファイルに書き込むときに説明ヘッダーを保持します。"
@@ -1224,8 +1209,7 @@ msgstr "**Trader 状態の永続性** 終了時に最新の実行状態を保存
 #: ../../source/RELEASE_HISTORY.md:408
 msgid "**delete_account()**   删除账户时一并清理交易日志、记录与断点文件。"
 msgstr ""
-"**delete_account()** アカウントを削除するときに、トランザクション ログ、レコード、およびブレークポイント "
-"ファイルを削除します。"
+"**delete_account()** アカウントを削除するときに、トランザクション ログ、レコード、およびブレークポイント ファイルを削除します。"
 
 #: ../../source/RELEASE_HISTORY.md:411
 msgid "1.3.4 (2024-08-17)"
@@ -1269,7 +1253,8 @@ msgstr "**CLI デバッグ** デバッグ モードを切り替えるための�
 
 #: ../../source/RELEASE_HISTORY.md:434
 msgid "**自选价**   改进 CLI 监控价显示与修复展示失败；Windows 字体名再次修正。"
-msgstr "**カスタム価格** CLI モニタリングの価格表示が改善され、表示エラーが修正されました。 Windows フォント名が再度修正されました。"
+msgstr ""
+"**カスタム価格** CLI モニタリングの価格表示が改善され、表示エラーが修正されました。 Windows フォント名が再度修正されました。"
 
 #: ../../source/RELEASE_HISTORY.md:437
 msgid "1.3.0 (2024-08-09)"
@@ -1277,15 +1262,16 @@ msgstr "Version 1.3.0 (2024-08-09)"
 
 #: ../../source/RELEASE_HISTORY.md:439
 msgid "**示例运行**   `-r` 清除订单时可指定账户，而非清空全部账户。"
-msgstr "**実行例** `-r` オプションを使用すると、注文をクリアするときに、すべてのアカウントをクリアするのではなく、アカウントを指定できます。"
+msgstr ""
+"**実行例** `-r` オプションを使用すると、注文をクリアするときに、すべてのアカウントをクリアするのではなく、アカウントを指定できます。"
 
 #: ../../source/RELEASE_HISTORY.md:441
 msgid ""
-"**交割与日志**   卖出现金交割记录更清晰；修复 trade log 现金/持仓记录错误、买入交割异常、空数据提取及 CLI `CHANGE`"
-" 若干边界问题。"
+"**交割与日志**   卖出现金交割记录更清晰；修复 trade log 现金/持仓记录错误、买入交割异常、空数据提取及 CLI `CHANGE` "
+"若干边界问题。"
 msgstr ""
-"**決済とログ** 売上の現金決済記録がより明確になりました。取引ログのキャッシュ/ポジション記録のエラー、異常な購入決済、空のデータ抽出、および"
-" CLI `CHANGE` のいくつかの境界問題が修正されました。"
+"**決済とログ** 売上の現金決済記録がより明確になりました。取引ログのキャッシュ/ポジション記録のエラー、異常な購入決済、空のデータ抽出、および "
+"CLI `CHANGE` のいくつかの境界問題が修正されました。"
 
 #: ../../source/RELEASE_HISTORY.md:444
 msgid "1.2.15 (2024-07-28)"
@@ -1309,8 +1295,8 @@ msgstr "1.2.13 (2024-06-19)"
 
 #: ../../source/RELEASE_HISTORY.md:456
 msgid ""
-"**内置策略查询**   `built_ins()` 恒返回 id→类型 dict，错误 id 时模糊匹配；`built_in_list()` /"
-" `built_in_strategies()` 行为对齐；新增 `built_in_doc()` 返回策略 docstring。"
+"**内置策略查询**   `built_ins()` 恒返回 id→类型 dict，错误 id 时模糊匹配；`built_in_list()` / "
+"`built_in_strategies()` 行为对齐；新增 `built_in_doc()` 返回策略 docstring。"
 msgstr ""
 "**組み込みの戦略クエリ:** `built_ins()` は常に ID → type dict を返します。間違った ID "
 "にはあいまい一致が付けられます。 `built_in_list()` / `built_in_strategies()` "
@@ -1369,7 +1355,8 @@ msgid "**UI 选择**   命令行 `-u` 须显式指定 `tui` 或 `cli`。"
 msgstr "**UI の選択** コマンド ライン `-u` では、`tui` または `cli` のいずれかを明示的に指定する必要があります。"
 
 #: ../../source/RELEASE_HISTORY.md:487
-msgid "**账户配置**   `live_trade_account` 重命名为 `live_trade_account_name`，帮助信息更完整。"
+msgid ""
+"**账户配置**   `live_trade_account` 重命名为 `live_trade_account_name`，帮助信息更完整。"
 msgstr ""
 "**アカウント設定** より完全なヘルプ情報を表示するには、`live_trade_account` の名前を "
 "`live_trade_account_name` に変更します。"
@@ -1446,7 +1433,8 @@ msgstr "**パッケージング** バージョン 1.2.0 でスタイル ファ�
 
 #: ../../source/RELEASE_HISTORY.md:530
 msgid "**live 账户 API**   新增 `live_trade_accounts()` 返回各账户详情。"
-msgstr "**ライブ アカウント API** には、各アカウントの詳細を返す `live_trade_accounts()` が含まれるようになりました。"
+msgstr ""
+"**ライブ アカウント API** には、各アカウントの詳細を返す `live_trade_accounts()` が含まれるようになりました。"
 
 #: ../../source/RELEASE_HISTORY.md:532
 msgid "**CLI**   修正 trade info 格式；live 相关配置帮助改进。"
@@ -1522,8 +1510,8 @@ msgid ""
 "**依赖冲突**   调整 numba/numpy 版本约束；首次加载警告略改进；修复 pandas > 2.0 兼容问题；优化算法 2 在部分 "
 "numpy/numba 组合下的性能警告。"
 msgstr ""
-"**依存関係の競合** numba/numpy のバージョン制約を調整しました。初期ロード警告がわずかに改善されました。 pandas > 2.0"
-" の互換性の問題を修正しました。特定の numpy/numba の組み合わせにおけるアルゴリズム 2 の最適化されたパフォーマンス警告。"
+"**依存関係の競合** numba/numpy のバージョン制約を調整しました。初期ロード警告がわずかに改善されました。 pandas > 2.0 "
+"の互換性の問題を修正しました。特定の numpy/numba の組み合わせにおけるアルゴリズム 2 の最適化されたパフォーマンス警告。"
 
 #: ../../source/RELEASE_HISTORY.md:572
 msgid "1.1.3 (2024-03-25)"
@@ -1567,27 +1555,27 @@ msgstr "Version 1.1.0 (2024-03-08)"
 msgid ""
 "**Trader Shell 参数解析**   全命令支持 `--parameter` / `-p` 风格及 "
 "`-h`/`--help`；错误提示与用法说明改进。`watch` 支持 `-r` 移除、`-c` 清空；`buy`/`sell` 用 `-p` "
-"价格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 "
-"status/time/side/type 过滤；`config` 支持 `-s` 设置与 `-l` 层级；`strategies` 支持 "
-"`--set-par`；`run` 支持 `--args` 传任务参数。"
+"价格、`-s` 方向；`info`/`overview` 增加 `--system`；`orders` 增加 status/time/side/type"
+" 过滤；`config` 支持 `-s` 设置与 `-l` 层级；`strategies` 支持 `--set-par`；`run` 支持 "
+"`--args` 传任务参数。"
 msgstr ""
 "**Trader シェルパラメータ解析** `--parameter` / `-p` スタイルおよび `-h` / `--help` "
 "のコマンドを完全にサポート。エラーメッセージと使用手順が改善されました。 `watch` は、`-r` の削除と `-c` "
-"のクリアをサポートするようになりました。 `buy` / `sell` は、価格に `-p` を使用し、方向に `-s` を使用します。 "
-"`info` / `overview` は `--system` を追加します。 `orders` "
-"はステータス/時間/サイド/タイプのフィルタリングを追加します。 `config` は設定用に `-s` をサポートし、階層用に `-l` "
-"をサポートします。 `strategies` は `--set-par` をサポートします。 `run` は、タスクパラメータを渡すために "
-"`--args` をサポートしています。"
+"のクリアをサポートするようになりました。 `buy` / `sell` は、価格に `-p` を使用し、方向に `-s` を使用します。 `info` "
+"/ `overview` は `--system` を追加します。 `orders` はステータス/時間/サイド/タイプのフィルタリングを追加します。 "
+"`config` は設定用に `-s` をサポートし、階層用に `-l` をサポートします。 `strategies` は `--set-par` "
+"をサポートします。 `run` は、タスクパラメータを渡すために `--args` をサポートしています。"
 
 #: ../../source/RELEASE_HISTORY.md:594
 msgid "1.0.27 (2024-03-05)"
 msgstr "1.0.27 (2024-03-05)"
 
 #: ../../source/RELEASE_HISTORY.md:596
-msgid "**数据库读取**   移除通过 pandas SQL 读库路径，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
+msgid ""
+"**数据库读取**   移除通过 pandas SQL 读库路径，避免高版本 pandas 要求 sqlalchemy 的 UserWarning。"
 msgstr ""
-"**データベース読み取り** pandas の SQL 読み取りパスを削除して、上位バージョンの pandas に必要な SQLAlchemy "
-"からの UserWarning を回避します。"
+"**データベース読み取り** pandas の SQL 読み取りパスを削除して、上位バージョンの pandas に必要な SQLAlchemy からの "
+"UserWarning を回避します。"
 
 #: ../../source/RELEASE_HISTORY.md:599
 msgid "1.0.26 (2024-02-29)"
@@ -1635,8 +1623,8 @@ msgid ""
 "无需全部基础表即可运行。"
 msgstr ""
 "**get_config / candle** Fixed a date parsing error in the "
-"list;進行状況バーのテキストが画面幅に合わせて切り詰められました。 `get_stock_info()` can now run "
-"without all underlying tables."
+"list;進行状況バーのテキストが画面幅に合わせて切り詰められました。 `get_stock_info()` can now run without "
+"all underlying tables."
 
 #: ../../source/RELEASE_HISTORY.md:624
 msgid "1.0.21 (2024-02-11)"
@@ -1651,10 +1639,11 @@ msgid "1.0.20 (2024-02-08)"
 msgstr "1.0.20 (2024-02-08)"
 
 #: ../../source/RELEASE_HISTORY.md:631
-msgid "**免 TA-Lib 指标**   修正 EMA、MACD、TRIX、DEMA 在无 ta-lib 时的实现，结果与 talib 版略有差异但可用。"
+msgid ""
+"**免 TA-Lib 指标**   修正 EMA、MACD、TRIX、DEMA 在无 ta-lib 时的实现，结果与 talib 版略有差异但可用。"
 msgstr ""
-"**TA-Lib-Free インジケーター** ta-lib を使用しない EMA、MACD、TRIX、DEMA の実装を修正しました。結果は "
-"ta-lib バージョンとは若干異なりますが、それでも使用できます。"
+"**TA-Lib-Free インジケーター** ta-lib を使用しない EMA、MACD、TRIX、DEMA の実装を修正しました。結果は ta-"
+"lib バージョンとは若干異なりますが、それでも使用できます。"
 
 #: ../../source/RELEASE_HISTORY.md:634
 msgid "1.0.19 (2024-02-07)"
@@ -1672,8 +1661,7 @@ msgstr "1.0.18 (2024-02-05)"
 
 #: ../../source/RELEASE_HISTORY.md:641
 msgid ""
-"**Trader Shell 消息**   订单成交展示含股数与现金变化；INFO/OVERVIEW 默认不再打印系统信息；numpy "
-"版本要求更新。"
+"**Trader Shell 消息**   订单成交展示含股数与现金变化；INFO/OVERVIEW 默认不再打印系统信息；numpy 版本要求更新。"
 msgstr ""
 "**Trader シェル メッセージ** 注文完了表示には、株式数量と現金の変更が含まれます。 INFO/OVERVIEW "
 "はデフォルトでシステム情報を出力しなくなりました。 NumPyのバージョンアップデートが必要です。"
@@ -1700,12 +1688,10 @@ msgstr "**注文発注失敗通知** このメッセージは、資金不足ま�
 
 #: ../../source/RELEASE_HISTORY.md:655
 msgid ""
-"**成交与成本**   修复重复处理成交导致可用量/现金错误、成本计算错误、history "
-"命令多标的成本错误；修复非交易日意外填数据（#85）等问题。"
+"**成交与成本**   修复重复处理成交导致可用量/现金错误、成本计算错误、history 命令多标的成本错误；修复非交易日意外填数据（#85）等问题。"
 msgstr ""
-"**トランザクションとコスト** "
-"重複したトランザクション処理による利用可能な数量/現金のエラー、コスト計算エラー、履歴コマンドの複数ターゲットのコスト "
-"エラーなどの問題を修正しました。非取引日の予期しないデータ入力などの問題を修正しました (#85)。"
+"**トランザクションとコスト** 重複したトランザクション処理による利用可能な数量/現金のエラー、コスト計算エラー、履歴コマンドの複数ターゲットのコスト"
+" エラーなどの問題を修正しました。非取引日の予期しないデータ入力などの問題を修正しました (#85)。"
 
 #: ../../source/RELEASE_HISTORY.md:658
 msgid "1.0.15 (2023-12-29)"
@@ -1756,14 +1742,13 @@ msgstr "1.0.11 (2023-12-03)"
 #: ../../source/RELEASE_HISTORY.md:682
 msgid "**Shell 参数风格**   支持 `--parameter` / `-p` 新风格（旧风格将弃用）。"
 msgstr ""
-"**シェル パラメーター スタイル** 新しいスタイル `--parameter` / `-p` をサポートします "
-"(古いスタイルは非推奨になります)。"
+"**シェル パラメーター スタイル** 新しいスタイル `--parameter` / `-p` をサポートします (古いスタイルは非推奨になります)。"
 
 #: ../../source/RELEASE_HISTORY.md:684
 msgid "**live 配置**   可配置 broker 参数与时区；ta-lib 改为可选，部分内置策略无 ta-lib 仍可用。"
 msgstr ""
-"**ライブ構成** では、ブローカーのパラメーターとタイムゾーンを構成できます。 ta-lib はオプションになりましたが、一部の組み込み戦略は "
-"ta-lib がなくても引き続き使用できます。"
+"**ライブ構成** では、ブローカーのパラメーターとタイムゾーンを構成できます。 ta-lib はオプションになりましたが、一部の組み込み戦略は ta-"
+"lib がなくても引き続き使用できます。"
 
 #: ../../source/RELEASE_HISTORY.md:687
 msgid "1.0.10 (2023-11-25)"
@@ -1836,4 +1821,3 @@ msgstr "Version 1.0.0 (2023-09-19)"
 #: ../../source/RELEASE_HISTORY.md:722
 msgid "**首次 PyPI 发布**   qteasy 首个可在 PyPI 安装使用的正式版本。"
 msgstr "**最初の PyPI リリース** qteasy は、PyPI にインストールして使用できる最初の正式バージョンです。"
-

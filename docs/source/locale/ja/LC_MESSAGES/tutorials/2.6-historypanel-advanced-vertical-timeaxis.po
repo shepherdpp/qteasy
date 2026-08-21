@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:1
@@ -30,12 +30,11 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:5
 msgid ""
-"**关于本篇**：在**少量标的**上，沿每只股票**自己的时间轴**做持有/不持有择时，再把结果汇总成组合曲线并与基准（如沪深 "
-"300）对比——这是 `HistoryPanel` 典型的**纵向择时研究**场景。"
+"**关于本篇**：在**少量标的**上，沿每只股票**自己的时间轴**做持有/不持有择时，再把结果汇总成组合曲线并与基准（如沪深 300）对比——这是 "
+"`HistoryPanel` 典型的**纵向择时研究**场景。"
 msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:7
-#, fuzzy
 msgid ""
 "**研究链路**：因子阈值 → bool 条件 → ``where`` 掩码 → ``portfolio`` + benchmark → "
 "``cum_return`` / CAGR → ``plot(highlight)`` 解释。"
@@ -46,14 +45,15 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:9
 msgid ""
-"**注**：上述 ``portfolio`` / ``cum_return`` 均为**研究向**粗聚合，**不含**交易成本、交割、滑点、MOQ"
-" 等完整回测语义；迁移至 ``Operator`` 见 [2.5 §9](2.5-historypanel-data-"
+"**注**：上述 ``portfolio`` / ``cum_return`` 均为**研究向**粗聚合，**不含**交易成本、交割、滑点、MOQ "
+"等完整回测语义；迁移至 ``Operator`` 见 [2.5 §9](2.5-historypanel-data-"
 "analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径)。"
 msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:11
 #, fuzzy
-msgid "本篇面向一个非常常见、也很「接地气」的研究场景：我们手里只有少量股票（几只到十几只），想沿每只股票自己的时间轴做出**持有/不持有**的择时决策；把这些决策汇总成一条组合曲线，再和基准（`000300.SH`）对比，得到可复用的年化摘要（CAGR）。"
+msgid ""
+"本篇面向一个非常常见、也很「接地气」的研究场景：我们手里只有少量股票（几只到十几只），想沿每只股票自己的时间轴做出**持有/不持有**的择时决策；把这些决策汇总成一条组合曲线，再和基准（`000300.SH`）对比，得到可复用的年化摘要（CAGR）。"
 msgstr ""
 "このチュートリアルは、非常に一般的で非常に実践的な調査シナリオを対象としています。つまり、少数の銘柄 (数個から十数個) "
 "しか持っていないため、各銘柄の独自のタイムラインに沿って**ホールド/ホールドしない**タイミングを決定したいと考えています。次に、それらの決定を単一のポートフォリオ曲線に集約し、最後にベンチマーク"
@@ -65,8 +65,8 @@ msgid ""
 "``HistoryPanel`` 在这里是**轻量因子研究容器**——强项是把「数据 → 条件 → 研究口径（mask）→ 组合聚合 → "
 "可视化解释」打通，便于快速验证规则是否值得继续深挖；**不是**交易回测引擎。"
 msgstr ""
-"まず、位置づけを明確にしましょう。ここでは、`HistoryPanel` が **軽量要素リサーチ コンテナ** "
-"として機能します。その強みは、「データ -> 条件 -> 研究定義（マスク） -> ポートフォリオの集計 -> "
+"まず、位置づけを明確にしましょう。ここでは、`HistoryPanel` が **軽量要素リサーチ コンテナ** として機能します。その強みは、「データ"
+" -> 条件 -> 研究定義（マスク） -> ポートフォリオの集計 -> "
 "視覚的な説明」を結び付けることで、ルールをさらに掘り下げる価値があるかどうかを迅速に検証できることです。これは取引バックテスト "
 "エンジンではありません。取引コスト、決済、スリッページ、資本制約、最小取引サイズなどの完全な取引セマンティクスは処理しません。この記事の目標は、**取引ループ**ではなく、**調査ループ**を構築することです。"
 
@@ -100,8 +100,7 @@ msgid ""
 "NaN、或不同股票对齐方式不一致。结果就是研究脚本一跑就报错，或者更糟——不报错但结论不可信。"
 msgstr ""
 "**タイミング ルールの実装方法**: 「MACD>0 "
-"のときにホールドする」などのルールを念頭に置くのは簡単ですが、コードとして記述すると、列名が間違っていたり、列が欠落していたり​​、すべてが "
-"NaN "
+"のときにホールドする」などのルールを念頭に置くのは簡単ですが、コードとして記述すると、列名が間違っていたり、列が欠落していたり​​、すべてが NaN "
 "になったり、異なる銘柄が一貫性なく配置されたりするなど、歪んでしまうことがよくあります。その結果、調査スクリプトは実行するとすぐにエラーが発生します。さらに悪いことに、エラーは発生しないものの、結論は信頼できません。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:46
@@ -111,8 +110,8 @@ msgid ""
 "是三维的（股票×时间×字段）。如果形状对不齐，您会出现“以为在筛选股票，其实在筛选字段”的隐性 bug；而这种 bug "
 "往往不会立刻报错，只会让收益曲线看起来“有点怪”。"
 msgstr ""
-"**マスクの形状を揃える方法**: 条件は基本的に 2D (ストック × 時間) ですが、`HistoryPanel` は 3D (ストック × "
-"時間 × フィールド) "
+"**マスクの形状を揃える方法**: 条件は基本的に 2D (ストック × 時間) ですが、`HistoryPanel` は 3D (ストック × 時間 "
+"× フィールド) "
 "です。形状が揃っていない場合、「株式をフィルタリングしていると思っていても、実際にはフィールドをフィルタリングしている」という微妙なバグが発生する可能性があります。そして、この種のバグは多くの場合、すぐにはエラーをスローしません。単に資本曲線が「少しずれている」ように見えるだけです。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:47
@@ -120,8 +119,8 @@ msgid ""
 "**没有 benchmark 很难判断好坏**：只看组合曲线很容易“自嗨”。它可能只是踩中了 2022 年某一段风格或大盘趋势。把 "
 "`000300.SH` 拉进来做对照，至少能回答一个更接近实战的问题：这套择时规则，是在**创造超额**，还是只是**跟着市场波动**？"
 msgstr ""
-"**ベンチマークがなければ、パフォーマンスを判断するのは難しい**: ポートフォリオの曲線だけを見ると、「自分の背中をたたく」のが簡単になります。"
-" 2022 年の一部の特定のスタイルや市場全体のトレンドに乗っているだけかもしれません。`000300.SH` "
+"**ベンチマークがなければ、パフォーマンスを判断するのは難しい**: ポートフォリオの曲線だけを見ると、「自分の背中をたたく」のが簡単になります。 "
+"2022 年の一部の特定のスタイルや市場全体のトレンドに乗っているだけかもしれません。`000300.SH` "
 "を参考として持ち込むことで、少なくともより現実的な質問に答えることができます。このタイミング ルールは "
 "**超過利益を生み出している**のか、それとも単に**市場に合わせて動いている**だけなのでしょうか?"
 
@@ -135,7 +134,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:50
 msgid "好在这些能力都可以一步步补齐。本文就按“先跑通，再增强”的节奏，把它补齐成一个真正可用的小研究流程。"
-msgstr "幸いなことに、これらの機能は段階的に満たすことができます。この記事では、「最初に実行してから強化する」というリズムに従って、本当に使える小規模な研究ワークフローに具体化します。"
+msgstr ""
+"幸いなことに、これらの機能は段階的に満たすことができます。この記事では、「最初に実行してから強化する」というリズムに従って、本当に使える小規模な研究ワークフローに具体化します。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:54
 #, fuzzy
@@ -168,11 +168,11 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:61
 #, fuzzy
-msgid "注：本文不强制您输出 GIF。更推荐的做法是：先在 Notebook 里把图跑通，截图即可；如果您要写博客或做分享，再把关键步骤录成 GIF。"
+msgid ""
+"注：本文不强制您输出 GIF。更推荐的做法是：先在 Notebook 里把图跑通，截图即可；如果您要写博客或做分享，再把关键步骤录成 GIF。"
 msgstr ""
 "注: この記事では、GIF を出力する必要はありません。より推奨されるアプローチは、まず Notebook "
-"でプロットを動作させ、スクリーンショットを撮るだけです。ブログ投稿を書いたり、プレゼンテーションをしたりする場合は、主要な手順を GIF "
-"に記録します。"
+"でプロットを動作させ、スクリーンショットを撮るだけです。ブログ投稿を書いたり、プレゼンテーションをしたりする場合は、主要な手順を GIF に記録します。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:65
 #, fuzzy
@@ -282,8 +282,8 @@ msgstr "7.1 このセクションの解決の目的"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:102
 msgid ""
-"我们先把数据准备干净：   用 3 只个股做纵向择时，同时把 `000300.SH`（沪深 300）加入面板，作为后面 "
-"`portfolio(..., benchmark=...)` 的对照。"
+"我们先把数据准备干净：   用 3 只个股做纵向择时，同时把 `000300.SH`（沪深 300）加入面板，作为后面 `portfolio(..., "
+"benchmark=...)` 的对照。"
 msgstr ""
 "まずデータをクリーンアップしましょう。クロスセクションのタイミングに 3 つの個別銘柄を使用し、後の `portfolio(..., "
 "benchmark=...)` 比較のためのベンチマークとして `000300.SH` (CSI 300) をパネルに追加します。"
@@ -338,7 +338,8 @@ msgstr "`hp.shares` には 3 つの個別株 + `000300.SH` が含まれます"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:154
 msgid "`hp.htypes` 至少包含 `open/high/low/close`（以及可能还有 `vol`）"
-msgstr "`hp.htypes` には少なくとも `open/high/low/close` (場合によっては `vol`) を含める必要があります。"
+msgstr ""
+"`hp.htypes` には少なくとも `open/high/low/close` (場合によっては `vol`) を含める必要があります。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:158
 #, fuzzy
@@ -356,7 +357,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:167
 msgid "`hp.kline.macd()` 会返回一个**新** `HistoryPanel`，并在 `htypes` 里追加三列："
-msgstr "`hp.kline.macd()` は **new** `HistoryPanel` を返し、3 つの列を `htypes` に追加します。"
+msgstr ""
+"`hp.kline.macd()` は **new** `HistoryPanel` を返し、3 つの列を `htypes` に追加します。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:169
 msgid "`macd_12_26_9`"
@@ -397,8 +399,8 @@ msgstr "4. 因子しきい値 -> ブール条件 -> `where()` マスクの検討
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:193
 msgid ""
-"现在我们把择时规则写清楚：   例如“MACD 柱状图大于 0 的时候属于 long，小于等于 0 属于 short”。   "
-"这一步要交付的产物是两个 mask："
+"现在我们把择时规则写清楚：   例如“MACD 柱状图大于 0 的时候属于 long，小于等于 0 属于 short”。   这一步要交付的产物是两个 "
+"mask："
 msgstr ""
 "次に、タイミング ルールを明確に説明します。たとえば、「MACD ヒストグラムが 0 より大きい場合は長く、0 以下の場合は短い」とします。   "
 "このステップで提供する必要があるのは、次の 2 つのマスクです。"
@@ -415,8 +417,8 @@ msgstr "`mask_short`: どのグリッド ポイントがショート ポート�
 #, fuzzy
 msgid ""
 "从 v2.2.8 起，`HistoryPanel` 支持直接做比较运算：   例如 `hp_macd > 0` 会返回 "
-"`numpy.ndarray(bool)`。   而 `hp.where(condition)` 会把各种可广播条件规整为与 "
-"`hp.values` 同形的 `(M,L,N)` mask。"
+"`numpy.ndarray(bool)`。   而 `hp.where(condition)` 会把各种可广播条件规整为与 `hp.values` "
+"同形的 `(M,L,N)` mask。"
 msgstr ""
 "2.2.8 以降、`HistoryPanel` は比較演算の直接実行をサポートします。たとえば、`hp_macd > 0` は "
 "`numpy.ndarray(bool)` を返します。   そして、`hp.where(condition)` "
@@ -424,12 +426,12 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:206
 msgid ""
-"这一步非常关键：我们不是在“删除数据”，而是在“定义研究口径”：   mask 为 False 的格点，在 "
-"`portfolio/cum_return` 里会被视作缺失（不参与聚合或导致路径断开）。   因此 mask 就是“研究规则本身”。"
+"这一步非常关键：我们不是在“删除数据”，而是在“定义研究口径”：   mask 为 False 的格点，在 `portfolio/cum_return`"
+" 里会被视作缺失（不参与聚合或导致路径断开）。   因此 mask 就是“研究规则本身”。"
 msgstr ""
 "このステップは重要です。私たちは「データを削除する」のではなく、「調査規約を定義する」のです。マスクが False のグリッド "
-"ポイントは、`portfolio/cum_return` で欠落しているものとして扱われます (集約に参加しないか、パスが壊れる原因になります)。"
-"   したがって、マスクは「研究ルールそのもの」である。"
+"ポイントは、`portfolio/cum_return` で欠落しているものとして扱われます (集約に参加しないか、パスが壊れる原因になります)。   "
+"したがって、マスクは「研究ルールそのもの」である。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:210
 msgid "这里我们再把“形状”说得更直白一点："
@@ -439,8 +441,8 @@ msgstr "ここで、「形」についてもう少しわかりやすく説明し
 #, fuzzy
 msgid "您脑子里的择时规则是“每只股票每天一个 True/False”，因此最自然的条件形状是 `(M, L)`。"
 msgstr ""
-"あなたの頭の中のタイミングルールは「1 日あたり 1 銘柄につき 1 つの True/False」であるため、最も自然な条件形状は `(M, "
-"L)` です。"
+"あなたの頭の中のタイミングルールは「1 日あたり 1 銘柄につき 1 つの True/False」であるため、最も自然な条件形状は `(M, L)` "
+"です。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:213
 msgid "但 `HistoryPanel` 的 values 是 `(M, L, N)`，有 N 个字段列。"
@@ -481,9 +483,10 @@ msgstr "`portfolio(mask=...)` を使用してポートフォリオ曲線に集�
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:251
 msgid ""
-"我们不做交易回测，只做研究向的“粗聚合”：   对每一天，把满足条件的股票（long/short）聚合成一条组合曲线，然后把 "
-"`000300.SH` 作为 benchmark 拉出来对比。"
-msgstr "私たちはトレーディングのバックテストを行っているのではなく、単にリサーチ指向の「大まかな集計」を行っているだけです。毎日、基準（ロング/ショート）を満たす銘柄を単一のポートフォリオ曲線に集計し、比較のためのベンチマークとして`000300.SH`を抽出します。"
+"我们不做交易回测，只做研究向的“粗聚合”：   对每一天，把满足条件的股票（long/short）聚合成一条组合曲线，然后把 `000300.SH` "
+"作为 benchmark 拉出来对比。"
+msgstr ""
+"私たちはトレーディングのバックテストを行っているのではなく、単にリサーチ指向の「大まかな集計」を行っているだけです。毎日、基準（ロング/ショート）を満たす銘柄を単一のポートフォリオ曲線に集計し、比較のためのベンチマークとして`000300.SH`を抽出します。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:256
 msgid "`HistoryPanel.portfolio()` 的几个关键点（我们用到的）："
@@ -508,7 +511,8 @@ msgstr "繰り返しますが、これは**リサーチ指向**の集計です�
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:264
 #, fuzzy
 msgid "您可以把它理解成一种“研究口径上的等权篮子”：每天把符合条件的股票等权平均成一条曲线。它的意义不是模拟真实交易，而是回答一个更基础的问题："
-msgstr "これを「リサーチ規約に基づく均等加重バスケット」と考えることができます。毎日、基準を満たす銘柄が単一の曲線に均等加重平均されます。その目的は、実際の取引をシミュレートすることではなく、より基本的な質問に答えることです。"
+msgstr ""
+"これを「リサーチ規約に基づく均等加重バスケット」と考えることができます。毎日、基準を満たす銘柄が単一の曲線に均等加重平均されます。その目的は、実際の取引をシミュレートすることではなく、より基本的な質問に答えることです。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:266
 msgid "如果我用这个条件去定义一个“持有集合”，它在样本期内表现有没有系统性差异？"
@@ -528,7 +532,8 @@ msgid "`normalize / cum_return` + CAGR：把曲线变成可比较的年化摘要
 msgstr "6. `normalize / cum_return` + CAGR: 曲線を比較可能な年間集計に変換します"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:306
-msgid "两条曲线摆在一起，人眼能看趋势，但很难快速总结：   “这一段研究期，long 比 benchmark 到底强多少？”   因此我们做两件事："
+msgid ""
+"两条曲线摆在一起，人眼能看趋势，但很难快速总结：   “这一段研究期，long 比 benchmark 到底强多少？”   因此我们做两件事："
 msgstr ""
 "2 つの曲線を並べて見ると傾向がわかりますが、「この調査期間中、ベンチマークよりも正確にどれくらい強いのか?」をすぐに要約するのは困難です。   "
 "そこで、次の 2 つのことを行います。"
@@ -580,13 +585,14 @@ msgstr "3 行の概要テーブルが表示されるはずです。少なくと�
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:369
 msgid "**LONG vs 000300.SH**：是否真的跑赢（CAGR 更高/或累计收益更高）？"
-msgstr "**LONG 対 000300.SH**: 本当に優れたパフォーマンスを示しましたか (より高い CAGR および/またはより高い累積収益)?"
+msgstr ""
+"**LONG 対 000300.SH**: 本当に優れたパフォーマンスを示しましたか (より高い CAGR および/またはより高い累積収益)?"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:370
 msgid "**SHORT 的表现**：它不一定要“亏”，但它能帮助我们判断条件是否真的在分离样本（LONG/SHORT 两端的差异是否明显）。"
 msgstr ""
-"**SHORT パフォーマンス**: 必ずしも「お金を失う」必要はありませんが、条件が本当にサンプルを分離しているかどうか (つまり、LONG "
-"エンドと SHORT エンドの違いが明らかかどうか) を判断するのに役立ちます。"
+"**SHORT パフォーマンス**: 必ずしも「お金を失う」必要はありませんが、条件が本当にサンプルを分離しているかどうか (つまり、LONG エンドと"
+" SHORT エンドの違いが明らかかどうか) を判断するのに役立ちます。"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:374
 #, fuzzy
@@ -616,8 +622,8 @@ msgstr "明示的: `highlight={'condition': <1D bool over time>, 'style': {...}}
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:388
 msgid ""
-"注意一点：静态渲染路径里 `condition` 更偏向 **1D 时间轴**（用于在图上散点标记）。因此我们在这里用单股时间轴的 1D bool"
-" 来做高亮更稳。"
+"注意一点：静态渲染路径里 `condition` 更偏向 **1D 时间轴**（用于在图上散点标记）。因此我们在这里用单股时间轴的 1D bool "
+"来做高亮更稳。"
 msgstr ""
 "注意すべき点が 1 つあります。静的レンダリング パスでは、`condition` は **1D 時間軸 ** "
 "(チャート上の散布マーカーに使用されます) を指向しています。したがって、ここでは強調表示に単一銘柄の時間軸で 1D "
@@ -629,8 +635,7 @@ msgid ""
 "预期效果：您会在图上看到一系列被高亮标出的点（对应 `macd_hist_12_26_9 > 0` 的时点）。   "
 "这一步的价值在于：当您看到组合曲线某段突然变差时，可以回到单股图快速确认：触发点是否集中出现在震荡区、是否“来回打脸”，从而决定下一步要不要加过滤条件（例如趋势过滤、波动过滤等）。"
 msgstr ""
-"期待される結果: チャート上に一連のハイライトされたポイントが表示されます (`macd_hist_12_26_9 > 0` の時間に対応)。"
-"   "
+"期待される結果: チャート上に一連のハイライトされたポイントが表示されます (`macd_hist_12_26_9 > 0` の時間に対応)。   "
 "このステップの価値は、ポートフォリオ曲線の一部が突然悪化した場合に、単一銘柄チャートに戻って、トリガーポイントが途切れ途切れの範囲に集中していないか、前後に「ホイップソー」されているかどうかをすぐに確認し、次にフィルター条件"
 " (トレンドフィルター、ボラティリティフィルターなど) を追加するかどうかを決定できることです。"
 
@@ -698,7 +703,8 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:599
-msgid "**横截面选股**：[横截面多因子](2.7-historypanel-advanced-horizontal-multifactor.md)"
+msgid ""
+"**横截面选股**：[横截面多因子](2.7-historypanel-advanced-horizontal-multifactor.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:600
@@ -707,9 +713,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:601
 msgid ""
-"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径) 或 [教程 3：第一个策略](3"
-"-start-first-strategy.md)"
+"**迁移至正式回测**：[2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-研究到-"
+"strategy--operator迁移路径) 或 [教程 3：第一个策略](3-start-first-strategy.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md:603
@@ -739,9 +744,8 @@ msgid "您将看到什么"
 msgstr "何が見えるか"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_minimal_run.png`"
-msgstr "`img/3.1_minimal_run.png`"
+msgstr "`3.1_minimal_run.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§0 开场最小可跑"
@@ -752,9 +756,8 @@ msgid "证明 `get_kline -> plot` 链路通了"
 msgstr "`get_kline -> plot` パイプラインが機能することを証明する"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_pf_compare.png`"
-msgstr "`img/3.1_pf_compare.png`"
+msgstr "`3.1_pf_compare.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§0.5 或 §6"
@@ -765,9 +768,8 @@ msgid "`LONG/SHORT/000300.SH` 归一化曲线对比"
 msgstr "`LONG/SHORT/000300.SH`の正規化曲線の比較"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
-#, fuzzy
 msgid "`3.1_highlight_one_share.png`"
-msgstr "`img/3.1_highlight_one_share.png`"
+msgstr "`3.1_highlight_one_share.png`"
 
 #: ../../source/tutorials/2.6-historypanel-advanced-vertical-timeaxis.md
 msgid "§7"
@@ -792,16 +794,15 @@ msgstr "単一銘柄チャート上のトリガーポイントを強調表示し
 #~ msgstr ""
 #~ "環境にまだデータがない場合、最も一般的な症状は次のとおりです。 `qt.get_kline()` "
 #~ "が空のパネルを返すか、後でインジケーターを計算するときにすべて NaN を取得します。 "
-#~ "「途中でデータがないことに気づく」という事態を避けるために、セクション 2 "
-#~ "を終了した後、次のことを必ず確認することをお勧めします。"
+#~ "「途中でデータがないことに気づく」という事態を避けるために、セクション 2 を終了した後、次のことを必ず確認することをお勧めします。"
 
 #~ msgid ""
-#~ "如果你在自己的环境里需要先下载数据，请先完成“数据下载与数据源配置”相关章节；本文不展开数据通道细节，专注在 "
-#~ "`HistoryPanel` 的研究链路本身。"
+#~ "如果你在自己的环境里需要先下载数据，请先完成“数据下载与数据源配置”相关章节；本文不展开数据通道细节，专注在 `HistoryPanel` "
+#~ "的研究链路本身。"
 #~ msgstr ""
 #~ "まず独自の環境にデータをダウンロードする必要がある場合は、最初に「データのダウンロードとデータ "
-#~ "ソースの構成」に関する章を完了してください。この記事では、データ パイプラインの詳細には触れず、`HistoryPanel`"
-#~ " 自体に関する調査ワークフローに焦点を当てます。"
+#~ "ソースの構成」に関する章を完了してください。この記事では、データ パイプラインの詳細には触れず、`HistoryPanel` "
+#~ "自体に関する調査ワークフローに焦点を当てます。"
 
 #~ msgid "2.1 本节要解决什么"
 #~ msgstr "2.1 このセクションの解決の目的"
@@ -855,17 +856,14 @@ msgstr "単一銘柄チャート上のトリガーポイントを強調表示し
 #~ msgstr "9. 概要と限界"
 
 #~ msgid ""
-#~ "需要注意的是：这里的 `portfolio/cum_return` "
-#~ "都是研究向计算，**不包含**交易成本、滑点、交割、资金约束等完整回测语义。   "
-#~ "如果你希望把研究逻辑迁移到真正的策略回测，建议把因子/条件输出成策略可用的数据列或信号，并交给 "
-#~ "`Operator/Backtester` 处理交易层语义。"
+#~ "需要注意的是：这里的 `portfolio/cum_return` 都是研究向计算，**不包含**交易成本、滑点、交割、资金约束等完整回测语义。   "
+#~ "如果你希望把研究逻辑迁移到真正的策略回测，建议把因子/条件输出成策略可用的数据列或信号，并交给 `Operator/Backtester` "
+#~ "处理交易层语义。"
 #~ msgstr ""
 #~ "注: ここでの `portfolio/cum_return` "
-#~ "はすべてリサーチ指向の計算であり、取引コスト、スリッページ、決済、資本制約などの完全なバックテスト セマンティクスは "
-#~ "**含まれていません**。リサーチ "
-#~ "ロジックを実際の戦略のバックテストに移行したい場合は、要因/条件を戦略で使用可能なデータ列またはシグナルとして出力し、それらを "
+#~ "はすべてリサーチ指向の計算であり、取引コスト、スリッページ、決済、資本制約などの完全なバックテスト セマンティクスは **含まれていません**。リサーチ"
+#~ " ロジックを実際の戦略のバックテストに移行したい場合は、要因/条件を戦略で使用可能なデータ列またはシグナルとして出力し、それらを "
 #~ "`Operator/Backtester` に渡してトレーディング層のセマンティクスを処理することをお勧めします。"
 
 #~ msgid "插图"
 #~ msgstr "図"
-

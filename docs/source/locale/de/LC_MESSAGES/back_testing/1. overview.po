@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG (de_translate_from_en)\n"
-"Language: de\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/back_testing/1. overview.md:1
@@ -27,71 +27,101 @@ msgid ""
 "回测在 qteasy 中通过 **qt.run(op, mode=1, ...)** "
 "触发，用于在历史数据上模拟策略运行，得到资金曲线、交易记录与绩效指标，为评价与优化策略提供依据。"
 msgstr ""
+"In qteasy werden Backtests über **``qt.run(op, mode=1, ...)``** ausgelöst, "
+"wobei Strategieläufe anhand historischer Daten simuliert werden, um "
+"Aktienkurven, Handelsprotokolle und Leistungsmetriken zur Bewertung und "
+"Optimierung zu erstellen."
 
 #: ../../source/back_testing/1. overview.md:5
 msgid "总体介绍"
-msgstr ""
+msgstr "Überblick"
 
 #: ../../source/back_testing/1. overview.md:7
 msgid "**入口**：`qt.run(operator, mode=1, ...)`，其中 `mode=1` 表示回测模式。"
 msgstr ""
+"**Einstiegspunkt**: „`qt.run(operator, mode=1, ...)`` where ``mode=1`“ wählt"
+" den Backtest-Modus aus."
 
 #: ../../source/back_testing/1. overview.md:8
 msgid "**回测能提供**：资金曲线（净值、累计收益）、逐笔交易记录、绩效指标（如夏普、回撤、胜率等）。"
 msgstr ""
+"**Backtest-Ergebnisse**: Eigenkapitalkurve (NAV, kumulative Rendite), "
+"Protokoll pro Trade, Leistungskennzahlen (Sharpe, Drawdown, Gewinnrate "
+"usw.)."
 
 #: ../../source/back_testing/1. overview.md:10
 msgid "回测流程概览"
-msgstr ""
+msgstr "Übersicht über den Backtest-Workflow"
 
 #: ../../source/back_testing/1. overview.md:12
 msgid ""
 "**配置**：资产池（asset_pool）、回测区间（invest_start、invest_end）、初始/分批资金（invest_cash_amounts"
 " 等）。"
 msgstr ""
+"**Konfigurieren**: Asset-Pool (``asset_pool``), date range "
+"(``invest_start``, ``invest_end``), initial/staged cash "
+"(``invest_cash_amounts`` usw.)."
 
 #: ../../source/back_testing/1. overview.md:13
 msgid "**准备数据**：确保 DataSource 中有所需历史数据。"
 msgstr ""
+"**Daten vorbereiten**: Stellen Sie sicher, dass der erforderliche Verlauf in"
+" „`DataSource`“ verfügbar ist."
 
 #: ../../source/back_testing/1. overview.md:14
 msgid "**按时间步运行 Operator**：在每个 run_timing 时刻调用策略生成信号。"
 msgstr ""
+"**Führen Sie Operator Schritt für Schritt aus**: Rufen Sie Strategien bei "
+"jedem „`run_timing`“ auf, um Signale zu generieren."
 
 #: ../../source/back_testing/1. overview.md:15
 msgid "**模拟成交**：按信号与成本、交易单位等规则生成买卖与持仓。"
 msgstr ""
+"**Auffüllungen simulieren**: Wenden Sie Signale mit Kosten, Losgrößen und "
+"zugehörigen Regeln an, um Positionen zu aktualisieren."
 
 #: ../../source/back_testing/1. overview.md:16
 msgid "**输出结果与可选报告**：返回结果对象（如 Backtester）、可选 trade_log、visual 图表等。"
 msgstr ""
+"**Ausgabe**: Ergebnisobjekt (z. B. „`Backtester``), optional ``trade_log`“, "
+"visuelle Diagramme usw."
 
 #: ../../source/back_testing/1. overview.md:18
 msgid "本目录各章导航"
-msgstr ""
+msgstr "Kapitel in diesem Abschnitt"
 
 #: ../../source/back_testing/1. overview.md:20
 msgid "**2. 如何运行回测** — 入口、配置方式、回测运行参数完整列表、最小示例。"
 msgstr ""
+"**2. So führen Sie einen Backtest aus** – Einstiegspunkt, Konfiguration, "
+"vollständige Parameterliste, Minimalbeispiel."
 
 #: ../../source/back_testing/1. overview.md:21
 msgid "**3. 回测结果的结构** — 返回值、结果字段完整列表、资金曲线与绩效指标。"
 msgstr ""
+"**3. Backtest-Ergebnisstruktur** – Rückgabewert, Feldreferenz, "
+"Eigenkapitalkurve und Kennzahlen."
 
 #: ../../source/back_testing/1. overview.md:22
 msgid "**4. 交易过程记录** — 开启 trade_log、日志内容、查看与保存。"
 msgstr ""
+"**4. Handelsprozessprotokoll** – Aktivieren von „`trade_log`“, Inhalt, "
+"Anzeigen und Speichern."
 
 #: ../../source/back_testing/1. overview.md:23
 msgid "**5. 回测结果评价与分析** — 绩效指标列表、可视化、结果导出与分析思路。"
 msgstr ""
+"**5. Auswertung der Backtest-Ergebnisse** – Metrikliste, Visualisierung, "
+"Export und Analyse."
 
 #: ../../source/back_testing/1. overview.md:25
 msgid ""
-"更多策略与混合器用法见《回测并评价交易策略》references（如 references/3-back-test-strategy.md、4"
-"-build-in-strategy-blender.md）。"
+"更多策略与混合器用法见《回测并评价交易策略》references（如 references/3-back-test-"
+"strategy.md、4-build-in-strategy-blender.md）。"
 msgstr ""
+"Weitere Informationen zu Strategien und Blendern finden Sie in den "
+"Referenzen (z. B. „`references/3-back-test-strategy.md``, ``4-build-in-"
+"strategy-blender.md`“)."
 
 #~ msgid "未完待续"
 #~ msgstr "Fortgesetzt werden"
-

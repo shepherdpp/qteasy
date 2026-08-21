@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:1
@@ -37,8 +37,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:7
 msgid ""
 "**研究链路**：``candle_pattern`` 信号 → 窗口化 ``(M,L)`` 条件 → ``where`` 掩码 → "
-"``portfolio`` + benchmark → ``cum_return`` / CAGR → K 线 "
-"``plot(highlight)`` 解释。"
+"``portfolio`` + benchmark → ``cum_return`` / CAGR → K 线 ``plot(highlight)`` "
+"解释。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:9
@@ -48,15 +48,16 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:11
-#, fuzzy
-msgid "在真实研究里，「事件型因子」往往比连续因子更贴近直觉：锤头线、吞没形态、放量长阳……事件一旦发生，我们常会问：**若只在事件附近选股，长期看会不会更好？**"
-msgstr "実際の研究では、「イベント型の要因」は、連続的な要因よりも直感に近いことがよくあります。たとえば、「ハンマーが現れる」、「巻き込むパターンが現れる」、「高出来高の長い強気のローソク足が現れる」...これらのイベントが発生すると、私たちはしばしば本能的に次のように尋ねます。"
+msgid ""
+"在真实研究里，「事件型因子」往往比连续因子更贴近直觉：锤头线、吞没形态、放量长阳……事件一旦发生，我们常会问：**若只在事件附近选股，长期看会不会更好？**"
+msgstr ""
+"実際の研究では、「イベント型の要因」は、連続的な要因よりも直感に近いことがよくあります。たとえば、「ハンマーが現れる」、「巻き込むパターンが現れる」、「高出来高の長い強気のローソク足が現れる」...これらのイベントが発生すると、私たちはしばしば本能的に次のように尋ねます。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:13
 msgid ""
 "本篇用 ``HistoryPanel.candle_pattern()`` "
-"把形态变成可研究数据，窗口化后跑通完整闭环。统一约束（与前两篇一致）：以个股为主并加入 ``000300.SH`` 作 "
-"benchmark；事件窗口 ``K=5``（最近 5 天内发生过即视为有效）。"
+"把形态变成可研究数据，窗口化后跑通完整闭环。统一约束（与前两篇一致）：以个股为主并加入 ``000300.SH`` 作 benchmark；事件窗口 "
+"``K=5``（最近 5 天内发生过即视为有效）。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:17
@@ -80,13 +81,15 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:46
 #, fuzzy
-msgid "**事件太稀疏**：很多形态信号都像“针尖”一样跳出来——今天出现、明天又没了。如果您按“当天出现就选”来做篮子，组合会非常不稳定：入选股票数量忽多忽少，收益曲线也容易断断续续，最后您甚至分不清是在研究形态，还是在研究“样本稀疏性”。"
+msgid ""
+"**事件太稀疏**：很多形态信号都像“针尖”一样跳出来——今天出现、明天又没了。如果您按“当天出现就选”来做篮子，组合会非常不稳定：入选股票数量忽多忽少，收益曲线也容易断断续续，最后您甚至分不清是在研究形态，还是在研究“样本稀疏性”。"
 msgstr ""
 "**イベントがまばらすぎる**: 多くのパターン信号が「ピンポイント」のように現れます。それらは今日現れても、明日には消えてしまいます。 "
 "「今日出てきたときに選ぶ」という方法でバスケットを構築すると、ポートフォリオは非常に不安定になり、選択する銘柄数が大きく変動し、リターンカーブが途切れ途切れになりやすくなります。結局のところ、パターンを研究しているのか、それとも「サンプルの希薄さ」を研究しているのかさえわからないかもしれません。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:47
-msgid "**怎么窗口化才像实战**：更自然的口径通常不是“今天出现就立刻选”，而是“最近一段时间出现过就算有效”。因为现实里我们不一定能在当天捕捉到完美的形态点；更常见的做法是把它当成一个“短窗口内的关注信号”。"
+msgid ""
+"**怎么窗口化才像实战**：更自然的口径通常不是“今天出现就立刻选”，而是“最近一段时间出现过就算有效”。因为现实里我们不一定能在当天捕捉到完美的形态点；更常见的做法是把它当成一个“短窗口内的关注信号”。"
 msgstr ""
 "**実際の取引と同様にウィンドウ処理を行う方法**: "
 "通常、より自然な慣例は、「今日出現した場合はすぐに選択する」のではなく、「直近の期間内に出現した場合は有効としてカウントする」です。なぜなら、実際には同じ日に完璧なパターンポイントを捕まえることはできないかもしれないからです。より一般的には、それを「短い時間枠内の注意信号」として扱います。"
@@ -137,7 +140,8 @@ msgstr "**CAGR 概要表**: ポートフォリオの最終収益率を年換算�
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:61
 msgid "**单股 K 线事件高亮图**：把事件发生日标回 K 线上，让结果可复盘、可讨论。"
-msgstr "**イベントのハイライトを含む単一銘柄のローソク足チャート**: 結果を確認して議論できるように、イベントの日付をローソク足チャートにマークします。"
+msgstr ""
+"**イベントのハイライトを含む単一銘柄のローソク足チャート**: 結果を確認して議論できるように、イベントの日付をローソク足チャートにマークします。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:65
 #, fuzzy
@@ -189,8 +193,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:82
 msgid ""
-"**提示**：缺 OHLC 列时 ``candle_pattern`` 会报错；请先确认 [2.5 §7](2.5-historypanel-"
-"data-analysis.md#7-识别蜡烛形态) 中的数据准备方式。"
+"**提示**：缺 OHLC 列时 ``candle_pattern`` 会报错；请先确认 [2.5 §7](2.5-historypanel-data-"
+"analysis.md#7-识别蜡烛形态) 中的数据准备方式。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:86
@@ -247,7 +251,8 @@ msgstr "3. ローソク足パターン因子抽出: `candle_pattern` はイベ�
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:134
 #, fuzzy
-msgid "我们要得到一张“事件信号表”：每一天、每只股票，是否出现该形态。   这里示例用 `cdlhammer`（锤头线），您后面可以替换成其他形态函数名。"
+msgid ""
+"我们要得到一张“事件信号表”：每一天、每只股票，是否出现该形态。   这里示例用 `cdlhammer`（锤头线），您后面可以替换成其他形态函数名。"
 msgstr ""
 "毎日、各銘柄ごとに、パターンが現れるかどうかを示す「イベントシグナルテーブル」が必要です。   この例では、`cdlhammer` (ハンマー) "
 "を使用します。後で、これを他のパターン関数名に置き換えることができます。"
@@ -279,8 +284,7 @@ msgid ""
 msgstr ""
 "ここでは、非常に実用的な「研究規約の簡略化」を使用します。+100 であっても -100 "
 "であっても、**ゼロ以外**である限り、それを「イベントが発生した」ものとして扱います。方向を重視する場合は、`>0` と `<0` の 2 "
-"つのウィンドウに分割することもできます (この記事では、前の 2 "
-"つの記事との一貫性を保つために、長いウィンドウと短いウィンドウの両方を示します)。"
+"つのウィンドウに分割することもできます (この記事では、前の 2 つの記事との一貫性を保つために、長いウィンドウと短いウィンドウの両方を示します)。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:162
 #, fuzzy
@@ -343,7 +347,8 @@ msgstr "4.3 実行可能なコード + 予想される出力 (サンプル シ�
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:217
 #, fuzzy
 msgid "建议您再加一段 sanity check：看看“每天入选数量”的分布，避免筛选过严导致空篮子："
-msgstr "別の健全性チェックを追加することをお勧めします。厳密すぎるフィルタリングによってバスケットが空になることを避けるために、「毎日選択された数」の分布を確認します。"
+msgstr ""
+"別の健全性チェックを追加することをお勧めします。厳密すぎるフィルタリングによってバスケットが空になることを避けるために、「毎日選択された数」の分布を確認します。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:229
 #, fuzzy
@@ -363,8 +368,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:239
 msgid "这里仍然使用研究向的 `portfolio` 聚合，不做交易执行。   然后用 `cum_return` 取末值推导 CAGR（等效年化）。"
 msgstr ""
-"ここでは、取引執行なしで、リサーチ指向の `portfolio` 集計を引き続き使用します。次に、`cum_return` の終了値を使用して "
-"CAGR (等価年率リターン) を導き出します。"
+"ここでは、取引執行なしで、リサーチ指向の `portfolio` 集計を引き続き使用します。次に、`cum_return` の終了値を使用して CAGR"
+" (等価年率リターン) を導き出します。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:242
 #, fuzzy
@@ -385,8 +390,7 @@ msgstr "6. 視覚的な説明: ローソク足チャートでイベント日を�
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:312
 msgid ""
-"事件型研究最怕“只有一张收益表”。   我们需要把事件点标回到 K "
-"线图上，肉眼核对“这到底是什么形态、发生在什么趋势里”，这样结论才可复盘、可讨论。"
+"事件型研究最怕“只有一张收益表”。   我们需要把事件点标回到 K 线图上，肉眼核对“这到底是什么形态、发生在什么趋势里”，这样结论才可复盘、可讨论。"
 msgstr ""
 "イベント研究における最大の懸念は、「リターン テーブルが 1 つしかない」ことです。   イベント "
 "ポイントをローソク足チャートにプロットし、「これが実際にどのようなパターンで、どのようなトレンド内で発生するか」を視覚的に検証して、結論を再現して議論できるようにする必要があります。"
@@ -396,8 +400,8 @@ msgid ""
 "`plot(highlight=...)` 可以用 1D bool（时间轴）高亮事件点。   因此我们对某只 `primary_share` 从 "
 "`signals` 里抽出 1D 条件，再画 K 线并高亮。"
 msgstr ""
-"`plot(highlight=...)` は 1D ブール (時間軸) を使用してイベント ポイントを強調表示できます。   したがって、特定の"
-" `primary_share` に対して、`signals` から 1D 条件を抽出し、ローソク足チャートをプロットして強調表示します。"
+"`plot(highlight=...)` は 1D ブール (時間軸) を使用してイベント ポイントを強調表示できます。   したがって、特定の "
+"`primary_share` に対して、`signals` から 1D 条件を抽出し、ローソク足チャートをプロットして強調表示します。"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:336
 #, fuzzy
@@ -447,8 +451,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:532
 msgid ""
-"**注**：该链路为研究向粗聚合，不含交易成本、交割、下单约束等；若要做可回测策略，须把事件窗口规则写进 "
-"``Strategy.realize()`` 并交给 ``Operator``。"
+"**注**：该链路为研究向粗聚合，不含交易成本、交割、下单约束等；若要做可回测策略，须把事件窗口规则写进 ``Strategy.realize()`` "
+"并交给 ``Operator``。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:534
@@ -469,9 +473,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:538
 msgid ""
-"**正式回测**：[2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径) 或 [教程 3](3"
-"-start-first-strategy.md)"
+"**正式回测**：[2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-研究到-"
+"strategy--operator迁移路径) 或 [教程 3](3-start-first-strategy.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:540
@@ -501,9 +504,8 @@ msgid "您将看到什么"
 msgstr "何が見えるか"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_minimal_run.png`"
-msgstr "`img/3.3_minimal_run.png`"
+msgstr "`3.3_minimal_run.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§0"
@@ -514,9 +516,8 @@ msgid "最小可跑：算 signals + 画出基础图"
 msgstr "最小限の実行可能機能: 信号を計算し、基本的なチャートをプロットする"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_pf_compare.png`"
-msgstr "`img/3.3_pf_compare.png`"
+msgstr "`3.3_pf_compare.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§0.5 或 §5"
@@ -527,9 +528,8 @@ msgid "事件窗口篮子 vs benchmark 的组合曲线"
 msgstr "イベントウィンドウバスケットとベンチマークの複合曲線"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_highlight_pattern.png`"
-msgstr "`img/3.3_highlight_pattern.png`"
+msgstr "`3.3_highlight_pattern.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§6"
@@ -547,18 +547,13 @@ msgstr "単一銘柄のローソク足チャートでイベント日を強調表
 
 #~ msgid ""
 #~ "本篇教程就围绕这个问题，用 `HistoryPanel.candle_pattern()` "
-#~ "把形态事件变成可研究的数据，再把它窗口化成横向筛选条件，最后跑通完整闭环：   **事件信号 -> "
-#~ "事件窗口 -> `where/mask` -> `portfolio + "
-#~ "benchmark` -> `cum_return + CAGR` -> "
-#~ "`plot(highlight)` 解释。**"
+#~ "把形态事件变成可研究的数据，再把它窗口化成横向筛选条件，最后跑通完整闭环：   **事件信号 -> 事件窗口 -> `where/mask` -> "
+#~ "`portfolio + benchmark` -> `cum_return + CAGR` -> `plot(highlight)` 解释。**"
 #~ msgstr ""
-#~ "このチュートリアルでは、この問題を中心に説明します。`HistoryPanel.candle_pattern()` "
-#~ "を使用してパターン "
-#~ "イベントを調査可能なデータに変換し、それを断面スクリーニング条件にウィンドウ処理して、最後に完全な閉ループを実行します: "
-#~ "**イベント信号 -> イベント ウィンドウ -> `where/mask`"
-#~ " -> `portfolio + benchmark` -> "
-#~ "`cum_return + CAGR` -> `plot(highlight)` "
-#~ "解釈**。"
+#~ "このチュートリアルでは、この問題を中心に説明します。`HistoryPanel.candle_pattern()` を使用してパターン "
+#~ "イベントを調査可能なデータに変換し、それを断面スクリーニング条件にウィンドウ処理して、最後に完全な閉ループを実行します: **イベント信号 -> "
+#~ "イベント ウィンドウ -> `where/mask` -> `portfolio + benchmark` -> `cum_return + CAGR`"
+#~ " -> `plot(highlight)` 解釈**。"
 
 #~ msgid "统一约束（与前两篇保持一致）："
 #~ msgstr "統合された制約 (前の 2 つの投稿と一致):"
@@ -616,13 +611,11 @@ msgstr "単一銘柄のローソク足チャートでイベント日を強調表
 
 #~ msgid "到这里，我们已经把事件型因子研究跑通了：   形态信号 -> 窗口化 -> 横向筛选 -> 组合曲线 -> CAGR -> K线高亮解释。"
 #~ msgstr ""
-#~ "この時点までに、パターン信号 -> ウィンドウ処理 -> 断面フィルタリング "
-#~ "-> 複合曲線 -> CAGR -> "
+#~ "この時点までに、パターン信号 -> ウィンドウ処理 -> 断面フィルタリング -> 複合曲線 -> CAGR -> "
 #~ "ローソク足の強調表示と説明という、イベント要因の調査パイプライン全体をすでに実行しています。"
 
 #~ msgid ""
-#~ "需要再次强调：这条链路是研究向粗聚合，不含交易执行语义。   "
-#~ "如果你希望把事件信号做成真实可回测的策略，应把“事件窗口的筛选规则”转成策略信号，并交给 "
+#~ "需要再次强调：这条链路是研究向粗聚合，不含交易执行语义。   如果你希望把事件信号做成真实可回测的策略，应把“事件窗口的筛选规则”转成策略信号，并交给 "
 #~ "`Operator/Backtester` 处理交易层细节（成本、交割、下单约束等）。"
 #~ msgstr ""
 #~ "もう一度強調しておきますが、このパイプラインはリサーチ指向の粗い集計であり、取引実行のセマンティクスは含まれていません。   "
@@ -630,4 +623,3 @@ msgstr "単一銘柄のローソク足チャートでイベント日を強調表
 
 #~ msgid "插图"
 #~ msgstr "図"
-

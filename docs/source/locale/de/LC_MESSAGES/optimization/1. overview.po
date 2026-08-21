@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG (de_translate_from_en)\n"
-"Language: de\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/optimization/1. overview.md:1
@@ -25,69 +25,96 @@ msgstr "Übersicht über die Optimierung der Handelsstrategie"
 #: ../../source/optimization/1. overview.md:3
 msgid "优化旨在在参数空间中寻找使目标函数更优（如夏普最大化）的参数组合；本质是多次回测加目标函数比较。"
 msgstr ""
+"Die Optimierung durchsucht den Parameterraum nach Kombinationen, die die "
+"Zielfunktion verbessern (z. B. Maximierung des Sharpe-Verhältnisses). Im "
+"Wesentlichen handelt es sich um wiederholtes Backtesting plus Ziel-"
+"Funktions-Vergleich."
 
 #: ../../source/optimization/1. overview.md:5
 msgid "总体介绍"
-msgstr ""
+msgstr "Überblick"
 
 #: ../../source/optimization/1. overview.md:7
 msgid "**目的**：在策略可调参数范围内，通过搜索或优化算法找到表现更好的参数（如均线周期、阈值等）。"
 msgstr ""
+"**Zweck**: Innerhalb der einstellbaren Parameterbereiche der Strategie Such-"
+" oder Optimierungsalgorithmen verwenden, um leistungsstärkere Parameter (z. "
+"B. gleitende Durchschnittsperioden oder Schwellenwerte) zu finden."
 
 #: ../../source/optimization/1. overview.md:8
 msgid "**与回测的关系**：优化 = 多次回测（每次一组参数）+ 按目标函数（如夏普、回撤）比较并排序，选出最优或 Top-K 组。"
 msgstr ""
+"**Beziehung zum Backtesting**: Optimierung = viele Backtests (jeweils ein "
+"Parametersatz) + Vergleich und Rangfolge anhand der Zielfunktion (z. B. "
+"Sharpe Ratio oder Drawdown), dann Auswahl der besten oder Top-K-Sätze."
 
 #: ../../source/optimization/1. overview.md:10
 msgid "优化流程概览"
-msgstr ""
+msgstr "Übersicht über den Optimierungsworkflow"
 
 #: ../../source/optimization/1. overview.md:12
 msgid "**设定参数空间与目标**：策略的 Parameter 与 par_range 定义搜索空间；目标函数由配置指定（如夏普最大化）。"
 msgstr ""
+"**Parameterraum und Ziel festlegen**: Der „`Parameter`` objects and "
+"``par_range`“ der Strategie definiert den Suchraum; Die Zielfunktion wird in"
+" der Konfiguration festgelegt (z. B. Sharpe-Ratio maximieren)."
 
 #: ../../source/optimization/1. overview.md:13
 msgid "**选择优化算法**：opti_method 可选 grid、montecarlo、GA、SA、PSO、bayesian 等。"
 msgstr ""
+"**Wählen Sie einen Optimierungsalgorithmus**: ``opti_method`` can be "
+"``grid``, ``montecarlo``, ``GA``, ``SA``, ``PSO``, ``bayesian`` und andere."
 
 #: ../../source/optimization/1. overview.md:14
 msgid "**qt.run(mode=2)**：运行策略优化。"
-msgstr ""
+msgstr "**``qt.run(mode=2)``**: Strategieoptimierung ausführen."
 
 #: ../../source/optimization/1. overview.md:15
 msgid "**获取结果与最优参数**：从返回对象中读取最优参数组合及 Top-K 结果。"
 msgstr ""
+"**Ergebnisse und beste Parameter lesen**: Extrahieren Sie die beste "
+"Parameterkombination und Top-K-Ergebnisse aus dem zurückgegebenen Objekt."
 
 #: ../../source/optimization/1. overview.md:17
 msgid "本目录各章导航"
-msgstr ""
+msgstr "Kapitelleitfaden in diesem Abschnitt"
 
 #: ../../source/optimization/1. overview.md:19
 msgid "**2. 如何运行策略优化** — 入口、优化算法与运行参数列表、参数空间、最小示例。"
 msgstr ""
+"**2. So führen Sie die Strategieoptimierung aus** – Einstiegspunkt, "
+"Optimierungsalgorithmen und Laufparameterlisten, Parameterraum und ein "
+"Minimalbeispiel."
 
 #: ../../source/optimization/1. overview.md:20
 msgid "**3. 优化算法的区别与使用情境** — 各算法对比与选择建议。"
 msgstr ""
+"**3. Optimierungsalgorithmen: Unterschiede und Anwendungsfälle** – "
+"Algorithmenvergleich und Auswahlberatung."
 
 #: ../../source/optimization/1. overview.md:21
 msgid "**4. 优化结果的结构与读取** — 返回值、结果字段、读取最优与 Top-K。"
 msgstr ""
+"**4. Struktur und Zugriff auf Optimierungsergebnisse** – Rückgabewerte, "
+"Ergebnisfelder und Lesen der besten und Top-K-Ergebnisse."
 
 #: ../../source/optimization/1. overview.md:22
 msgid "**5. 优化结果的分析与使用** — 结果分析、目标函数与约束、将最优参数写回策略、注意事项。"
 msgstr ""
+"**5. Analyse und Nutzung von Optimierungsergebnissen** – Ergebnisanalyse, "
+"Ziele und Einschränkungen, Anwendung der besten Parameter auf die Strategie "
+"und Vorbehalte."
 
 #: ../../source/optimization/1. overview.md:24
 msgid "更多算法细节见《优化交易策略》references（如 references/5-optimize-strategy.md）。"
 msgstr ""
+"Weitere Details zum Algorithmus finden Sie in den Optimierungsreferenzen (z."
+" B. „`references/5-optimize-strategy.md`“)."
 
 #~ msgid "本文介绍如何使用`qteasy`优化交易策略。"
 #~ msgstr ""
-#~ "In diesem Artikel wird erläutert, wie"
-#~ " Sie „qteasy“ zur Optimierung von "
+#~ "In diesem Artikel wird erläutert, wie Sie „qteasy“ zur Optimierung von "
 #~ "Handelsstrategien verwenden."
 
 #~ msgid "未完待续"
 #~ msgstr "Fortgesetzt werden"
-

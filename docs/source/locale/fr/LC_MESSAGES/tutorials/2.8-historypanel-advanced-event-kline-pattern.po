@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 12:00+0800\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:1
@@ -37,8 +37,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:7
 msgid ""
 "**研究链路**：``candle_pattern`` 信号 → 窗口化 ``(M,L)`` 条件 → ``where`` 掩码 → "
-"``portfolio`` + benchmark → ``cum_return`` / CAGR → K 线 "
-"``plot(highlight)`` 解释。"
+"``portfolio`` + benchmark → ``cum_return`` / CAGR → K 线 ``plot(highlight)`` "
+"解释。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:9
@@ -48,20 +48,20 @@ msgid ""
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:11
-#, fuzzy
-msgid "在真实研究里，「事件型因子」往往比连续因子更贴近直觉：锤头线、吞没形态、放量长阳……事件一旦发生，我们常会问：**若只在事件附近选股，长期看会不会更好？**"
+msgid ""
+"在真实研究里，「事件型因子」往往比连续因子更贴近直觉：锤头线、吞没形态、放量长阳……事件一旦发生，我们常会问：**若只在事件附近选股，长期看会不会更好？**"
 msgstr ""
 "Dans les recherches réelles, les « facteurs de type événementiel » sont "
 "souvent plus proches de notre intuition que les facteurs continus : par "
-"exemple, « un marteau apparaît », « une figure engloutissante apparaît »,"
-" « une longue bougie haussière sur un volume élevé apparaît »… Une fois "
-"ces événements survenus, nous demandons souvent instinctivement :"
+"exemple, « un marteau apparaît », « une figure engloutissante apparaît », « "
+"une longue bougie haussière sur un volume élevé apparaît »… Une fois ces "
+"événements survenus, nous demandons souvent instinctivement :"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:13
 msgid ""
 "本篇用 ``HistoryPanel.candle_pattern()`` "
-"把形态变成可研究数据，窗口化后跑通完整闭环。统一约束（与前两篇一致）：以个股为主并加入 ``000300.SH`` 作 "
-"benchmark；事件窗口 ``K=5``（最近 5 天内发生过即视为有效）。"
+"把形态变成可研究数据，窗口化后跑通完整闭环。统一约束（与前两篇一致）：以个股为主并加入 ``000300.SH`` 作 benchmark；事件窗口 "
+"``K=5``（最近 5 天内发生过即视为有效）。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:17
@@ -82,43 +82,44 @@ msgid "不过，仅仅「能算出来 / 能画出来」还远远不够。 如果
 msgstr ""
 "Cependant, le simple fait de pouvoir « le calculer/le tracer » est loin "
 "d’être suffisant.   Si nous voulons vraiment l’utiliser comme méthode de "
-"recherche réutilisable, nous rencontrerons au moins les problèmes "
-"suivants :"
+"recherche réutilisable, nous rencontrerons au moins les problèmes suivants :"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:46
 #, fuzzy
-msgid "**事件太稀疏**：很多形态信号都像“针尖”一样跳出来——今天出现、明天又没了。如果您按“当天出现就选”来做篮子，组合会非常不稳定：入选股票数量忽多忽少，收益曲线也容易断断续续，最后您甚至分不清是在研究形态，还是在研究“样本稀疏性”。"
+msgid ""
+"**事件太稀疏**：很多形态信号都像“针尖”一样跳出来——今天出现、明天又没了。如果您按“当天出现就选”来做篮子，组合会非常不稳定：入选股票数量忽多忽少，收益曲线也容易断断续续，最后您甚至分不清是在研究形态，还是在研究“样本稀疏性”。"
 msgstr ""
 "**Les événements sont trop rares** : de nombreux signaux de modèle "
 "apparaissent comme des « points » : ils apparaissent aujourd'hui et "
 "disparaissent demain. Si vous construisez le panier en « le choisissant "
 "quand il apparaît aujourd’hui », le portefeuille sera très instable : le "
-"nombre d’actions sélectionnées variera énormément et la courbe de "
-"rendement deviendra facilement instable et discontinue. En fin de compte,"
-" vous ne savez peut-être même pas si vous étudiez le modèle ou la « "
-"rareté des échantillons »."
+"nombre d’actions sélectionnées variera énormément et la courbe de rendement "
+"deviendra facilement instable et discontinue. En fin de compte, vous ne "
+"savez peut-être même pas si vous étudiez le modèle ou la « rareté des "
+"échantillons »."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:47
-msgid "**怎么窗口化才像实战**：更自然的口径通常不是“今天出现就立刻选”，而是“最近一段时间出现过就算有效”。因为现实里我们不一定能在当天捕捉到完美的形态点；更常见的做法是把它当成一个“短窗口内的关注信号”。"
+msgid ""
+"**怎么窗口化才像实战**：更自然的口径通常不是“今天出现就立刻选”，而是“最近一段时间出现过就算有效”。因为现实里我们不一定能在当天捕捉到完美的形态点；更常见的做法是把它当成一个“短窗口内的关注信号”。"
 msgstr ""
-"**Comment le visualiser comme dans le trading réel** : Une convention "
-"plus naturelle n'est généralement pas de « le sélectionner immédiatement "
-"s'il apparaît aujourd'hui », mais de « le considérer comme valide s'il "
-"est apparu au cours de la période la plus récente ». Parce qu'en réalité,"
-" nous ne pourrons peut-être pas capturer le point de modèle parfait le "
-"même jour ; plus communément, nous le traitons comme un « signal "
-"d’attention dans une courte fenêtre »."
+"**Comment le visualiser comme dans le trading réel** : Une convention plus "
+"naturelle n'est généralement pas de « le sélectionner immédiatement s'il "
+"apparaît aujourd'hui », mais de « le considérer comme valide s'il est apparu"
+" au cours de la période la plus récente ». Parce qu'en réalité, nous ne "
+"pourrons peut-être pas capturer le point de modèle parfait le même jour ; "
+"plus communément, nous le traitons comme un « signal d’attention dans une "
+"courte fenêtre »."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:48
 msgid ""
 "**怎么变成横向选股**：事件研究的价值，往往在于“同一天从很多股票里挑出发生过事件的那一批”。这要求我们把事件信号变成 `(M,L)` "
 "的条件矩阵，再统一规整成 `where` 的 mask。"
 msgstr ""
-"**Comment en faire une sélection transversale de titres** : La valeur des"
-" études d'événements réside souvent dans la « sélection, le même jour, du"
-" sous-ensemble qui a eu l'événement parmi de nombreux titres ». Cela "
-"nécessite de transformer le signal d'événement en une matrice de "
-"conditions `(M,L)`, puis de le standardiser en un masque `where`."
+"**Comment en faire une sélection transversale de titres** : La valeur des "
+"études d'événements réside souvent dans la « sélection, le même jour, du "
+"sous-ensemble qui a eu l'événement parmi de nombreux titres ». Cela "
+"nécessite de transformer le signal d'événement en une matrice de conditions "
+"`(M,L)`, puis de le standardiser en un masque `where`."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:49
 #, fuzzy
@@ -126,12 +127,12 @@ msgid ""
 "**有收益没解释**：就算您算出了 CAGR，您也需要可复盘：事件点到底对应了哪些 K "
 "线？发生在上升趋势、下跌趋势还是震荡？把事件标回图上，是事件型研究里最关键的一步。"
 msgstr ""
-"**Renvois sans explication** : Même si vous avez calculé le TCAC, vous "
-"avez toujours besoin de quelque chose que vous puissiez examiner : à "
-"quels chandeliers correspondaient les points d'événement ? Se sont-ils "
-"produits dans une tendance haussière, baissière ou dans une fourchette ? "
-"Marquer les événements sur le graphique est l'étape la plus critique de "
-"la recherche basée sur les événements."
+"**Renvois sans explication** : Même si vous avez calculé le TCAC, vous avez "
+"toujours besoin de quelque chose que vous puissiez examiner : à quels "
+"chandeliers correspondaient les points d'événement ? Se sont-ils produits "
+"dans une tendance haussière, baissière ou dans une fourchette ? Marquer les "
+"événements sur le graphique est l'étape la plus critique de la recherche "
+"basée sur les événements."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:51
 msgid "好在这些能力都可以一步步补齐。本文就从“形态信号的结构”讲起。"
@@ -157,11 +158,10 @@ msgid ""
 "**事件窗口筛选的组合曲线 vs benchmark**：把“最近 5 天发生过形态”的股票当作一个动态篮子，算出它的组合曲线，并与 "
 "`000300.SH` 对比。"
 msgstr ""
-"**Courbe de portefeuille issue de la sélection de fenêtres d'événements "
-"par rapport à l'indice de référence** : traitez les actions dont la "
-"tendance s'est produite au cours des 5 derniers jours comme un panier "
-"dynamique, calculez sa courbe de portefeuille et comparez-la avec "
-"`000300.SH`."
+"**Courbe de portefeuille issue de la sélection de fenêtres d'événements par "
+"rapport à l'indice de référence** : traitez les actions dont la tendance "
+"s'est produite au cours des 5 derniers jours comme un panier dynamique, "
+"calculez sa courbe de portefeuille et comparez-la avec `000300.SH`."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:60
 msgid "**CAGR 摘要表**：把组合末值收益折算成年化口径，便于横向比较不同研究期。"
@@ -173,8 +173,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:61
 msgid "**单股 K 线事件高亮图**：把事件发生日标回 K 线上，让结果可复盘、可讨论。"
 msgstr ""
-"**Graphique en chandeliers pour une action unique avec faits saillants de"
-" l'événement** : marquez la date de l'événement sur le graphique en "
+"**Graphique en chandeliers pour une action unique avec faits saillants de "
+"l'événement** : marquez la date de l'événement sur le graphique en "
 "chandeliers afin que les résultats soient consultables et discutables."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:65
@@ -238,16 +238,16 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:82
 msgid ""
-"**提示**：缺 OHLC 列时 ``candle_pattern`` 会报错；请先确认 [2.5 §7](2.5-historypanel-"
-"data-analysis.md#7-识别蜡烛形态) 中的数据准备方式。"
+"**提示**：缺 OHLC 列时 ``candle_pattern`` 会报错；请先确认 [2.5 §7](2.5-historypanel-data-"
+"analysis.md#7-识别蜡烛形态) 中的数据准备方式。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:86
 #, fuzzy
 msgid "准备数据：必须有 OHLC（事件型因子离不开它）"
 msgstr ""
-"2. Préparer les données : OHLC est requis (les facteurs de type "
-"événementiel ne peuvent s'en passer)"
+"2. Préparer les données : OHLC est requis (les facteurs de type événementiel"
+" ne peuvent s'en passer)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:88
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:132
@@ -263,10 +263,10 @@ msgid ""
 "形态识别依赖 `open/high/low/close`。   所以本节我们只做一件事：确保 OHLC 列齐全，并把 benchmark "
 "一并放进来，后面直接对比。"
 msgstr ""
-"La reconnaissance des formes dépend de `open/high/low/close`.   Donc, "
-"dans cette section, nous ne faisons qu'une seule chose : nous assurer que"
-" les colonnes OHLC sont complètes et inclure également le benchmark afin "
-"que nous puissions comparer directement plus tard."
+"La reconnaissance des formes dépend de `open/high/low/close`.   Donc, dans "
+"cette section, nous ne faisons qu'une seule chose : nous assurer que les "
+"colonnes OHLC sont complètes et inclure également le benchmark afin que nous"
+" puissions comparer directement plus tard."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:93
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:137
@@ -283,9 +283,9 @@ msgid ""
 "`candle_pattern(name=...)` 会检查您传入的 `price_htypes` 是否在 `hp.htypes` 中存在。   "
 "因此我们先做字段校验，避免写到一半才发现缺列。"
 msgstr ""
-"`candle_pattern(name=...)` vérifie si le `price_htypes` que vous "
-"transmettez existe dans `hp.htypes`.   On valide donc d'abord les champs "
-"pour éviter de découvrir des colonnes manquantes à mi-parcours."
+"`candle_pattern(name=...)` vérifie si le `price_htypes` que vous transmettez"
+" existe dans `hp.htypes`.   On valide donc d'abord les champs pour éviter de"
+" découvrir des colonnes manquantes à mi-parcours."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:98
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:149
@@ -298,15 +298,16 @@ msgstr "6.3 Code exécutable + résultats attendus"
 #, fuzzy
 msgid "形态因子提取：`candle_pattern` 得到事件信号矩阵"
 msgstr ""
-"3. Extraction du facteur de modèle de chandelier : `candle_pattern` "
-"produit une matrice événement-signal"
+"3. Extraction du facteur de modèle de chandelier : `candle_pattern` produit "
+"une matrice événement-signal"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:134
 #, fuzzy
-msgid "我们要得到一张“事件信号表”：每一天、每只股票，是否出现该形态。   这里示例用 `cdlhammer`（锤头线），您后面可以替换成其他形态函数名。"
+msgid ""
+"我们要得到一张“事件信号表”：每一天、每只股票，是否出现该形态。   这里示例用 `cdlhammer`（锤头线），您后面可以替换成其他形态函数名。"
 msgstr ""
-"Nous voulons un « tableau des signaux d'événement » : pour chaque jour et"
-" chaque titre, si le modèle apparaît.   Cet exemple utilise `cdlhammer` "
+"Nous voulons un « tableau des signaux d'événement » : pour chaque jour et "
+"chaque titre, si le modèle apparaît.   Cet exemple utilise `cdlhammer` "
 "(Hammer) ; plus tard, vous pourrez le remplacer par d'autres noms de "
 "fonctions de modèle."
 
@@ -329,8 +330,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:144
 msgid "后面我们会把它转成 bool 事件矩阵，再做窗口化。"
 msgstr ""
-"Plus tard, nous la convertirons en une matrice d'événements booléens, "
-"puis appliquerons le fenêtrage."
+"Plus tard, nous la convertirons en une matrice d'événements booléens, puis "
+"appliquerons le fenêtrage."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:146
 #, fuzzy
@@ -339,21 +340,21 @@ msgid ""
 "0**，我们就认为“发生过事件”。如果您更关心方向，也可以分成 `>0` 和 `<0` 两套窗口（本文会同时演示 long/short "
 "两套窗口，保持与前两篇一致）。"
 msgstr ""
-"Ici, nous utilisons une « simplification des conventions de recherche » "
-"très pratique : peu importe qu'il s'agisse de +100 ou de -100, tant qu'il"
-" est **différent de zéro**, nous le traitons comme « un événement s'est "
-"produit ». Si vous vous souciez davantage de la direction, vous pouvez "
-"également la diviser en deux fenêtres, `>0` et `<0` (cet article "
-"présentera les deux fenêtres longues/courtes pour rester cohérent avec "
-"les deux articles précédents)."
+"Ici, nous utilisons une « simplification des conventions de recherche » très"
+" pratique : peu importe qu'il s'agisse de +100 ou de -100, tant qu'il est "
+"**différent de zéro**, nous le traitons comme « un événement s'est produit "
+"». Si vous vous souciez davantage de la direction, vous pouvez également la "
+"diviser en deux fenêtres, `>0` et `<0` (cet article présentera les deux "
+"fenêtres longues/courtes pour rester cohérent avec les deux articles "
+"précédents)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:162
 #, fuzzy
 msgid "事件窗口化（K=5）：不是“今天发生就选”，而是“最近 5 天发生过就选”"
 msgstr ""
 "4. Fenêtrage des événements (K=5) : non pas « sélectionner si cela se "
-"produit aujourd'hui », mais « sélectionner si cela s'est produit au cours"
-" des 5 derniers jours »"
+"produit aujourd'hui », mais « sélectionner si cela s'est produit au cours "
+"des 5 derniers jours »"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:166
 msgid "这是本文最关键的一节：   把稀疏的事件信号变成更贴近实战的“窗口内有效”条件。"
@@ -374,13 +375,13 @@ msgid ""
 "`signals` 的形状是 `(L, M)`（time x shares），我们把它转成 `(M, L)`（shares x "
 "time），再做窗口滚动的 `any`："
 msgstr ""
-"La forme de `signals` est `(L, M)` (temps x parts). Nous le convertissons"
-" en `(M, L)` (partages x temps), puis créons une fenêtre déroulante `any`"
-" :"
+"La forme de `signals` est `(L, M)` (temps x parts). Nous le convertissons en"
+" `(M, L)` (partages x temps), puis créons une fenêtre déroulante `any` :"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:176
 msgid "`events_ml[i, t] = True` 表示 share i 在 t 日发生了事件"
-msgstr "`events_ml[i, t] = True` signifie partager j'ai eu l'événement le jour t"
+msgstr ""
+"`events_ml[i, t] = True` signifie partager j'ai eu l'événement le jour t"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:177
 msgid "`window_ml[i, t] = any(events_ml[i, t-K+1 : t+1])`"
@@ -396,8 +397,8 @@ msgstr ""
 #, fuzzy
 msgid "您可以把这个“窗口化”理解成一句非常直觉的研究口径："
 msgstr ""
-"Vous pouvez comprendre ce « fenêtrage » comme une convention de recherche"
-" très intuitive :"
+"Vous pouvez comprendre ce « fenêtrage » comme une convention de recherche "
+"très intuitive :"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:183
 #, fuzzy
@@ -405,24 +406,22 @@ msgid "我不要求您今天刚好踩在形态当天；只要您在最近 5 天�
 msgstr ""
 "Je ne vous demande pas d'atteindre le jour exact du modèle aujourd'hui ; "
 "tant que le modèle est apparu une fois au cours des 5 derniers jours, je "
-"vous traiterai comme un candidat dont « l'événement est toujours valable "
-"»."
+"vous traiterai comme un candidat dont « l'événement est toujours valable »."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:185
 msgid "这会让篮子更稳定（不会只剩一两个针尖信号），也更接近我们做复盘时的真实行为：形态往往是一个“阶段信号”，不是一个“毫秒级触发器”。"
 msgstr ""
-"Cela rendra le panier plus stable (il ne restera plus qu'un ou deux "
-"signaux d'aiguille dans une botte de foin), et il sera plus proche de ce "
-"que nous faisons réellement dans les critiques : les modèles sont souvent"
-" un « signal de phase », et non un « déclencheur au niveau de la "
-"milliseconde »."
+"Cela rendra le panier plus stable (il ne restera plus qu'un ou deux signaux "
+"d'aiguille dans une botte de foin), et il sera plus proche de ce que nous "
+"faisons réellement dans les critiques : les modèles sont souvent un « signal"
+" de phase », et non un « déclencheur au niveau de la milliseconde »."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:187
 #, fuzzy
 msgid "可运行代码 + 预期效果（样张3对应，K=5）"
 msgstr ""
-"4.3 Code exécutable + sortie attendue (correspondant à l'exemple de "
-"feuille 3, K=5)"
+"4.3 Code exécutable + sortie attendue (correspondant à l'exemple de feuille "
+"3, K=5)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:217
 #, fuzzy
@@ -436,8 +435,8 @@ msgstr ""
 #, fuzzy
 msgid "`portfolio + benchmark + cum_return + CAGR`：把事件窗口筛选变成可比较的结果"
 msgstr ""
-"5. `portfolio + benchmark + cum_return + CAGR` : transformer le filtrage "
-"des fenêtres d'événements en résultats comparables"
+"5. `portfolio + benchmark + cum_return + CAGR` : transformer le filtrage des"
+" fenêtres d'événements en résultats comparables"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:233
 msgid ""
@@ -445,16 +444,16 @@ msgid ""
 "两组在研究期内与 benchmark 的差异。"
 msgstr ""
 "Nous avons le filtrage des fenêtres d'événements, mais est-ce que cela « "
-"fonctionne » réellement ? Dans cette section, nous donnons une conclusion"
-" claire en utilisant la courbe du portefeuille + un tableau CAGR : la "
+"fonctionne » réellement ? Dans cette section, nous donnons une conclusion "
+"claire en utilisant la courbe du portefeuille + un tableau CAGR : la "
 "différence entre les groupes événementiels long/short et l'indice de "
 "référence sur la période de recherche."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:239
 msgid "这里仍然使用研究向的 `portfolio` 聚合，不做交易执行。   然后用 `cum_return` 取末值推导 CAGR（等效年化）。"
 msgstr ""
-"Ici, nous utilisons toujours l'agrégation `portfolio` orientée recherche,"
-" sans exécution de transactions. Utilisez ensuite la valeur finale de "
+"Ici, nous utilisons toujours l'agrégation `portfolio` orientée recherche, "
+"sans exécution de transactions. Utilisez ensuite la valeur finale de "
 "`cum_return` pour dériver le CAGR (rendement annualisé équivalent)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:242
@@ -474,30 +473,28 @@ msgstr ""
 #, fuzzy
 msgid "可视化解释：在 K 线上高亮事件发生日（让结论可复盘）"
 msgstr ""
-"6. Explication visuelle : mettez en surbrillance le jour de l'événement "
-"sur le graphique en chandeliers (pour que la conclusion soit "
-"reproductible)"
+"6. Explication visuelle : mettez en surbrillance le jour de l'événement sur "
+"le graphique en chandeliers (pour que la conclusion soit reproductible)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:312
 msgid ""
-"事件型研究最怕“只有一张收益表”。   我们需要把事件点标回到 K "
-"线图上，肉眼核对“这到底是什么形态、发生在什么趋势里”，这样结论才可复盘、可讨论。"
+"事件型研究最怕“只有一张收益表”。   我们需要把事件点标回到 K 线图上，肉眼核对“这到底是什么形态、发生在什么趋势里”，这样结论才可复盘、可讨论。"
 msgstr ""
 "La plus grande crainte dans les études événementielles est « de n’avoir "
 "qu’une seule table de retours ».   Nous devons retracer les points "
-"d'événement sur le graphique en chandeliers et vérifier visuellement « de"
-" quel modèle il s'agit réellement et dans quelle tendance il se produit "
-"», afin que la conclusion puisse être reproduite et discutée."
+"d'événement sur le graphique en chandeliers et vérifier visuellement « de "
+"quel modèle il s'agit réellement et dans quelle tendance il se produit », "
+"afin que la conclusion puisse être reproduite et discutée."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:317
 msgid ""
 "`plot(highlight=...)` 可以用 1D bool（时间轴）高亮事件点。   因此我们对某只 `primary_share` 从 "
 "`signals` 里抽出 1D 条件，再画 K 线并高亮。"
 msgstr ""
-"`plot(highlight=...)` peut utiliser un bool 1D (axe du temps) pour mettre"
-" en évidence les points d'événement.   Par conséquent, pour un "
-"`primary_share` donné, nous extrayons une condition 1D de `signals`, puis"
-" traçons le graphique en chandeliers et le mettons en surbrillance."
+"`plot(highlight=...)` peut utiliser un bool 1D (axe du temps) pour mettre en"
+" évidence les points d'événement.   Par conséquent, pour un `primary_share` "
+"donné, nous extrayons une condition 1D de `signals`, puis traçons le "
+"graphique en chandeliers et le mettons en surbrillance."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:336
 #, fuzzy
@@ -505,15 +502,15 @@ msgid ""
 "预期效果：您会在 K 线上看到一串被高亮的点（事件发生日）。   "
 "这一步很重要：事件型研究不怕“结果不好”，怕的是“结果无法解释”。把事件标回图上，您就能直观看到它出现在哪些位置：是下跌末端、是上涨中继、还是震荡噪声，从而决定下一步要不要叠加趋势过滤或波动过滤。"
 msgstr ""
-"Résultat attendu : vous verrez une série de points en surbrillance (jours"
-" d'événement) sur le graphique en chandeliers.   Cette étape est cruciale"
-" : les études événementielles n’ont pas peur des « mauvais résultats » ; "
-"ils ont peur des « résultats qui ne peuvent être expliqués ». En marquant"
-" les événements sur le graphique, vous pouvez voir directement où ils se "
+"Résultat attendu : vous verrez une série de points en surbrillance (jours "
+"d'événement) sur le graphique en chandeliers.   Cette étape est cruciale : "
+"les études événementielles n’ont pas peur des « mauvais résultats » ; ils "
+"ont peur des « résultats qui ne peuvent être expliqués ». En marquant les "
+"événements sur le graphique, vous pouvez voir directement où ils se "
 "produisent : à la fin d'une baisse, dans la continuité d'une tendance "
-"haussière ou simplement comme un bruit latéral. Vous pouvez ainsi décider"
-" si l'étape suivante consiste à ajouter des filtres de tendance ou des "
-"filtres de volatilité."
+"haussière ou simplement comme un bruit latéral. Vous pouvez ainsi décider si"
+" l'étape suivante consiste à ajouter des filtres de tendance ou des filtres "
+"de volatilité."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:341
 #, fuzzy
@@ -525,8 +522,8 @@ msgstr "7. Code complet (version exécutable à fonction unique)"
 msgid "下面给出一段“单函数可跑”的完整版本，方便您复制进 Notebook 一键运行。它覆盖："
 msgstr ""
 "Vous trouverez ci-dessous une version complète « exécutable à fonction "
-"unique » que vous pouvez copier dans un ordinateur portable et exécuter "
-"en un seul clic. Il couvre :"
+"unique » que vous pouvez copier dans un ordinateur portable et exécuter en "
+"un seul clic. Il couvre :"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:345
 msgid "`candle_pattern` 提取事件信号；"
@@ -545,8 +542,8 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:348
 msgid "单股 K 线高亮事件点（可复盘解释）。"
 msgstr ""
-"Mettez en surbrillance les points d’événement sur le graphique en "
-"chandelier d’une seule action (explicable via la revue/relecture)."
+"Mettez en surbrillance les points d’événement sur le graphique en chandelier"
+" d’une seule action (explicable via la revue/relecture)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:528
 msgid "小结与下一步"
@@ -560,8 +557,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:532
 msgid ""
-"**注**：该链路为研究向粗聚合，不含交易成本、交割、下单约束等；若要做可回测策略，须把事件窗口规则写进 "
-"``Strategy.realize()`` 并交给 ``Operator``。"
+"**注**：该链路为研究向粗聚合，不含交易成本、交割、下单约束等；若要做可回测策略，须把事件窗口规则写进 ``Strategy.realize()`` "
+"并交给 ``Operator``。"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:534
@@ -582,9 +579,8 @@ msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:538
 msgid ""
-"**正式回测**：[2.5 §9](2.5-historypanel-data-"
-"analysis.md#9-从-historypanel-研究到-strategy--operator迁移路径) 或 [教程 3](3"
-"-start-first-strategy.md)"
+"**正式回测**：[2.5 §9](2.5-historypanel-data-analysis.md#9-从-historypanel-研究到-"
+"strategy--operator迁移路径) 或 [教程 3](3-start-first-strategy.md)"
 msgstr ""
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:540
@@ -595,8 +591,8 @@ msgstr ""
 #, fuzzy
 msgid "附录：插图索引（可选：在 Notebook 中生成后截图）"
 msgstr ""
-"Annexe : index des figures (recommandé de générer/capture d'écran dans le"
-" Notebook)"
+"Annexe : index des figures (recommandé de générer/capture d'écran dans le "
+"Notebook)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:546
 msgid "下列文件名为**建议**命名；仓库内未必已包含对应 png。在 Notebook 跑通各节后自行截图即可。"
@@ -616,9 +612,8 @@ msgid "您将看到什么"
 msgstr "Ce que vous verrez"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_minimal_run.png`"
-msgstr "`img/3.3_minimal_run.png`"
+msgstr "`3.3_minimal_run.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§0"
@@ -626,12 +621,12 @@ msgstr "§0"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "最小可跑：算 signals + 画出基础图"
-msgstr "Exécutable minimal : calculer les signaux + tracer le graphique de base"
+msgstr ""
+"Exécutable minimal : calculer les signaux + tracer le graphique de base"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_pf_compare.png`"
-msgstr "`img/3.3_pf_compare.png`"
+msgstr "`3.3_pf_compare.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§0.5 或 §5"
@@ -642,9 +637,8 @@ msgid "事件窗口篮子 vs benchmark 的组合曲线"
 msgstr "Courbe composite du panier événement-fenêtre vs. benchmark"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "`3.3_highlight_pattern.png`"
-msgstr "`img/3.3_highlight_pattern.png`"
+msgstr "`3.3_highlight_pattern.png`"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "§6"
@@ -658,62 +652,47 @@ msgstr ""
 
 #~ msgid "事件型因子：K线形态信号 -> 事件窗口 mask -> CAGR 与可视化解释"
 #~ msgstr ""
-#~ "Facteur événementiel : signal de modèle"
-#~ " de chandelier -> masque de fenêtre"
-#~ " d'événement -> CAGR et explication "
-#~ "visuelle"
+#~ "Facteur événementiel : signal de modèle de chandelier -> masque de fenêtre "
+#~ "d'événement -> CAGR et explication visuelle"
 
 #~ msgid "如果我只在事件附近挑股票，长期看会不会更好？"
 #~ msgstr ""
-#~ "Si je sélectionne uniquement des actions"
-#~ " en fonction d’événements, est-ce que"
-#~ " ce sera mieux à long terme ?"
+#~ "Si je sélectionne uniquement des actions en fonction d’événements, est-ce "
+#~ "que ce sera mieux à long terme ?"
 
 #~ msgid ""
 #~ "本篇教程就围绕这个问题，用 `HistoryPanel.candle_pattern()` "
-#~ "把形态事件变成可研究的数据，再把它窗口化成横向筛选条件，最后跑通完整闭环：   **事件信号 -> "
-#~ "事件窗口 -> `where/mask` -> `portfolio + "
-#~ "benchmark` -> `cum_return + CAGR` -> "
-#~ "`plot(highlight)` 解释。**"
+#~ "把形态事件变成可研究的数据，再把它窗口化成横向筛选条件，最后跑通完整闭环：   **事件信号 -> 事件窗口 -> `where/mask` -> "
+#~ "`portfolio + benchmark` -> `cum_return + CAGR` -> `plot(highlight)` 解释。**"
 #~ msgstr ""
-#~ "Ce didacticiel se concentre sur ce "
-#~ "problème : utilisez `HistoryPanel.candle_pattern()`"
-#~ " pour transformer des événements de "
-#~ "modèle en données pouvant être "
-#~ "recherchées, puis fenêtrez-les dans des"
-#~ " conditions de dépistage transversal, et"
-#~ " enfin parcourez la boucle fermée "
-#~ "complète : **signal d'événement -> "
-#~ "fenêtre d'événement -> `where/mask` -> "
-#~ "`portfolio + benchmark` -> `cum_return +"
-#~ " CAGR` -> interprétation `plot(highlight)`.**"
+#~ "Ce didacticiel se concentre sur ce problème : utilisez "
+#~ "`HistoryPanel.candle_pattern()` pour transformer des événements de modèle en"
+#~ " données pouvant être recherchées, puis fenêtrez-les dans des conditions de "
+#~ "dépistage transversal, et enfin parcourez la boucle fermée complète : "
+#~ "**signal d'événement -> fenêtre d'événement -> `where/mask` -> `portfolio + "
+#~ "benchmark` -> `cum_return + CAGR` -> interprétation `plot(highlight)`.**"
 
 #~ msgid "统一约束（与前两篇保持一致）："
 #~ msgstr "Contraintes unifiées (en cohérence avec les deux posts précédents) :"
 
 #~ msgid "以个股为主，同时加入 `000300.SH` 作为 benchmark"
 #~ msgstr ""
-#~ "Concentrez-vous sur les actions "
-#~ "individuelles et incluez également `000300.SH`"
-#~ " comme référence"
+#~ "Concentrez-vous sur les actions individuelles et incluez également "
+#~ "`000300.SH` comme référence"
 
 #~ msgid "事件窗口 \\(K=5\\)（最近 5 天内发生过就算“有效”）"
 #~ msgstr ""
-#~ "Fenêtre d'événement \\(K=5\\) (compte comme"
-#~ " « valide » s'il s'est produit "
-#~ "au cours des 5 derniers jours)"
+#~ "Fenêtre d'événement \\(K=5\\) (compte comme « valide » s'il s'est produit au"
+#~ " cours des 5 derniers jours)"
 
 #~ msgid "0. 开场：先跑通“形态信号 -> 在 K 线上高亮事件”的最小版本"
 #~ msgstr ""
-#~ "0. Ouverture : lancez d'abord la "
-#~ "version minimale : \"signal de modèle"
-#~ " -> événements en surbrillance sur le"
-#~ " graphique en chandeliers\""
+#~ "0. Ouverture : lancez d'abord la version minimale : \"signal de modèle -> "
+#~ "événements en surbrillance sur le graphique en chandeliers\""
 
 #~ msgid "先看最小可跑证明：我们只做两件事："
 #~ msgstr ""
-#~ "Premièrement, la preuve exécutable minimale"
-#~ " : nous ne faisons que deux "
+#~ "Premièrement, la preuve exécutable minimale : nous ne faisons que deux "
 #~ "choses :"
 
 #~ msgid "计算形态信号；"
@@ -721,9 +700,8 @@ msgstr ""
 
 #~ msgid "在单只股票的 K 线上把事件点高亮出来。"
 #~ msgstr ""
-#~ "Mettez en surbrillance les points "
-#~ "d’événement sur le graphique en "
-#~ "chandelier d’une seule action."
+#~ "Mettez en surbrillance les points d’événement sur le graphique en chandelier"
+#~ " d’une seule action."
 
 #~ msgid "2.1 本节要解决什么"
 #~ msgstr "2.1 Ce que cette section vise à résoudre"
@@ -760,33 +738,22 @@ msgstr ""
 
 #~ msgid "到这里，我们已经把事件型因子研究跑通了：   形态信号 -> 窗口化 -> 横向筛选 -> 组合曲线 -> CAGR -> K线高亮解释。"
 #~ msgstr ""
-#~ "À ce stade, nous avons déjà "
-#~ "parcouru le pipeline complet de "
-#~ "recherche sur les facteurs d'événement :"
-#~ " signal de modèle -> fenêtrage -> "
-#~ "filtrage transversal -> courbe composite "
-#~ "-> CAGR -> mise en évidence et "
-#~ "explication des chandeliers."
+#~ "À ce stade, nous avons déjà parcouru le pipeline complet de recherche sur "
+#~ "les facteurs d'événement : signal de modèle -> fenêtrage -> filtrage "
+#~ "transversal -> courbe composite -> CAGR -> mise en évidence et explication "
+#~ "des chandeliers."
 
 #~ msgid ""
-#~ "需要再次强调：这条链路是研究向粗聚合，不含交易执行语义。   "
-#~ "如果你希望把事件信号做成真实可回测的策略，应把“事件窗口的筛选规则”转成策略信号，并交给 "
+#~ "需要再次强调：这条链路是研究向粗聚合，不含交易执行语义。   如果你希望把事件信号做成真实可回测的策略，应把“事件窗口的筛选规则”转成策略信号，并交给 "
 #~ "`Operator/Backtester` 处理交易层细节（成本、交割、下单约束等）。"
 #~ msgstr ""
-#~ "Il faut souligner à nouveau : ce"
-#~ " pipeline est une agrégation grossière "
-#~ "orientée vers la recherche et ne "
-#~ "contient aucune sémantique d'exécution des "
-#~ "transactions.   Si vous souhaitez transformer"
-#~ " le signal d'événement en une "
-#~ "véritable stratégie backtestable, vous devez"
-#~ " convertir les « règles de filtrage"
-#~ " de la fenêtre d'événement » en "
-#~ "signaux de stratégie et les transmettre"
-#~ " à `Operator/Backtester` pour gérer les "
-#~ "détails de la couche de négociation "
-#~ "(coûts, règlement, contraintes d'ordre, etc.)."
+#~ "Il faut souligner à nouveau : ce pipeline est une agrégation grossière "
+#~ "orientée vers la recherche et ne contient aucune sémantique d'exécution des "
+#~ "transactions.   Si vous souhaitez transformer le signal d'événement en une "
+#~ "véritable stratégie backtestable, vous devez convertir les « règles de "
+#~ "filtrage de la fenêtre d'événement » en signaux de stratégie et les "
+#~ "transmettre à `Operator/Backtester` pour gérer les détails de la couche de "
+#~ "négociation (coûts, règlement, contraintes d'ordre, etc.)."
 
 #~ msgid "插图"
 #~ msgstr "Figure"
-

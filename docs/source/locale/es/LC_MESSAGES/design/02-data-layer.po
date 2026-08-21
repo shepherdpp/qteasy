@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: es\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: es <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/design/02-data-layer.md:1
@@ -32,16 +32,15 @@ msgid ""
 "**window_length**；运行前，引擎根据这些声明从 **DataSource** "
 "中取出对应数据、整理成数据窗口并注入策略。这样既保证了回测与实盘使用同一套数据视图，也从机制上避免了策略使用“未来数据”。"
 msgstr ""
-"La capa de datos proporciona a la capa de estrategia y a la capa de "
-"tiempo de ejecución información histórica \"por tipo, por ventana\". Las "
-"estrategias no acceden directamente a las tablas de datos sin procesar; "
-"en su lugar, declaran qué **DataType** necesitan y cuánto tiempo debe "
-"tener **window_length**. Antes de la ejecución, el motor recupera los "
-"datos correspondientes de **DataSource**, los organiza en ventanas de "
-"datos y los inyecta en la estrategia. Esto garantiza que las pruebas "
-"retrospectivas y las operaciones en vivo utilicen la misma vista de datos"
-" y también evita que las estrategias utilicen \"datos futuros\" por "
-"diseño."
+"La capa de datos proporciona a la capa de estrategia y a la capa de tiempo "
+"de ejecución información histórica \"por tipo, por ventana\". Las "
+"estrategias no acceden directamente a las tablas de datos sin procesar; en "
+"su lugar, declaran qué **DataType** necesitan y cuánto tiempo debe tener "
+"**window_length**. Antes de la ejecución, el motor recupera los datos "
+"correspondientes de **DataSource**, los organiza en ventanas de datos y los "
+"inyecta en la estrategia. Esto garantiza que las pruebas retrospectivas y "
+"las operaciones en vivo utilicen la misma vista de datos y también evita que"
+" las estrategias utilicen \"datos futuros\" por diseño."
 
 #: ../../source/design/02-data-layer.md:7
 msgid "2. 从原始数据到本地存储"
@@ -56,10 +55,10 @@ msgid ""
 "外部数据源（如 Tushare、东方财富等）→ 拉取与清洗（格式统一、去重、对齐）→ **DataSource**（文件或数据库）→ "
 "以统一结构写入多张**数据表**。"
 msgstr ""
-"Fuentes de datos externas (por ejemplo, Tushare, Eastmoney, etc.) → "
-"búsqueda y limpieza (unificación de formato, deduplicación, alineación) →"
-" **DataSource** (archivos o base de datos) → escritas en múltiples "
-"**tablas de datos** en una estructura unificada."
+"Fuentes de datos externas (por ejemplo, Tushare, Eastmoney, etc.) → búsqueda"
+" y limpieza (unificación de formato, deduplicación, alineación) → "
+"**DataSource** (archivos o base de datos) → escritas en múltiples **tablas "
+"de datos** en una estructura unificada."
 
 #: ../../source/design/02-data-layer.md:13
 msgid "2.2 DataSource 的角色"
@@ -69,9 +68,9 @@ msgstr "2.2 El papel de DataSource"
 msgid "**统一存储抽象**：无论底层是 CSV/HDF/Feather 文件还是 MySQL 等数据库，对上层而言都是“按表名、按列”读写。"
 msgstr ""
 "**Abstracción de almacenamiento unificado**: independientemente de si la "
-"capa subyacente son archivos CSV/HDF/Feather o una base de datos como "
-"MySQL, en la capa superior siempre se lee y escribe “por nombre de tabla,"
-" por columna”."
+"capa subyacente son archivos CSV/HDF/Feather o una base de datos como MySQL,"
+" en la capa superior siempre se lee y escribe “por nombre de tabla, por "
+"columna”."
 
 #: ../../source/design/02-data-layer.md:16
 msgid "**多引擎支持**：可配置为 file（csv/hdf/fth）或 db（mysql 等），满足不同部署需求。"
@@ -82,20 +81,20 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md:17
 msgid ""
-"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 "
-"DataSource。"
+"**不主动拉数**：DataSource 只负责读写本地已存在的数据；从网络拉取与更新由用户或定时任务调用数据接口完成，再写入 DataSource。"
 msgstr ""
-"**No extrae datos de forma proactiva**: DataSource solo es responsable de"
-" leer y escribir datos que ya existen localmente; La búsqueda y "
-"actualización de la red la realiza el usuario o las tareas programadas "
-"que llaman a la interfaz de datos y luego escriben en DataSource."
+"**No extrae datos de forma proactiva**: DataSource solo es responsable de "
+"leer y escribir datos que ya existen localmente; La búsqueda y actualización"
+" de la red la realiza el usuario o las tareas programadas que llaman a la "
+"interfaz de datos y luego escriben en DataSource."
 
 #: ../../source/design/02-data-layer.md:19
-msgid "因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
+msgid ""
+"因此，数据层设计把“拉取”和“存储”分开：拉取得到的数据经清洗后写入 DataSource，策略与回测只消费 DataSource 中已有的数据。"
 msgstr ""
 "Por lo tanto, el diseño de la capa de datos separa la \"obtención\" y el "
-"\"almacenamiento\": los datos obtenidos de la recuperación se escriben en"
-" DataSource después de la limpieza, y las estrategias y pruebas "
+"\"almacenamiento\": los datos obtenidos de la recuperación se escriben en "
+"DataSource después de la limpieza, y las estrategias y pruebas "
 "retrospectivas solo consumen datos que ya existen en DataSource."
 
 #: ../../source/design/02-data-layer.md:21
@@ -107,33 +106,31 @@ msgid ""
 "**内置表划分**：qteasy "
 "预定义了多张数据表，大致包括行情类（如日线、分钟线）、财务类（利润表、资产负债表等）、宏观与指数等。每张表有固定的表名、主键与列结构。"
 msgstr ""
-"**Partición de tablas incorporada**: qteasy predefine múltiples tablas de"
-" datos, que incluyen aproximadamente datos de mercado (por ejemplo, "
-"barras diarias, barras de minutos), datos financieros (estado de "
-"resultados, balance general, etc.), macro e índices, etc. Cada tabla "
-"tiene un nombre de tabla fijo, una clave principal y un esquema de "
-"columnas."
+"**Partición de tablas incorporada**: qteasy predefine múltiples tablas de "
+"datos, que incluyen aproximadamente datos de mercado (por ejemplo, barras "
+"diarias, barras de minutos), datos financieros (estado de resultados, "
+"balance general, etc.), macro e índices, etc. Cada tabla tiene un nombre de "
+"tabla fijo, una clave principal y un esquema de columnas."
 
 #: ../../source/design/02-data-layer.md:24
 msgid ""
 "**表结构与 DataType 的对应关系**：一种“可被策略引用的信息”往往对应某张表的某列（或若干列经计算得到）。DataType 的 "
-"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id**"
-" 声明需求，无需关心具体表名或列名。"
+"**name**（及 freq、asset_type）与数据表/列的映射在系统内维护，策略只需通过 DataType 或 **dtype_id** "
+"声明需求，无需关心具体表名或列名。"
 msgstr ""
 "**Mapeo entre el esquema de la tabla y DataType**: una parte de "
 "\"información a la que una estrategia puede hacer referencia\" a menudo "
 "corresponde a una columna de una tabla (o una o más columnas después del "
 "cálculo). La asignación del **nombre** de un DataType (y frecuencia, "
-"tipo_activo) a tablas/columnas de datos se mantiene dentro del sistema. "
-"Las estrategias solo necesitan declarar requisitos a través de DataType o"
-" **dtype_id**, sin preocuparse por nombres de tablas o columnas "
-"específicos."
+"tipo_activo) a tablas/columnas de datos se mantiene dentro del sistema. Las "
+"estrategias solo necesitan declarar requisitos a través de DataType o "
+"**dtype_id**, sin preocuparse por nombres de tablas o columnas específicos."
 
 #: ../../source/design/02-data-layer.md:26
 msgid "4. DataType：从“表里的数据”到“策略可引用的信息”"
 msgstr ""
-"4. DataType: De “datos en tablas” a “estrategias de información a las que"
-" se puede hacer referencia”"
+"4. DataType: De “datos en tablas” a “estrategias de información a las que se"
+" puede hacer referencia”"
 
 #: ../../source/design/02-data-layer.md:28
 msgid ""
@@ -147,7 +144,7 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/design/02-data-layer.md
 msgid "形状"
@@ -163,7 +160,7 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`history`"
-msgstr ""
+msgstr "`history`"
 
 #: ../../source/design/02-data-layer.md
 msgid "时间 × 标的"
@@ -175,11 +172,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_history_data` / `get_kline`"
-msgstr ""
+msgstr "`get_history_data` / `get_kline`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`reference`"
-msgstr ""
+msgstr "`reference`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅时间"
@@ -191,11 +188,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_reference_data`"
-msgstr ""
+msgstr "`get_reference_data`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`static`"
-msgstr ""
+msgstr "`static`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅标的"
@@ -203,11 +200,11 @@ msgstr ""
 
 #: ../../source/design/02-data-layer.md
 msgid "`industry`、`list_date`"
-msgstr ""
+msgstr "`industry`、`list_date`"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_static_data`"
-msgstr ""
+msgstr "`get_static_data`"
 
 #: ../../source/design/02-data-layer.md:38
 msgid ""
@@ -217,7 +214,6 @@ msgid ""
 msgstr ""
 
 #: ../../source/design/02-data-layer.md:40
-#, fuzzy
 msgid "4.2 name、freq、asset_type 与 dtype_id"
 msgstr "4.1 nombre, frecuencia, tipo_activo y dtype_id"
 
@@ -249,9 +245,8 @@ msgid ""
 "`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
 "**dtype_id**: generado a partir de los tres elementos anteriores, con la "
-"regla `name_assettype_freq`, por ejemplo `close_E_d`, `total_mv_E_q`. Las"
-" estrategias utilizan esta identificación al llamar a "
-"`get_data(dtype_id)`."
+"regla `name_assettype_freq`, por ejemplo `close_E_d`, `total_mv_E_q`. Las "
+"estrategias utilizan esta identificación al llamar a `get_data(dtype_id)`."
 
 #: ../../source/design/02-data-layer.md:47
 #, fuzzy
@@ -262,42 +257,42 @@ msgstr "4.2 Mapeo entre tipos de datos integrados y tablas/columnas de datos"
 #, fuzzy
 msgid ""
 "系统内置大量 "
-"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息"
-" ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
+"DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
+"ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
-"El sistema viene con un gran conjunto de tipos de datos integrados, cada "
-"uno de ellos asignado a columnas o columnas derivadas en diferentes "
-"tablas de datos. Para conocer nombres de tablas y columnas específicos y "
-"cómo obtenerlos, consulte *Descargar y administrar datos históricos "
-"financieros* y la documentación sobre “tipos de datos y tablas de datos” "
-"en los documentos de la API. Esta serie solo enfatiza: **las estrategias "
-"hacen referencia a datos solo a través de DataType (dtype_id) y no "
-"dependen directamente del esquema de la tabla**. De esta manera, cuando "
-"el esquema evolucione, solo necesitará ajustar el mapeo, sin cambiar el "
-"código de estrategia."
+"El sistema viene con un gran conjunto de tipos de datos integrados, cada uno"
+" de ellos asignado a columnas o columnas derivadas en diferentes tablas de "
+"datos. Para conocer nombres de tablas y columnas específicos y cómo "
+"obtenerlos, consulte *Descargar y administrar datos históricos financieros* "
+"y la documentación sobre “tipos de datos y tablas de datos” en los "
+"documentos de la API. Esta serie solo enfatiza: **las estrategias hacen "
+"referencia a datos solo a través de DataType (dtype_id) y no dependen "
+"directamente del esquema de la tabla**. De esta manera, cuando el esquema "
+"evolucione, solo necesitará ajustar el mapeo, sin cambiar el código de "
+"estrategia."
 
 #: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
 msgstr ""
-"5. Resumen: por qué las estrategias solo interactúan con DataType en "
-"lugar de leer tablas directamente"
+"5. Resumen: por qué las estrategias solo interactúan con DataType en lugar "
+"de leer tablas directamente"
 
 #: ../../source/design/02-data-layer.md:53
 #, fuzzy
 msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
 msgstr ""
-"**Consistencia**: Tanto las pruebas retrospectivas como las operaciones "
-"en vivo obtienen datos a través de la misma ruta: “declarar DataType + "
+"**Consistencia**: Tanto las pruebas retrospectivas como las operaciones en "
+"vivo obtienen datos a través de la misma ruta: “declarar DataType + "
 "inyecciones de motor por ventana”, evitando dos conjuntos de lógica "
 "separados."
 
 #: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
 msgstr ""
-"**Sin sesgo de anticipación**: el motor prepara estrictamente la ventana "
-"de datos históricos en función del paso de tiempo actual y la longitud de"
-" la ventana, por lo que la estrategia no puede acceder a datos futuros "
-"que no se hayan inyectado."
+"**Sin sesgo de anticipación**: el motor prepara estrictamente la ventana de "
+"datos históricos en función del paso de tiempo actual y la longitud de la "
+"ventana, por lo que la estrategia no puede acceder a datos futuros que no se"
+" hayan inyectado."
 
 #: ../../source/design/02-data-layer.md:55
 msgid ""
@@ -311,27 +306,18 @@ msgstr ""
 
 #~ msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
 #~ msgstr ""
-#~ "**freq**: la frecuencia de los datos "
-#~ "(p. ej., d/w/m/q), relacionada con la"
-#~ " granularidad temporal de la tabla de"
-#~ " datos o el método de remuestreo."
+#~ "**freq**: la frecuencia de los datos (p. ej., d/w/m/q), relacionada con la "
+#~ "granularidad temporal de la tabla de datos o el método de remuestreo."
 
 #~ msgid ""
-#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与"
-#~ " DataType 一一对应，便于维护与扩展。"
+#~ "**接口统一**：所有策略都用 `get_data(dtype_id)` 取数，dtype_id 与 DataType 一一对应，便于维护与扩展。"
 #~ msgstr ""
-#~ "**Interfaz unificada**: todas las estrategias"
-#~ " obtienen datos a través de "
-#~ "`get_data(dtype_id)`. Cada dtype_id se "
-#~ "corresponde uno a uno con un "
-#~ "DataType, lo que facilita el "
-#~ "mantenimiento y la extensión."
+#~ "**Interfaz unificada**: todas las estrategias obtienen datos a través de "
+#~ "`get_data(dtype_id)`. Cada dtype_id se corresponde uno a uno con un "
+#~ "DataType, lo que facilita el mantenimiento y la extensión."
 
 #~ msgid "更多数据配置与 API 用法见《下载并管理金融历史数据》与 API 参考。"
 #~ msgstr ""
-#~ "Para obtener más información sobre la"
-#~ " configuración de datos y el uso "
-#~ "de API, consulte *Descargar y "
-#~ "administrar datos históricos financieros* y"
-#~ " la referencia de API."
-
+#~ "Para obtener más información sobre la configuración de datos y el uso de "
+#~ "API, consulte *Descargar y administrar datos históricos financieros* y la "
+#~ "referencia de API."

@@ -1,8 +1,9 @@
 # coding=utf-8
-"""Phase 3：以 OpenCC s2t 将 zh_TW .po 的 msgstr 从简体 msgid 转为繁体，并套用两岸术语与 RTD 链接。"""
+"""以 OpenCC s2t + 台湾术语表填充 zh_TW .po 的空条目 / fuzzy（默认不覆盖已有译文）。"""
 
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -11,41 +12,14 @@ import polib
 from opencc import OpenCC
 
 _SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+from zh_tw_taiwan_terms import apply_taiwan_terms
+
 ZH_TW_ROOT = _SCRIPTS.parent / 'source' / 'locale' / 'zh_TW' / 'LC_MESSAGES'
 
-# 简体 -> 台湾常用（在 OpenCC 之后按长短序替换，避免短词误伤）
-TW_TERMS: list[tuple[str, str]] = [
-    ('默认', '預設'),
-    ('数据库', '資料庫'),
-    ('内存', '記憶體'),
-    ('磁盘', '磁碟'),
-    ('软件', '軟體'),
-    ('程序', '程式'),
-    ('服务器', '伺服器'),
-    ('网络', '網路'),
-    ('信息', '資訊'),
-    ('视频', '影片'),
-    ('代码', '程式碼'),
-    ('文档', '文件'),
-    ('鼠标', '滑鼠'),
-    ('打印', '列印'),
-    ('屏幕', '螢幕'),
-    ('操作系统', '作業系統'),
-    ('线程', '執行緒'),
-    ('缓存', '快取'),
-    ('链接', '連結'),
-    ('账户', '帳戶'),
-    ('账户', '帳戶'),
-    ('回测', '回測'),
-    ('实盘', '實盤'),
-    ('持仓', '持倉'),
-    ('标的', '標的'),
-    ('复权', '復權'),
-    ('优化', '最佳化'),
-]
-
-RTD_ZHCN = re.compile(r'https://qteasy\.readthedocs\.io/zh-cn/latest/', re.I)
-ASCII_ONLY = re.compile(r'^[\x00-\x7f\s\d\W]+$')
+RTD_ZHCN = re.compile(r'https://qteasy\.readthedocs\.io/(?:zh-cn|zh)/latest/', re.I)
 CHINESE = re.compile(r'[\u4e00-\u9fff]')
 
 
@@ -60,31 +34,45 @@ def is_copy_as_is(msgid: str) -> bool:
     return False
 
 
-def apply_tw_terms(text: str) -> str:
-    """在 OpenCC 结果上套用术语表。"""
-    for simp, trad in sorted(TW_TERMS, key=lambda x: -len(x[0])):
-        text = text.replace(simp, trad)
-    return text
-
-
 def convert_text(converter: OpenCC, msgid: str) -> str:
-    """将 msgid 转为繁中 msgstr。"""
+    """将 msgid 转为台湾繁中 msgstr。"""
     if is_copy_as_is(msgid):
         return msgid
-    out = converter.convert(msgid)
-    out = apply_tw_terms(out)
+    # 先对简体套台湾词，再 OpenCC，再对残留大陆繁体套台湾词
+    out = apply_taiwan_terms(msgid)
+    out = converter.convert(out)
+    out = apply_taiwan_terms(out)
     out = RTD_ZHCN.sub('https://qteasy.readthedocs.io/zh-tw/latest/', out)
     return out
 
 
-def process_po(po_path: Path, converter: OpenCC) -> int:
+def needs_fill(entry: polib.POEntry, new_only: bool) -> bool:
+    """是否需要填充。
+
+    Parameters
+    ----------
+    entry : polib.POEntry
+        词条。
+    new_only : bool
+        True 时仅空 msgstr 或 fuzzy（不覆盖已有完整译文）。
+    """
+    if entry.obsolete or not entry.msgid:
+        return False
+    if not new_only:
+        return True
+    if not entry.msgstr:
+        return True
+    if 'fuzzy' in entry.flags:
+        return True
+    return False
+
+
+def process_po(po_path: Path, converter: OpenCC, new_only: bool) -> int:
     """填充单个 po 文件。"""
     po = polib.pofile(str(po_path))
     filled = 0
     for entry in po:
-        if entry.obsolete or not entry.msgid:
-            continue
-        if entry.msgstr and 'fuzzy' not in entry.flags:
+        if not needs_fill(entry, new_only):
             continue
         new = convert_text(converter, entry.msgid)
         if entry.msgstr != new:
@@ -93,7 +81,7 @@ def process_po(po_path: Path, converter: OpenCC) -> int:
         if 'fuzzy' in entry.flags:
             entry.flags.remove('fuzzy')
     if filled:
-        po.metadata['PO-Revision-Date'] = '2026-05-24 16:00+0800'
+        po.metadata['PO-Revision-Date'] = '2026-08-21 22:00+0800'
         po.metadata['Last-Translator'] = 'Jackie PENG (zh_tw_fill_opencc)'
         po.save(str(po_path))
     return filled
@@ -112,13 +100,23 @@ def clear_header_fuzzy() -> int:
     return count
 
 
-def main() -> int:
-    """遍历全部 zh_TW po 并填充 msgstr。"""
+def main(argv: list[str] | None = None) -> int:
+    """遍历 zh_TW po；默认仅补新缺口。"""
+    parser = argparse.ArgumentParser(description='Fill zh_TW .po with OpenCC + Taiwan terms')
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        help='Also rewrite existing msgstr (full terminology pass; default: new-only)',
+    )
+    args = parser.parse_args(argv)
+    new_only = not args.all
+
     converter = OpenCC('s2t')
     total = 0
     files = sorted(p for p in ZH_TW_ROOT.rglob('*.po') if not p.name.endswith('~'))
+    print(f'[zh_tw] files={len(files)} new_only={new_only}')
     for i, po_path in enumerate(files, 1):
-        n = process_po(po_path, converter)
+        n = process_po(po_path, converter, new_only=new_only)
         if n:
             print(f'  [{i}/{len(files)}] {po_path.relative_to(ZH_TW_ROOT)}: +{n}')
             total += n

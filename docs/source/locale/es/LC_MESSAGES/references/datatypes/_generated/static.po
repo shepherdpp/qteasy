@@ -3,20 +3,19 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: es\n"
+"PO-Revision-Date: 2026-05-24 10:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: es <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/references/datatypes/_generated/static.md:6
@@ -37,47 +36,47 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "name"
-msgstr ""
+msgstr "name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "freq"
-msgstr ""
+msgstr "freq"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "asset_type"
-msgstr ""
+msgstr "asset_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "description"
-msgstr ""
+msgstr "description"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "kind"
-msgstr ""
+msgstr "kind"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "usable_in"
-msgstr ""
+msgstr "usable_in"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "acquisition_type"
-msgstr ""
+msgstr "acquisition_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "table_name"
-msgstr ""
+msgstr "table_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "area"
-msgstr ""
+msgstr "area"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "None"
-msgstr ""
+msgstr "None"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 地域"
@@ -85,27 +84,27 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "static"
-msgstr ""
+msgstr "static"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "static_api,universe"
-msgstr ""
+msgstr "static_api,universe"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "basics"
-msgstr ""
+msgstr "basics"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_basic"
-msgstr ""
+msgstr "stock_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ballot"
-msgstr ""
+msgstr "ballot"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d"
-msgstr ""
+msgstr "d"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 中签率"
@@ -113,15 +112,15 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "new_share"
-msgstr ""
+msgstr "new_share"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "base_date"
-msgstr ""
+msgstr "base_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "IDX"
-msgstr ""
+msgstr "IDX"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基期"
@@ -129,11 +128,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_basic"
-msgstr ""
+msgstr "index_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "base_point"
-msgstr ""
+msgstr "base_point"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基点"
@@ -141,11 +140,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "benchmark"
-msgstr ""
+msgstr "benchmark"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "FD"
-msgstr ""
+msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 业绩比较基准"
@@ -153,11 +152,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_basic"
-msgstr ""
+msgstr "fund_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "business_scope"
-msgstr ""
+msgstr "business_scope"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 经营范围"
@@ -165,11 +164,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_company"
-msgstr ""
+msgstr "stock_company"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "c_fee"
-msgstr ""
+msgstr "c_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管费"
@@ -177,11 +176,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "call_put"
-msgstr ""
+msgstr "call_put"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "OPT"
-msgstr ""
+msgstr "OPT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 期权类型"
@@ -189,11 +188,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_basic"
-msgstr ""
+msgstr "opt_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "category"
-msgstr ""
+msgstr "category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数类别"
@@ -201,7 +200,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "chairman"
-msgstr ""
+msgstr "chairman"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 法人代表"
@@ -209,7 +208,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "city"
-msgstr ""
+msgstr "city"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在城市"
@@ -217,7 +216,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "cnspell"
-msgstr ""
+msgstr "cnspell"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 拼音缩写"
@@ -225,7 +224,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "curr_type"
-msgstr ""
+msgstr "curr_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易货币"
@@ -233,7 +232,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "custodian"
-msgstr ""
+msgstr "custodian"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管人"
@@ -241,11 +240,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d_mode_desc"
-msgstr ""
+msgstr "d_mode_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "FT"
-msgstr ""
+msgstr "FT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割方式说明"
@@ -253,11 +252,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "future_basic"
-msgstr ""
+msgstr "future_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d_month"
-msgstr ""
+msgstr "d_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割月份"
@@ -265,7 +264,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "delist_date"
-msgstr ""
+msgstr "delist_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 退市日期"
@@ -285,7 +284,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "desc"
-msgstr ""
+msgstr "desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 描述"
@@ -293,7 +292,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "due_date"
-msgstr ""
+msgstr "due_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 到期日期"
@@ -301,7 +300,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "duration_year"
-msgstr ""
+msgstr "duration_year"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续期"
@@ -309,7 +308,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "email"
-msgstr ""
+msgstr "email"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 电子邮件"
@@ -317,7 +316,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "employees"
-msgstr ""
+msgstr "employees"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 员工人数"
@@ -325,7 +324,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "enname"
-msgstr ""
+msgstr "enname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 英文全称"
@@ -333,7 +332,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exchange"
-msgstr ""
+msgstr "exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易所代码"
@@ -349,7 +348,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_price"
-msgstr ""
+msgstr "exercise_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权价格"
@@ -357,7 +356,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_type"
-msgstr ""
+msgstr "exercise_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权方式"
@@ -365,7 +364,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_date"
-msgstr ""
+msgstr "exp_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 终止日期"
@@ -373,7 +372,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_return"
-msgstr ""
+msgstr "exp_return"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 预期收益率"
@@ -381,7 +380,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "found_date"
-msgstr ""
+msgstr "found_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 成立日期"
@@ -389,7 +388,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fullname"
-msgstr ""
+msgstr "fullname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票全称"
@@ -397,7 +396,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_name"
-msgstr ""
+msgstr "fund_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 简称"
@@ -405,7 +404,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_type"
-msgstr ""
+msgstr "fund_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资类型"
@@ -413,7 +412,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "funds"
-msgstr ""
+msgstr "funds"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 募集资金（亿元）"
@@ -421,7 +420,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fut_code"
-msgstr ""
+msgstr "fut_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约产品代码"
@@ -429,7 +428,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_type"
-msgstr ""
+msgstr "index_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数风格"
@@ -437,7 +436,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "industry"
-msgstr ""
+msgstr "industry"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 所属行业"
@@ -445,7 +444,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_pe"
-msgstr ""
+msgstr "initial_pe"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行市盈率"
@@ -453,7 +452,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_price"
-msgstr ""
+msgstr "initial_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行价格"
@@ -461,7 +460,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "introduction"
-msgstr ""
+msgstr "introduction"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司介绍"
@@ -469,7 +468,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "invest_type"
-msgstr ""
+msgstr "invest_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资风格"
@@ -477,7 +476,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "IPO_amount"
-msgstr ""
+msgstr "IPO_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行总量（万股）"
@@ -485,7 +484,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ipo_date"
-msgstr ""
+msgstr "ipo_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行日期"
@@ -493,7 +492,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "is_hs"
-msgstr ""
+msgstr "is_hs"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 是否沪深港通标的"
@@ -501,7 +500,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_amount"
-msgstr ""
+msgstr "issue_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行份额(亿)"
@@ -509,7 +508,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_date"
-msgstr ""
+msgstr "issue_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行日期"
@@ -521,7 +520,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_ddate"
-msgstr ""
+msgstr "last_ddate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最后交割日"
@@ -533,7 +532,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_edate"
-msgstr ""
+msgstr "last_edate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后行权日期"
@@ -541,7 +540,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "limit_amount"
-msgstr ""
+msgstr "limit_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 个人申购上限（万股）"
@@ -549,7 +548,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_date"
-msgstr ""
+msgstr "list_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市日期"
@@ -573,7 +572,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_price"
-msgstr ""
+msgstr "list_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 挂牌基准价"
@@ -581,7 +580,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_status"
-msgstr ""
+msgstr "list_status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市状态 L上市 D退市 P暂停上市"
@@ -589,7 +588,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "m_fee"
-msgstr ""
+msgstr "m_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理费"
@@ -597,7 +596,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "main_business"
-msgstr ""
+msgstr "main_business"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 主要业务及产品"
@@ -605,7 +604,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "management"
-msgstr ""
+msgstr "management"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理人"
@@ -613,7 +612,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "manager"
-msgstr ""
+msgstr "manager"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 总经理"
@@ -621,7 +620,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market"
-msgstr ""
+msgstr "market"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 市场类型"
@@ -637,7 +636,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market_amount"
-msgstr ""
+msgstr "market_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行总量（万股）"
@@ -645,7 +644,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "maturity_date"
-msgstr ""
+msgstr "maturity_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 到期日"
@@ -653,7 +652,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_amount"
-msgstr ""
+msgstr "min_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 起点金额(万元)"
@@ -661,7 +660,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_price_chg"
-msgstr ""
+msgstr "min_price_chg"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最小价格波幅"
@@ -669,7 +668,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "multiplier"
-msgstr ""
+msgstr "multiplier"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约乘数(只适用于国债期货、指数期货)"
@@ -685,7 +684,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "office"
-msgstr ""
+msgstr "office"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 办公室"
@@ -693,7 +692,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_code"
-msgstr ""
+msgstr "opt_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 标的合约代码"
@@ -701,7 +700,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_type"
-msgstr ""
+msgstr "opt_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约类型"
@@ -709,7 +708,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "p_value"
-msgstr ""
+msgstr "p_value"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 面值"
@@ -717,7 +716,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "per_unit"
-msgstr ""
+msgstr "per_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易单位(每手)"
@@ -729,7 +728,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "province"
-msgstr ""
+msgstr "province"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在省份"
@@ -737,7 +736,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "publisher"
-msgstr ""
+msgstr "publisher"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 发布方"
@@ -745,7 +744,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "purc_startdate"
-msgstr ""
+msgstr "purc_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常申购起始日"
@@ -753,7 +752,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit"
-msgstr ""
+msgstr "quote_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 报价单位"
@@ -765,7 +764,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit_desc"
-msgstr ""
+msgstr "quote_unit_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最小报价单位说明"
@@ -773,7 +772,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "redm_startdate"
-msgstr ""
+msgstr "redm_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常赎回起始日"
@@ -781,7 +780,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "reg_capital"
-msgstr ""
+msgstr "reg_capital"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册资本"
@@ -789,7 +788,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "s_month"
-msgstr ""
+msgstr "s_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 结算月"
@@ -797,7 +796,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "secretary"
-msgstr ""
+msgstr "secretary"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 董秘"
@@ -805,7 +804,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "setup_date"
-msgstr ""
+msgstr "setup_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册日期"
@@ -813,7 +812,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "status"
-msgstr ""
+msgstr "status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续状态D摘牌 I发行 L已上市"
@@ -821,7 +820,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_name"
-msgstr ""
+msgstr "stock_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票名称"
@@ -829,7 +828,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_symbol"
-msgstr ""
+msgstr "stock_symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票代码"
@@ -837,7 +836,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw|%"
-msgstr ""
+msgstr "sw|%"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类筛选 - %"
@@ -845,15 +844,15 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "selection"
-msgstr ""
+msgstr "selection"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_basic"
-msgstr ""
+msgstr "sw_industry_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_code"
-msgstr ""
+msgstr "sw_industry_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 行业代码"
@@ -861,7 +860,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_name"
-msgstr ""
+msgstr "sw_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 名称"
@@ -869,7 +868,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level"
-msgstr ""
+msgstr "sw_level"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 级别"
@@ -877,11 +876,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level|%"
-msgstr ""
+msgstr "sw_level|%"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_parent_code"
-msgstr ""
+msgstr "sw_parent_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 上级行业代码"
@@ -889,7 +888,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_published"
-msgstr ""
+msgstr "sw_published"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 是否发布"
@@ -897,7 +896,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_source"
-msgstr ""
+msgstr "sw_source"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 分类版本"
@@ -905,7 +904,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "symbol"
-msgstr ""
+msgstr "symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易标识"
@@ -913,7 +912,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_category"
-msgstr ""
+msgstr "ths_category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票同花顺行业分类"
@@ -921,11 +920,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_weight"
-msgstr ""
+msgstr "ths_index_weight"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_count"
-msgstr ""
+msgstr "ths_industry_count"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 股票数量"
@@ -933,11 +932,11 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_basic"
-msgstr ""
+msgstr "ths_index_basic"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_date"
-msgstr ""
+msgstr "ths_industry_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 发布日期"
@@ -945,7 +944,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_exchange"
-msgstr ""
+msgstr "ths_industry_exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 交易所"
@@ -953,7 +952,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_name"
-msgstr ""
+msgstr "ths_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 行业名称"
@@ -961,7 +960,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_time_desc"
-msgstr ""
+msgstr "trade_time_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易时间说明"
@@ -969,7 +968,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_unit"
-msgstr ""
+msgstr "trade_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易计量单位"
@@ -977,7 +976,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trustee"
-msgstr ""
+msgstr "trustee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 受托人"
@@ -985,7 +984,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "type"
-msgstr ""
+msgstr "type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 基金类型"
@@ -993,7 +992,7 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "website"
-msgstr ""
+msgstr "website"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司主页"
@@ -1001,9 +1000,8 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "weight_rule"
-msgstr ""
+msgstr "weight_rule"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 加权方式"
 msgstr ""
-

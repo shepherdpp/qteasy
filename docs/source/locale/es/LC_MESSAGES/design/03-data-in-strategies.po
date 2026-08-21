@@ -79,7 +79,6 @@ msgstr ""
 "d."
 
 #: ../../source/design/03-data-in-strategies.md:15
-#, fuzzy
 msgid "声明后，引擎会知道该策略需要哪些完整 dtype_id、多长窗口，从而在运行前准备相应的数据窗口并在每一步更新注入。"
 msgstr ""
 "Después de la declaración, el motor sabrá qué dtype_id necesita la "

@@ -62,6 +62,10 @@
 
 繁中（zh_TW）与日语（ja）在 Phase 3 单独补充列。
 
+**台湾用语（zh_TW）**：OpenCC `s2t` 只解决字形；语义词见知识库  
+[`knowledge/domain/i18n-zh-tw-taiwan-terms.md`](../knowledge/domain/i18n-zh-tw-taiwan-terms.md)  
+与机读表 [`docs/scripts/zh_tw_taiwan_terms.py`](scripts/zh_tw_taiwan_terms.py)（例：軟件→軟體、內存→記憶體、數據庫→資料庫、默認→預設）。
+
 ---
 
 ## 5. `manage_data` 数据表字段

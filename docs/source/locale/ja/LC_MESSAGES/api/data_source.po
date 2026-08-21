@@ -562,7 +562,6 @@ msgid "数据表名，必须是database中定义的数据表"
 msgstr "テーブル名。データベースに定義されたテーブルである必要があります。"
 
 #: of qteasy.database.DataSource.update_table_data:10
-#, fuzzy
 msgid ""
 "指定如何合并下载数据和本地数据： - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据；   对 "
 "``table_usage=='basics'`` 的表在重复主键上仅当下载字段非空时才覆盖该列（patch），   避免稀疏通道（如 "

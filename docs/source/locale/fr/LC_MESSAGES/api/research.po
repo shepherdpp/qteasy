@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the qteasy package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
@@ -11,209 +10,253 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/research.rst:2
 msgid "qteasy.research （因子研究模块）"
-msgstr ""
+msgstr "qteasy.research (module de recherche de facteurs)"
 
 #: ../../source/api/research.rst:4
 msgid "``qteasy.research`` 提供**模块级**因子研究函数（截面 IC、分位组合、多空收益等）。"
 msgstr ""
+"``qteasy.research`` fournit des fonctions de recherche factorielle **au "
+"niveau du module** (IC transversal, portefeuille quantile, rendements long-"
+"short, etc.)."
 
 #: ../../source/api/research.rst:6
 msgid "这些 API："
-msgstr ""
+msgstr "Ces API :"
 
 #: ../../source/api/research.rst:8
 msgid "**不是** Backtester：不计算交割、费用、MOQ 或正式交易报告；"
 msgstr ""
+"**Pas** Backtester : Ne compte pas la livraison, les frais, le MOQ ou les "
+"rapports de transactions formels ;"
 
 #: ../../source/api/research.rst:9
 msgid "**不**挂在 ``HistoryPanel`` 方法上（请 ``from qteasy.research import ...``）；"
 msgstr ""
+"**Pas** accroché à ``HistoryPanel`` 方法上（请 ``from qteasy.research import "
+"...``);"
 
 #: ../../source/api/research.rst:10
 msgid ""
 "**不**内置 Newey–West / Fama–MacBeth（发表级推断请导出到 pandas / statsmodels，见教程 2.5 "
 "§11）；"
 msgstr ""
+"**Pas** intégré Newey-West/Fama-MacBeth (pour l'inférence au niveau de la "
+"publication, veuillez exporter vers pandas/statsmodels, voir Tutoriel 2.5 "
+"§11) ;"
 
 #: ../../source/api/research.rst:11
 msgid "``factor_ic`` **不会**隐式前瞻：收益列须由调用方事先用 ``shift`` / ``pct_change`` 等造好。"
 msgstr ""
+"``factor_ic`` **不会**隐式前瞻：收益列须由调用方事先用 ``shift`` / ``pct_change`` et ainsi de "
+"suite."
 
 #: ../../source/api/research.rst:13
 msgid "导入示例::"
-msgstr ""
+msgstr "Exemple d'importation : :"
 
 #: ../../source/api/research.rst:22
 msgid ""
-"可运行合成示例见仓库 ``examples/historypanel_research_factor_workflow.py``。 "
-"与面板级时序相关矩阵 （``HistoryPanel.corr`` / ``cov``）的语义对照见 :doc:`HistoryPanel "
-"<HistoryPanel>`。"
+"可运行合成示例见仓库 ``examples/historypanel_research_factor_workflow.py``。 与面板级时序相关矩阵"
+" （``HistoryPanel.corr`` / ``cov``）的语义对照见 :doc:`HistoryPanel <HistoryPanel>`。"
 msgstr ""
+"Des exemples de synthèse exécutables peuvent être trouvés dans le "
+"référentiel ``examples/historypanel_research_factor_workflow.py``。 "
+"与面板级时序相关矩阵 （``HistoryPanel.corr`` / ``cov``）的语义对照见 :doc:`HistoryPanel "
+"<HistoryPanel>`."
 
 #: ../../source/api/research.rst:27
 msgid "截面 IC"
-msgstr ""
+msgstr "Section IC"
 
 #: of qteasy.research.factor_stats.factor_ic:1
 msgid "计算逐期截面因子 IC（Information Coefficient）。"
 msgstr ""
+"Calculez le facteur de section transversale période par période IC "
+"(coefficient d'information)."
 
 #: of qteasy.research.factor_stats.factor_ic:3
 msgid ""
-"每个交易日在 share 维上对 ``factor_htype`` 与 ``return_htype`` 两列做相关； "
-"**不会**在函数内对收益列做 ``shift``——前瞻收益须由调用方事先构造并写入面板。 本函数面向研究粗验，**不是** "
-"Backtester。"
+"每个交易日在 share 维上对 ``factor_htype`` 与 ``return_htype`` 两列做相关； **不会**在函数内对收益列做 "
+"``shift``——前瞻收益须由调用方事先构造并写入面板。 本函数面向研究粗验，**不是** Backtester。"
 msgstr ""
+"``factor_htype`` 与 ``return_htype`` 两列做相关； **不会**在函数内对收益列做 ``shift`` sur la "
+"dimension action pour chaque jour de bourse - le rendement à terme doit être"
+" construit à l'avance par l'appelant et écrit sur le panneau. Cette fonction"
+" est destinée à une recherche approximative et n'est pas Backtester."
 
 #: of qteasy.research.factor_stats.factor_ic
 #: qteasy.research.factor_stats.factor_ic_summary
 #: qteasy.research.factor_stats.long_short_return
 #: qteasy.research.factor_stats.quantile_portfolio
 msgid "参数"
-msgstr ""
+msgstr "paramètre"
 
 #: of qteasy.research.factor_stats.factor_ic:7
 #: qteasy.research.factor_stats.quantile_portfolio:7
 msgid "至少包含因子列与收益列的面板。"
-msgstr ""
+msgstr "Un panneau contenant au moins des colonnes de facteur et de retour."
 
 #: of qteasy.research.factor_stats.factor_ic:9
 msgid "因子列名（须已在 ``panel.htypes`` 中）。"
-msgstr ""
+msgstr "Nom de la colonne Facteur (doit déjà être dans ``panel.htypes``)."
 
 #: of qteasy.research.factor_stats.factor_ic:11
 msgid "收益列名（须已对齐到当期；含前瞻收益时由调用方先 ``shift``）。"
 msgstr ""
+"Nom de la colonne Revenu (doit être aligné sur la période en cours ; si des "
+"revenus prospectifs sont inclus, l'appelant doit d'abord saisir ``shift``)."
 
 #: of qteasy.research.factor_stats.factor_ic:13
 msgid "截面相关系数方法。"
-msgstr ""
+msgstr "Méthode du coefficient de corrélation transversale."
 
 #: of qteasy.research.factor_stats.factor_ic:15
 msgid "某日两侧均非 NaN 的有效标的数低于该阈值时，该日 IC 为 NaN；须 ``>= 2``。"
 msgstr ""
+"Lorsque le nombre de cibles valides avec non-NaN des deux côtés d'une "
+"journée est inférieur au seuil, l'IC de cette journée est NaN ; ce doit être"
+" ``>= 2``."
 
 #: of qteasy.research.factor_stats.factor_ic
 #: qteasy.research.factor_stats.factor_ic_summary
 #: qteasy.research.factor_stats.long_short_return
 #: qteasy.research.factor_stats.quantile_portfolio
 msgid "返回"
-msgstr ""
+msgstr "retour"
 
 #: of qteasy.research.factor_stats.factor_ic:18
 msgid "index 为 ``hdates``，值为逐期 IC，``name='ic'``；空面板返回长度为 0 的 Series。"
 msgstr ""
+"L'index est ``hdates``，值为逐期 IC，``name='ic'`` ; un panneau vide renvoie une "
+"série de longueur 0."
 
 #: of qteasy.research.factor_stats.factor_ic
 #: qteasy.research.factor_stats.factor_ic_summary
 #: qteasy.research.factor_stats.long_short_return
 #: qteasy.research.factor_stats.quantile_portfolio
 msgid "返回类型"
-msgstr ""
+msgstr "Type de retour"
 
 #: of qteasy.research.factor_stats.factor_ic
 #: qteasy.research.factor_stats.long_short_return
 #: qteasy.research.factor_stats.quantile_portfolio
 msgid "抛出"
-msgstr ""
+msgstr "Lancer"
 
 #: of qteasy.research.factor_stats.factor_ic:21
 msgid "未知列名、非法 ``method`` / ``min_assets``。"
-msgstr ""
+msgstr "Nom de colonne inconnu, ``method`` / ``min_assets`` illégal."
 
 #: of qteasy.research.factor_stats.factor_ic:24
 #: qteasy.research.factor_stats.factor_ic_summary:12
 #: qteasy.research.factor_stats.long_short_return:16
 #: qteasy.research.factor_stats.quantile_portfolio:25
 msgid "示例"
-msgstr ""
+msgstr "Exemple"
 
 #: of qteasy.research.factor_stats.factor_ic_summary:1
 msgid "对 IC 时序做标量摘要：均值、标准差、IR 与胜率。"
 msgstr ""
+"Faites des résumés scalaires des timings IC : moyenne, écart type, IR et "
+"taux de victoire."
 
 #: of qteasy.research.factor_stats.factor_ic_summary:3
 msgid "逐期 IC（通常为 ``factor_ic`` 的返回值）。"
 msgstr ""
+"IC période par période (généralement la valeur de retour de ``factor_ic``)."
 
 #: of qteasy.research.factor_stats.factor_ic_summary:6
 msgid ""
 "index 为 ``mean`` / ``std`` / ``ir`` / ``win_rate``。 ``ir = mean / "
-"std``（样本标准差 ``ddof=1``）；``std`` 为 0 或有效样本不足时 ``ir`` 为 NaN。 ``win_rate`` 为"
-" ``ic > 0`` 占比（分母为非 NaN 期数）；无有效样本时为 NaN。"
+"std``（样本标准差 ``ddof=1``）；``std`` 为 0 或有效样本不足时 ``ir`` 为 NaN。 ``win_rate`` 为 "
+"``ic > 0`` 占比（分母为非 NaN 期数）；无有效样本时为 NaN。"
 msgstr ""
+"l'index est ``mean`` / ``std`` / ``ir`` / ``win_rate``。 ``ir = mean / "
+"std``（样本标准差 `⟦ CODE10⟧`）；``std`` 为 0 或有效样本不足时 ``ir`` 为 NaN。 ``win_rate`` 为 "
+"``ic > 0`` Proportion (le dénominateur est le nombre de périodes non NaN) ; "
+"c'est NaN lorsqu'il n'y a pas d'échantillon valide."
 
 #: ../../source/api/research.rst:35
 msgid "分位组合与多空"
-msgstr ""
+msgstr "Combinaisons de quantiles et long et court"
 
 #: of qteasy.research.factor_stats.quantile_portfolio:1
 msgid "按因子截面分位分桶，计算各桶等权逐期收益。"
 msgstr ""
+"Divisez les tranches en tranches en fonction des quantiles de section "
+"transversale des facteurs et calculez les rendements période par période "
+"équipondérés pour chaque tranche."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:3
 msgid ""
 "因子从小到大：``Q1`` 为最低因子桶，``Qn`` 为最高因子桶。 **不会**在函数内对收益列做 "
 "``shift``——前瞻收益须由调用方事先构造。 本函数面向研究粗验，**不是** Backtester。"
 msgstr ""
+"Facteurs de petit à grand : ``Q1`` 为最低因子桶，``Qn`` 为最高因子桶。 **不会**在函数内对收益列做 "
+"``shift`` - Les retours directs doivent être construits à l'avance par "
+"l'appelant. Cette fonction est destinée à une recherche approximative et "
+"n'est pas Backtester."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:9
 msgid "因子列名。"
-msgstr ""
+msgstr "Nom de la colonne Facteur."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:11
 msgid "收益列名（须已对齐到当期）。"
-msgstr ""
+msgstr "Liste des revenus (doit être alignée sur la période en cours)."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:13
 msgid "分位桶数量，须 ``>= 2``。"
-msgstr ""
+msgstr "Le nombre de compartiments quantiles doit être « `>= 2` »."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:15
 msgid "桶内权重；v1 仅支持等权。"
-msgstr ""
+msgstr "Poids dans le seau ; La v1 ne prend en charge que le même poids."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:18
 msgid ""
 "index 为 ``hdates``，columns 为 ``Q1..Qn``；空面板返回 0 行同列名表。 当日有效标的数小于 "
 "``n_quantiles`` 时该日全为 NaN。"
 msgstr ""
+"Lorsque l'index est ``hdates``，columns 为 ``Q1..Qn``；空面板返回 0 行同列名表。 当日有效标的数小于"
+" ``n_quantiles``, le jour est entièrement NaN."
 
 #: of qteasy.research.factor_stats.quantile_portfolio:22
 msgid "未知列名、非法 ``n_quantiles`` / ``weight``。"
-msgstr ""
+msgstr "Nom de colonne inconnu, ``n_quantiles`` / ``weight`` illégal."
 
 #: of qteasy.research.factor_stats.long_short_return:1
 msgid "由分位桶收益表构造多空收益序列 ``long - short``。"
 msgstr ""
+"La séquence de retour longue et courte ``long - short`` est construite à "
+"partir de la table de retour du compartiment quantile."
 
 #: of qteasy.research.factor_stats.long_short_return:3
 msgid "通常为 ``quantile_portfolio`` 的返回值，列名为 ``Q1..Qn``。"
-msgstr ""
+msgstr "Habituellement ``quantile_portfolio`` 的返回值，列名为 ``Q1..Qn``."
 
 #: of qteasy.research.factor_stats.long_short_return:5
 msgid "多头桶列名。"
-msgstr ""
+msgstr "Longue liste de compartiments."
 
 #: of qteasy.research.factor_stats.long_short_return:7
 msgid "空头桶列名。"
-msgstr ""
+msgstr "Courte liste de compartiments."
 
 #: of qteasy.research.factor_stats.long_short_return:10
 msgid "index 与输入对齐，``name='long_short'``。"
-msgstr ""
+msgstr "l'index est aligné avec l'entrée, ``name='long_short'``."
 
 #: of qteasy.research.factor_stats.long_short_return:13
 msgid "缺少 ``long`` 或 ``short`` 列。"
-msgstr ""
-
+msgstr "La colonne ``long`` 或 ``short`` est manquante."

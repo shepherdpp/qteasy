@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
-"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
-"Language: zh_TW\n"
 "Language-Team: zh_TW <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:1
@@ -36,13 +36,11 @@ msgstr ""
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:7
 msgid ""
-"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 → 异步推送成交」。默认的 "
-"**simulator** 用 live 价模拟这一切；我们设计了统一适配层，以便日后换成 QMT 等真实柜台时，Trader "
-"主体逻辑尽量不用改。"
+"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 → 异步推送成交」。默认的 **simulator** "
+"用 live 价模拟这一切；我们设计了统一适配层，以便日后换成 QMT 等真实柜台时，Trader 主体逻辑尽量不用改。"
 msgstr ""
-"親愛的用戶，在 qteasy 裏，**Broker（券商）** 負責「收單 → 告訴您是否受理 → 異步推送成交」。默認的 "
-"**simulator** 用 live 價模擬這一切；我們設計了統一適配層，以便日後換成 QMT 等真實櫃檯時，Trader "
-"主體邏輯儘量不用改。"
+"親愛的用戶，在 qteasy 裏，**Broker（券商）** 負責「收單 → 告訴您是否受理 → 異步推送成交」。默認的 **simulator** "
+"用 live 價模擬這一切；我們設計了統一適配層，以便日後換成 QMT 等真實櫃檯時，Trader 主體邏輯儘量不用改。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:9
 msgid "0. 适用场景"
@@ -66,11 +64,11 @@ msgstr "典型 live 調用鏈（由外到內）："
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:25
 msgid ""
-"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——Trader 只跟 Facade 说「connect /"
-" submit /  poll_fills」，不必关心底层是模拟还是 QMT。"
+"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——Trader 只跟 Facade 说「connect / "
+"submit /  poll_fills」，不必关心底层是模拟还是 QMT。"
 msgstr ""
-"**BrokerFacade（適配外殼）**：像給不同券商櫃檯套上的**統一翻譯層**——Trader 只跟 Facade 說「connect /"
-" submit /  poll_fills」，不必關心底層是模擬還是 QMT。"
+"**BrokerFacade（適配外殼）**：像給不同券商櫃檯套上的**統一翻譯層**——Trader 只跟 Facade 說「connect / "
+"submit /  poll_fills」，不必關心底層是模擬還是 QMT。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:27
 msgid "要点："
@@ -78,11 +76,11 @@ msgstr "要點："
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:29
 msgid ""
-"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` /"
-" `get_remote_*` 等"
+"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` / "
+"`get_remote_*` 等"
 msgstr ""
-"Facade 對外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` /"
-" `get_remote_*` 等"
+"Facade 對外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` / "
+"`get_remote_*` 等"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:30
 msgid ""
@@ -103,12 +101,10 @@ msgstr "2. 核心接口（用戶/開發者向）"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:35
 msgid ""
 "**Broker 适配层**是 Trader 与具体券商（simulator、未来的 QMT 等）之间的统一接口。无论底层是谁，Trader "
-"都用同一套「连接 → 递单 → 听受理 → 轮询成交 → "
-"必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对照表与接入清单。"
+"都用同一套「连接 → 递单 → 听受理 → 轮询成交 → 必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对照表与接入清单。"
 msgstr ""
 "**Broker 適配層**是 Trader 與具體券商（simulator、未來的 QMT 等）之間的統一接口。無論底層是誰，Trader "
-"都用同一套「連接 → 遞單 → 聽受理 → 輪詢成交 → "
-"必要時查遠端賬本」流程。下表先給出**接口名與日常類比**，便於閱讀後文對照表與接入清單。"
+"都用同一套「連接 → 遞單 → 聽受理 → 輪詢成交 → 必要時查遠端賬本」流程。下表先給出**接口名與日常類比**，便於閱讀後文對照表與接入清單。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:37
 msgid "**各列含义**：**接口**为适配层方法名；**做什么**为在 live 链路中的职责；**您可以理解为**为帮助记忆的比喻。"
@@ -212,21 +208,19 @@ msgstr "2.1 接口職責對照"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:52
 msgid ""
-"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live "
-"价模拟，后者对接柜台。下表帮助您建立预期——避免把 simulator 上的 `connect` 当成真实登录，也便于规划 QMT "
-"接入时要补的能力。"
+"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live 价模拟，后者对接柜台。下表帮助您建立预期——避免把 "
+"simulator 上的 `connect` 当成真实登录，也便于规划 QMT 接入时要补的能力。"
 msgstr ""
-"同一接口在 **simulator** 與 **真實 QMT** 上行爲深度不同：前者用 live "
-"價模擬，後者對接櫃檯。下表幫助您建立預期——避免把 simulator 上的 `connect` 當成真實登錄，也便於規劃 QMT "
-"接入時要補的能力。"
+"同一接口在 **simulator** 與 **真實 QMT** 上行爲深度不同：前者用 live 價模擬，後者對接櫃檯。下表幫助您建立預期——避免把 "
+"simulator 上的 `connect` 當成真實登錄，也便於規劃 QMT 接入時要補的能力。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:54
 msgid ""
-"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**为当前默认模拟行为；**真实 "
-"QMT（规划中）** 为后续目标（非当前版本承诺）。"
+"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**为当前默认模拟行为；**真实 QMT（规划中）**"
+" 为后续目标（非当前版本承诺）。"
 msgstr ""
-"**各列含義**：**接口**同 §2；**語義**爲抽象職責；**simulator 上您會看到**爲當前默認模擬行爲；**真實 "
-"QMT（規劃中）** 爲後續目標（非當前版本承諾）。"
+"**各列含義**：**接口**同 §2；**語義**爲抽象職責；**simulator 上您會看到**爲當前默認模擬行爲；**真實 QMT（規劃中）**"
+" 爲後續目標（非當前版本承諾）。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:56
 msgid "**如何使用**：排错时先看 simulator 列是否已满足「受理 + 回报」；规划 QMT 时以最后一列为目标能力勾选。"
@@ -266,7 +260,7 @@ msgstr "返回 accepted、模擬 broker_order_id 等"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "柜台真实受理结果（见 :doc:`4a-xtquant-broker-adapter-contract-v1`）"
-msgstr ""
+msgstr "櫃檯真實受理結果（見 :doc:`4a-xtquant-broker-adapter-contract-v1`）"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "异步回报"
@@ -338,19 +332,19 @@ msgstr ""
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:79
 msgid ""
-"**各列含义**：**受理结果**为 ACK 中的 accepted "
-"语义；**本地订单**为订单表状态走向；**broker_order_id** 为是否回写券商委托号。"
+"**各列含义**：**受理结果**为 ACK 中的 accepted 语义；**本地订单**为订单表状态走向；**broker_order_id** "
+"为是否回写券商委托号。"
 msgstr ""
-"**各列含義**：**受理結果**爲 ACK 中的 accepted "
-"語義；**本地訂單**爲訂單表狀態走向；**broker_order_id** 爲是否回寫券商委託號。"
+"**各列含義**：**受理結果**爲 ACK 中的 accepted 語義；**本地訂單**爲訂單表狀態走向；**broker_order_id** "
+"爲是否回寫券商委託號。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:81
 msgid ""
-"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；有 broker 号但长期不成交"
-" → 查状态表与 `poll_fills`。"
+"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；有 broker 号但长期不成交 → "
+"查状态表与 `poll_fills`。"
 msgstr ""
-"**如何使用**：訂單 `rejected` 且 broker 號爲空 → 查「accepted=False」行；有 broker 號但長期不成交"
-" → 查狀態表與 `poll_fills`。"
+"**如何使用**：訂單 `rejected` 且 broker 號爲空 → 查「accepted=False」行；有 broker 號但長期不成交 → "
+"查狀態表與 `poll_fills`。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "受理结果"
@@ -403,9 +397,12 @@ msgstr "4. 擴展新 Broker 類型"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:94
 msgid ""
 "**XtQuant / MiniQMT**：配置项 ``live_trade_broker_type='xtquant'`` 已在 2.5.2 "
-"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1`（协作方"
-" PR 评审基准）。"
+"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1`（协作方 PR"
+" 评审基准）。"
 msgstr ""
+"**XtQuant / MiniQMT**：設定項 ``live_trade_broker_type='xtquant'`` 已在 2.5.2 "
+"白名單中；實現細節與禁止雙重下單等規則見英文契約 :doc:`4a-xtquant-broker-adapter-contract-v1`（協作方 PR"
+" 評審基準）。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:96
 msgid "注册工厂（示例）："
@@ -413,7 +410,7 @@ msgstr "註冊工廠（示例）："
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:105
 msgid "独立扩展包（推荐用于 QMT）："
-msgstr ""
+msgstr "獨立擴展包（推薦用於 QMT）："
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:114
 msgid ""
@@ -529,4 +526,3 @@ msgstr ""
 
 #~ msgid "柜台真实受理结果"
 #~ msgstr "櫃檯真實受理結果"
-
