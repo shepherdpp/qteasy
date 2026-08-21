@@ -4,7 +4,7 @@
 
 ## 2.6.4 (2026-08-20)
 
-- **DataType 按形状取数，完善数据体验叙事**  
+- **完善 `DataType` 类的取数API，完善数据体验叙事**  
   - **Reference 入口** `get_reference_data`：宏观、利率、资金流等仅时间序列，以及把单标的行情抽成基准的写法（如 `close-000300.SH`）；无需传入股票池。  
   - **Static 入口** `get_static_data`：行业、上市日等仅标的截面属性；返回按证券代码索引的表，不编入 HistoryPanel。  
   - **History 入口收紧** `get_history_data` / `get_kline`：只接受时间 × 标的的 History；误传宏观/基准/行业等会提示改用上述入口。  
