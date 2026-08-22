@@ -144,15 +144,14 @@ msgstr ""
 "„Where“-Maske."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:49
-#, fuzzy
 msgid ""
 "**有收益没解释**：就算您算出了 CAGR，您也需要可复盘：事件点到底对应了哪些 K "
 "线？发生在上升趋势、下跌趋势还是震荡？把事件标回图上，是事件型研究里最关键的一步。"
 msgstr ""
-"**Rückgabe ohne Erklärung**: Selbst wenn Sie die CAGR berechnet haben, "
-"benötigen Sie noch etwas, das Sie überprüfen können: Welchen Candlesticks "
-"entsprachen die Ereignispunkte? Traten sie in einem Aufwärtstrend, einem "
-"Abwärtstrend oder einer Spanne auf? Das Zurückmarkieren der Ereignisse im "
+"**Es gibt einen Gewinn, aber keine Erklärung**: Selbst wenn Sie die CAGR "
+"berechnen, müssen Sie dennoch überprüfen können: Welchen K-Linien "
+"entsprechen die Ereignispunkte? Geschieht es in einem Aufwärtstrend, einem "
+"Abwärtstrend oder einem Swing? Das erneute Markieren von Ereignissen im "
 "Diagramm ist der wichtigste Schritt in der ereignisbasierten Forschung."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:51
@@ -163,16 +162,14 @@ msgstr ""
 "Mustersignalen“."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:55
-#, fuzzy
 msgid "先贴最终效果（我们最后会得到什么）"
-msgstr "0.5 Zeigen Sie zunächst das Endergebnis (was am Ende herauskommt)"
+msgstr ""
+"Veröffentlichen Sie zuerst den endgültigen Effekt (was werden wir am Ende "
+"bekommen)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:57
-#, fuzzy
 msgid "按本文做完，您会得到三类输出："
-msgstr ""
-"Wenn Sie diesen Artikel bis zum Ende durchgehen, erhalten Sie drei Arten von"
-" Ausgaben:"
+msgstr "Nach Abschluss dieses Artikels erhalten Sie drei Arten von Ausgaben:"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:59
 msgid ""
@@ -199,9 +196,8 @@ msgstr ""
 "überprüft und besprochen werden können."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:65
-#, fuzzy
 msgid "目标（我们这篇文章要完成什么）"
-msgstr "1. Ziel (was dieser Artikel erreichen soll)"
+msgstr "Ziel (was wir mit diesem Artikel erreichen wollen)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:67
 msgid "获取多 shares 的 OHLC 面板，并加入 `000300.SH` 作为 benchmark"
@@ -238,11 +234,10 @@ msgstr ""
 "Diagramm hervorzuheben und so die Interpretierbarkeitsschleife zu schließen"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:73
-#, fuzzy
 msgid "文末给出「单函数可跑」的完整代码"
 msgstr ""
-"Stellen Sie am Ende den vollständigen „ausführbaren Einzelfunktions“-Code "
-"bereit"
+"Am Ende des Artikels wird der vollständige Code „Eine einzelne Funktion kann"
+" ausgeführt werden“ angegeben"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:74
 msgid "明确研究口径边界：事件窗口筛选 ≠ 交易回测"
@@ -273,20 +268,18 @@ msgstr ""
 "§7](2.5-historypanel-data-analysis.md#7-Identifying Candle Patterns)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:86
-#, fuzzy
 msgid "准备数据：必须有 OHLC（事件型因子离不开它）"
 msgstr ""
-"2. Daten vorbereiten: OHLC ist erforderlich (Ereignistypfaktoren kommen ohne"
-" sie nicht aus)"
+"Daten vorbereiten: OHLC ist erforderlich (Ereignistypfaktoren sind "
+"untrennbar damit verbunden)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:88
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:132
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:164
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:231
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:310
-#, fuzzy
 msgid "本节要解决什么"
-msgstr "6.1 Was dieser Abschnitt lösen soll"
+msgstr "Was wird in diesem Abschnitt gelöst?"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:90
 msgid ""
@@ -303,42 +296,39 @@ msgstr ""
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:172
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:237
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:315
-#, fuzzy
 msgid "最小必要原理"
-msgstr "6.2 Das Prinzip der Mindestnotwendigkeit"
+msgstr "Prinzip des geringsten Bedarfs"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:95
-#, fuzzy
 msgid ""
 "`candle_pattern(name=...)` 会检查您传入的 `price_htypes` 是否在 `hp.htypes` 中存在。   "
 "因此我们先做字段校验，避免写到一半才发现缺列。"
 msgstr ""
-"„candle_pattern(name=...)“ prüft, ob die „price_htypes“, die Sie übergeben, "
-"in „hp.htypes“ vorhanden sind.   Deshalb validieren wir zunächst die Felder,"
-" um zu vermeiden, dass auf halbem Weg fehlende Spalten entdeckt werden."
+"`candle_pattern(name=...)` prüft, ob der von Ihnen übergebene `price_htypes`"
+" in `hp.htypes` existiert.   Daher führen wir zunächst eine Feldüberprüfung "
+"durch, um zu vermeiden, dass mitten im Schreiben fehlende Spalten entdeckt "
+"werden."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:98
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:149
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:320
-#, fuzzy
 msgid "可运行代码 + 预期效果"
-msgstr "6.3 Ausführbarer Code + erwartete Ergebnisse"
+msgstr "Ausführbarer Code + erwartete Ergebnisse"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:130
-#, fuzzy
 msgid "形态因子提取：`candle_pattern` 得到事件信号矩阵"
 msgstr ""
-"3. Extraktion des Candlestick-Musterfaktors: „candle_pattern“ erzeugt eine "
-"Ereignis-Signal-Matrix"
+"Extraktion morphologischer Faktoren: `candle_pattern` Holen Sie sich die "
+"Ereignissignalmatrix"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:134
-#, fuzzy
 msgid ""
 "我们要得到一张“事件信号表”：每一天、每只股票，是否出现该形态。   这里示例用 `cdlhammer`（锤头线），您后面可以替换成其他形态函数名。"
 msgstr ""
-"Wir wollen eine „Ereignissignaltabelle“: für jeden Tag und jede Aktie, ob "
-"das Muster auftritt.   In diesem Beispiel wird „cdlhammer“ (Hammer) "
-"verwendet; Später können Sie es durch andere Musterfunktionsnamen ersetzen."
+"Wir möchten eine „Ereignissignaltabelle“ erhalten: jeden Tag, jede Aktie, ob"
+" dieses Muster auftritt.   In diesem Beispiel wird `cdlhammer` (Hammerlinie)"
+" verwendet, den Sie später durch andere Formularfunktionsnamen ersetzen "
+"können."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:139
 msgid "`signals = hp.candle_pattern(name='cdlhammer', as_panel=False)` 的返回是："
@@ -363,26 +353,24 @@ msgstr ""
 "Fensterung anwenden."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:146
-#, fuzzy
 msgid ""
 "这里我们用一个很实用的“研究口径简化”：   不管它是 +100 还是 -100，只要 **非 "
 "0**，我们就认为“发生过事件”。如果您更关心方向，也可以分成 `>0` 和 `<0` 两套窗口（本文会同时演示 long/short "
 "两套窗口，保持与前两篇一致）。"
 msgstr ""
-"Hier verwenden wir eine sehr praktische Vereinfachung der "
-"„Forschungskonvention“: Unabhängig davon, ob es +100 oder -100 ist, "
-"behandeln wir es als „ein Ereignis ist eingetreten“, solange es **ungleich "
-"Null** ist. Wenn Ihnen die Richtung wichtiger ist, können Sie sie auch in "
-"zwei Fenster aufteilen, „>0“ und „<0“ (in diesem Artikel werden sowohl lange"
-" als auch kurze Fenster demonstriert, um mit den beiden vorherigen Artikeln "
-"konsistent zu bleiben)."
+"Hier verwenden wir eine sehr praktische „Vereinfachung des "
+"Forschungskalibers“: Unabhängig davon, ob es +100 oder -100 ist, gehen wir "
+"davon aus, dass „ein Ereignis aufgetreten ist“, solange **nicht 0** ist. "
+"Wenn Sie sich mehr Gedanken über die Richtung machen, können Sie sie auch in"
+" zwei Fenstersätze unterteilen: `>0` und `<0` (in diesem Artikel werden die "
+"beiden Sätze von langen/kurzen Fenstern gleichzeitig demonstriert, wobei das"
+" Gleiche wie in den beiden vorherigen Artikeln beibehalten wird)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:162
-#, fuzzy
 msgid "事件窗口化（K=5）：不是“今天发生就选”，而是“最近 5 天发生过就选”"
 msgstr ""
-"4. Ereignisfenster (K=5): nicht „wählen Sie aus, ob es heute passiert“, "
-"sondern „wählen Sie aus, ob es innerhalb der letzten 5 Tage passiert ist“"
+"Ereignisfenster (K=5): Es ist nicht „wählen Sie aus, ob es heute passiert“, "
+"sondern „wählen Sie aus, ob es in den letzten 5 Tagen passiert“"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:166
 msgid "这是本文最关键的一节：   把稀疏的事件信号变成更贴近实战的“窗口内有效”条件。"
@@ -422,19 +410,17 @@ msgstr ""
 "sodass Sie es direkt in „hp.where(window_ml)“ einspeisen können."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:181
-#, fuzzy
 msgid "您可以把这个“窗口化”理解成一句非常直觉的研究口径："
 msgstr ""
-"Man kann dieses „Windowing“ als eine sehr intuitive Recherchekonvention "
+"Man kann dieses „Windowing“ als einen sehr intuitiven Forschungsansatz "
 "verstehen:"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:183
-#, fuzzy
 msgid "我不要求您今天刚好踩在形态当天；只要您在最近 5 天里出现过一次形态，我就把您当作“事件仍然有效”的候选。"
 msgstr ""
-"Ich bitte Sie nicht, heute den genauen Mustertag zu treffen; Solange das "
-"Muster in den letzten 5 Tagen einmal aufgetreten ist, behandle ich Sie als "
-"Kandidaten, bei dem das „Ereignis noch gültig ist“."
+"Ich verlange nicht, dass Sie heute das Muster befolgen; Solange bei Ihnen "
+"das Muster in den letzten 5 Tagen einmal aufgetreten ist, halte ich Sie für "
+"einen „Ereignis noch aktiv“-Kandidaten."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:185
 msgid "这会让篮子更稳定（不会只剩一两个针尖信号），也更接近我们做复盘时的真实行为：形态往往是一个“阶段信号”，不是一个“毫秒级触发器”。"
@@ -445,27 +431,21 @@ msgstr ""
 "„Trigger auf Millisekundenebene“."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:187
-#, fuzzy
 msgid "可运行代码 + 预期效果（样张3对应，K=5）"
-msgstr ""
-"4.3 Ausführbarer Code + erwartete Ausgabe (entsprechend Beispielblatt 3, "
-"K=5)"
+msgstr "Ausführbarer Code + erwarteter Effekt (entsprechend Beispiel 3, K=5)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:217
-#, fuzzy
 msgid "建议您再加一段 sanity check：看看“每天入选数量”的分布，避免筛选过严导致空篮子："
 msgstr ""
-"Ich schlage vor, dass Sie eine weitere Plausibilitätsprüfung hinzufügen: "
-"Schauen Sie sich die Verteilung der „täglich ausgewählten Anzahl“ an, um zu "
-"vermeiden, dass aufgrund einer zu strengen Filterung ein leerer Warenkorb "
-"entsteht:"
+"Es wird empfohlen, eine Plausibilitätsprüfung hinzuzufügen: Sehen Sie sich "
+"die Verteilung der „täglichen Auswahlzahlen“ an, um leere Körbe aufgrund "
+"einer zu strengen Überprüfung zu vermeiden:"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:229
-#, fuzzy
 msgid "`portfolio + benchmark + cum_return + CAGR`：把事件窗口筛选变成可比较的结果"
 msgstr ""
-"5. „Portfolio + Benchmark + Cum_Return + CAGR“: Ereignisfensterfilterung in "
-"vergleichbare Ergebnisse umwandeln"
+"`portfolio + benchmark + cum_return + CAGR`: Verwandeln Sie die "
+"Ereignisfensterfilterung in vergleichbare Ergebnisse"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:233
 msgid ""
@@ -486,24 +466,21 @@ msgstr ""
 "abzuleiten."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:242
-#, fuzzy
 msgid "可运行代码（示意）"
-msgstr "5.3 Ausführbarer Code (Abbildung)"
+msgstr "Ausführbarer Code (Abbildung)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:285
-#, fuzzy
 msgid "同样建议您整理成摘要表（至少 3 行：EVENT_LONG / EVENT_SHORT / benchmark），便于读者一眼比较："
 msgstr ""
-"Ebenso schlage ich vor, dass Sie es in einer Übersichtstabelle organisieren "
-"(mindestens 3 Zeilen: EVENT_LONG / EVENT_SHORT / benchmark), damit die Leser"
-" es auf einen Blick vergleichen können:"
+"Es wird außerdem empfohlen, es in einer Übersichtstabelle (mindestens 3 "
+"Zeilen: EVENT_LONG / EVENT_SHORT / Benchmark) zu organisieren, um den Lesern"
+" den Vergleich auf einen Blick zu erleichtern:"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:308
-#, fuzzy
 msgid "可视化解释：在 K 线上高亮事件发生日（让结论可复盘）"
 msgstr ""
-"6. Visuelle Erklärung: Markieren Sie den Ereignistag im Candlestick-Chart "
-"(damit die Schlussfolgerung reproduzierbar ist)."
+"Visuelle Erklärung: Markieren Sie das Datum des Ereignisses in der K-Zeile "
+"(um die Schlussfolgerung wiederholbar zu machen)."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:312
 msgid ""
@@ -526,33 +503,29 @@ msgstr ""
 "Candlestick-Diagramm und markieren es."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:336
-#, fuzzy
 msgid ""
 "预期效果：您会在 K 线上看到一串被高亮的点（事件发生日）。   "
 "这一步很重要：事件型研究不怕“结果不好”，怕的是“结果无法解释”。把事件标回图上，您就能直观看到它出现在哪些位置：是下跌末端、是上涨中继、还是震荡噪声，从而决定下一步要不要叠加趋势过滤或波动过滤。"
 msgstr ""
-"Erwartetes Ergebnis: Auf dem Candlestick-Chart sehen Sie eine Reihe "
-"hervorgehobener Punkte (Ereignistage).   Dieser Schritt ist entscheidend: "
-"Ereignisstudien haben keine Angst vor „schlechten Ergebnissen“; Sie haben "
-"Angst vor „Ergebnissen, die nicht erklärt werden können“. Indem Sie die "
-"Ereignisse wieder im Diagramm markieren, können Sie direkt sehen, wo sie "
-"auftreten: am Ende eines Rückgangs, als Fortsetzung eines Aufwärtstrends "
-"oder nur seitwärts gerichtetes Rauschen – so können Sie entscheiden, ob der "
-"nächste Schritt darin besteht, Trendfilter oder Volatilitätsfilter "
-"hinzuzufügen."
+"Was Sie erwartet: Auf dem Kerzenhalter sehen Sie eine Reihe hervorgehobener "
+"Punkte (Ereignistage).   Dieser Schritt ist sehr wichtig: Ereignisbasierte "
+"Forschung hat keine Angst vor „schlechten Ergebnissen“, sondern vor "
+"„unerklärlichen Ergebnissen“. Markieren Sie das Ereignis wieder im Diagramm,"
+" und Sie können intuitiv erkennen, wo es erscheint: ob es sich um das Ende "
+"eines Rückgangs, einen Anstiegsschub oder ein Schockgeräusch handelt. So "
+"können Sie entscheiden, ob Sie im nächsten Schritt eine Trendfilterung oder "
+"eine Fluktuationsfilterung hinzufügen möchten."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:341
-#, fuzzy
 msgid "完整代码（单函数可跑版本）"
-msgstr "7. Vollständiger Code (ausführbare Einzelfunktionsversion)"
+msgstr "Vollständiger Code (ausführbare Einzelfunktionsversion)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:343
-#, fuzzy
 msgid "下面给出一段“单函数可跑”的完整版本，方便您复制进 Notebook 一键运行。它覆盖："
 msgstr ""
-"Nachfolgend finden Sie eine vollständige „ausführbare "
-"Einzelfunktionsversion“, die Sie in ein Notebook kopieren und mit einem "
-"Klick ausführen können. Es umfasst:"
+"Nachfolgend finden Sie die vollständige Version „Eine einzelne Funktion kann"
+" ausgeführt werden“, die Sie bequem in Notebook kopieren und mit einem Klick"
+" ausführen können. Es umfasst:"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:345
 msgid "`candle_pattern` 提取事件信号；"
@@ -637,10 +610,10 @@ msgstr ""
 " Sie im Anhang."
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:544
-#, fuzzy
 msgid "附录：插图索引（可选：在 Notebook 中生成后截图）"
 msgstr ""
-"Anhang: Abbildungsindex (empfohlen zur Erstellung/Screenshot im Notebook)"
+"Anhang: Abbildungsverzeichnis (optional: Screenshot nach Generierung im "
+"Notebook)"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md:546
 msgid "下列文件名为**建议**命名；仓库内未必已包含对应 png。在 Notebook 跑通各节后自行截图即可。"
@@ -659,9 +632,8 @@ msgid "建议放置位置"
 msgstr "Empfohlene Platzierung"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
-#, fuzzy
 msgid "您将看到什么"
-msgstr "Was Sie sehen werden"
+msgstr "was du sehen wirst"
 
 #: ../../source/tutorials/2.8-historypanel-advanced-event-kline-pattern.md
 msgid "`3.3_minimal_run.png`"

@@ -189,27 +189,25 @@ msgid "`docs/source/api/HistoryPanel.rst`（含导出推荐名、`corr`/`cov`）
 msgstr "`docs/source/api/HistoryPanel.rst`"
 
 #: ../../source/api/top_level_exports.md:46
-#, fuzzy
 msgid "`docs/source/api/research.rst`（`factor_ic` / 分位组合等）"
-msgstr "`docs/source/api/api_reference.rst` (Konfiguration und Referenz)"
+msgstr ""
+"`docs/source/api/research.rst` (`factor_ic` / Quantilkombination usw.)"
 
 #: ../../source/api/top_level_exports.md:47
-#, fuzzy
 msgid ""
 "`docs/source/tutorials/2.5-historypanel-data-analysis.md`（含 "
 "§9–§11：研究→回测迁移、多源拼板、导出 statsmodels；以及 `qteasy.research` cookbook）"
 msgstr ""
-"`docs/source/tutorials/2.5-historypanel-data-analysis.md` (enthält §9–§11: "
-"Forschung → Backtest-Migration, Multi-Source-Panel-Stitching, Export in "
-"Statistikmodelle)"
+"`docs/source/tutorials/2.5-historypanel-data-analysis.md` (Enthält §9–§11: "
+"Forschung → Backtest-Migration, Multi-Source-Paneling, Export-"
+"Statistikmodelle; und `qteasy.research`-Kochbuch)"
 
 #: ../../source/api/top_level_exports.md:48
-#, fuzzy
 msgid ""
 "`docs/source/design/10-historypanel-factor-research-layer.md`（模块级研究层边界）"
 msgstr ""
-"`docs/source/design/10-historypanel-factor-research-layer.md` (optionale "
-"FactorResearch-Layer-Bewertung)"
+"`docs/source/design/10-historypanel-factor-research-layer.md` (Grenze der "
+"Forschungsebene auf Modulebene)"
 
 #: ../../source/api/top_level_exports.md:49
 msgid ""

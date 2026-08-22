@@ -225,12 +225,10 @@ msgstr ""
 "Kategorie usw."
 
 #: ../../source/tutorials/2.0-get-data.md:58
-#, fuzzy
 msgid "`index_basic` - 指数基础信息，包括沪深股市所有指数的基本信息"
 msgstr ""
-"„index_basics“ – Grundlegende Indexinformationen, einschließlich "
-"grundlegender Informationen für alle Indizes an den Aktienmärkten von "
-"Shanghai und Shenzhen, wie Code, Name, vollständiger Name usw."
+"`index_basic` – Index-Grundinformationen, einschließlich Grundinformationen "
+"aller Indizes an den Aktienmärkten von Shanghai und Shenzhen"
 
 #: ../../source/tutorials/2.0-get-data.md:60
 msgid "`refill_data_source(tables=...)` 使用**数据表名**（如 `stock_basic`），与上列一致。"
@@ -294,24 +292,20 @@ msgid "下载交易日历和基础数据"
 msgstr "Laden Sie den Handelskalender und die Basisdaten herunter"
 
 #: ../../source/tutorials/2.0-get-data.md:101
-#, fuzzy
 msgid ""
 "我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是`tables`，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。"
 msgstr ""
-"Wir können die Funktion „refill_data_source“ aufrufen, um den "
-"Handelskalender und die Basisdaten herunterzuladen. Diese Funktion ist die "
-"Standardfunktion der Daten-Download-Schnittstelle von qteasy, und alle Arten"
-" von historischen Daten können über diese Schnittstelle heruntergeladen "
-"werden. Sein Grundparameter ist „Tabellen“; Übergeben Sie den Namen der "
-"Datentabelle, um die entsprechenden Daten in den lokalen Speicher "
-"herunterzuladen. Wenn Sie „refill_data_source“ zum Herunterladen von "
-"Handelsdaten verwenden, bereinigt „qteasy“ automatisch die Daten, entfernt "
-"doppelte Daten, beseitigt fehlerhafte Daten, versucht es bei Fehlern "
-"automatisch erneut und führt die heruntergeladenen Daten in den lokalen "
-"Datentabellen zusammen. Derzeit unterstützt „qteasy“ nur das Herunterladen "
-"von Finanzdaten über „tushare“. In Zukunft werden weitere "
-"Finanzdatenschnittstellen hinzugefügt, um die Auswahlmöglichkeiten der "
-"Benutzer zu erweitern."
+"Wir können die Funktion `refill_data_source` aufrufen, um den "
+"Handelskalender und die Grunddaten herunterzuladen. Diese Funktion ist die "
+"Standard-Daten-Download-Schnittstellenfunktion von `qteasy`. Über diese "
+"Schnittstelle können alle historischen Datentypen heruntergeladen werden. "
+"Der Grundparameter dieser Funktion ist `tables`. Übergeben Sie den Namen der"
+" Datentabelle, um die entsprechenden Daten in den lokalen Speicher "
+"herunterzuladen. Wenn Sie `refill_data_source` zum Herunterladen von "
+"Transaktionsdaten verwenden, bereinigt `qteasy` automatisch die Daten, "
+"schließt doppelte Daten aus, entfernt fehlerhafte Daten, versucht es "
+"automatisch erneut, wenn Fehler auftreten, und führt die heruntergeladenen "
+"Daten in die lokale Datentabelle ein."
 
 #: ../../source/tutorials/2.0-get-data.md:103
 #, python-format
@@ -328,12 +322,12 @@ msgstr ""
 "[Datenkanaldokumentation](../manage_data/10.%20data_channels.md)."
 
 #: ../../source/tutorials/2.0-get-data.md:105
-#, fuzzy
 msgid "要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码（默认使用 Tushare，需已配置 `tushare_token`）："
 msgstr ""
-"Um den zuvor erwähnten Handelskalender sowie grundlegende Informationen zu "
-"Aktien und Indizes herunterzuladen, müssen Sie nur den folgenden Code "
-"ausführen:"
+"Um den oben genannten Handelskalender sowie grundlegende Informationen zu "
+"Aktien und Indizes herunterzuladen, führen Sie einfach den folgenden Code "
+"aus (standardmäßig wird Tushare verwendet, erfordert die Konfiguration von "
+"`tushare_token`):"
 
 #: ../../source/tutorials/2.0-get-data.md:110
 msgid "数据下载过程中会显示进度条显示下载进度。"
@@ -496,7 +490,6 @@ msgstr ""
 "extrahieren und verwenden."
 
 #: ../../source/tutorials/2.0-get-data.md:217
-#, fuzzy
 msgid ""
 "我们可以使用`qt.get_history_data()`函数来获取股票的量价等 **History**（时间 × 标的）数据。这是 History "
 "形状的通用入口；宏观/基准请用 `get_reference_data`，行业等截面属性请用 "
@@ -504,15 +497,17 @@ msgid ""
 "ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`\"open, high, low, "
 "close, vol\"`以获取开盘价、最高价、最低价、收盘价和交易量："
 msgstr ""
-"Wir können die Funktion „qt.get_history_data()“ verwenden, um die Preis- und"
-" Volumendaten einer Aktie zu erhalten. Diese Funktion ist eine "
-"Allzweckschnittstelle in „qteasy“ und kann zum Abrufen verschiedener "
-"Datentypen verwendet werden. Durch Angabe des Datentyps (über die Datentyp-"
-"ID), des Börsentickers und anderer Parameter in den Funktionsargumenten "
-"können Sie die entsprechenden Daten erhalten. Wenn Sie die soeben "
-"heruntergeladenen Candlestick-Preise (K-Linie) abrufen möchten, stellen Sie "
-"den Datentyp auf „Eröffnung, Hoch, Tief, Schluss, Vol.“ ein, um die "
-"Eröffnungs-, Höchst-, Tiefst-, Schluss- und Handelsvolumina zu erhalten:"
+"Wir können die Funktion `qt.get_history_data()` verwenden, um "
+"**Verlaufsdaten** (Zeit × Ziel) wie Lagervolumen und Preis zu erhalten. Dies"
+" ist der allgemeine Eintrag für die Verlaufsform. Bitte verwenden Sie "
+"`get_reference_data` für Makro/Grundlinie und `get_static_data` für "
+"Querschnittsattribute wie die Branche (siehe „Zahlen nach Form ermitteln“ "
+"unten). Geben Sie den Datentyp (über die Datentyp-ID), den Aktiencode und "
+"andere Parameter in den Parametern der Funktion an, um die entsprechenden "
+"Daten zu erhalten. Wenn Sie den gerade heruntergeladenen K-Line-Preis "
+"erhalten möchten, müssen Sie den Datentyp auf `\"open, high, low, close, "
+"vol\"` setzen, um den Eröffnungspreis, den höchsten Preis, den niedrigsten "
+"Preis, den Schlusspreis und das Handelsvolumen zu erhalten:"
 
 #: ../../source/tutorials/2.0-get-data.md:228
 msgid "得到结果如下："
@@ -692,9 +687,9 @@ msgstr ""
 "`examples/historypanel_basic_plot.py` und `examples/data_playground_e2e.py`."
 
 #: ../../source/tutorials/2.0-get-data.md:358
-#, fuzzy
 msgid "数据类型`DataType`的查找与按形状取数"
-msgstr "Nachschlagen des Datentyps `DataType`"
+msgstr ""
+"Suchen Sie nach dem Datentyp `DataType` und erhalten Sie Zahlen nach Form"
 
 #: ../../source/tutorials/2.0-get-data.md:360
 msgid ""
@@ -778,9 +773,8 @@ msgstr ""
 "HistoryPanel nicht gewaltsam."
 
 #: ../../source/tutorials/2.0-get-data.md:419
-#, fuzzy
 msgid "简单介绍`DataType`对象（专家层）"
-msgstr "Eine kurze Einführung in das `DataType`-Objekt"
+msgstr "Kurze Einführung in das `DataType`-Objekt (Expertenebene)"
 
 #: ../../source/tutorials/2.0-get-data.md:421
 msgid ""
@@ -953,11 +947,10 @@ msgstr ""
 "[Erstellen und testen Sie Ihre erste Strategie](3-start-first-strategy.md)"
 
 #: ../../source/tutorials/2.0-get-data.md:528
-#, fuzzy
 msgid "关于`qteasy`的更多介绍，请参见 [qteasy 文档](https://qteasy.readthedocs.io)。"
 msgstr ""
-"Weitere Informationen zu „qteasy“ finden Sie in der [qteasy-"
-"Dokumentation](https://qteasy.readthedocs.io)"
+"Weitere Informationen zu `qteasy` finden Sie in der [qteasy-"
+"Dokumentation](https://qteasy.readthedocs.io)."
 
 #~ msgid "完成`qteasy.cfg`文件的配置，将`tushare_token`写入配置文件"
 #~ msgstr ""

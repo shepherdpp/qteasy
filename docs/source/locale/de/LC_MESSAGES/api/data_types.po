@@ -573,13 +573,13 @@ msgstr ""
 "(get_history_data/get_reference_data/get_static_data/none)"
 
 #: of qteasy.datatypes.find_history_data:29
-#, fuzzy
 msgid ""
 "**data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id "
 "列表，可以用于 qt.get_history_data() 下载数据"
 msgstr ""
-"**data_id** – Die data_id des übereinstimmenden Datentyps, die zum "
-"Herunterladen von Daten mit qt.get_history_data() verwendet werden kann"
+"**data_id** (*list[str]*) – Wenn as_data_frame False ist, kann die data_id-"
+"Liste des übereinstimmenden Datentyps zum Herunterladen von Daten mit "
+"qt.get_history_data() verwendet werden."
 
 #: of qteasy.datatypes.find_history_data:30
 msgid ""
@@ -607,9 +607,8 @@ msgid "asset_type:  资产类型"
 msgstr "asset_type: Asset-Typ"
 
 #: of qteasy.datatypes.find_history_data:36
-#, fuzzy
 msgid "table_name:  底层数据表名称"
-msgstr "table_name: str"
+msgstr "Tabellenname: Name der zugrunde liegenden Datentabelle"
 
 #: of qteasy.datatypes.find_history_data:37
 msgid "column:      对应的数据字段名"
@@ -632,11 +631,10 @@ msgstr ""
 " get_static_data / none)"
 
 #: of qteasy.datatypes.find_history_data:87
-#, fuzzy
 msgid "输入的 s 不是字符串，或者 freq/asset_type/table 不是字符串或列表"
 msgstr ""
-"Die Eingabe s ist keine Zeichenfolge oder freq/asset_type ist keine "
-"Zeichenfolge oder Liste:"
+"Die Eingabe s ist keine Zeichenfolge oder freq/asset_type/table ist keine "
+"Zeichenfolge oder Liste"
 
 #: ../../source/api/data_types.rst:37
 msgid "``find_history_data`` 亦在 :doc:`历史数据获取和管理 <history_data>` 中列出。"

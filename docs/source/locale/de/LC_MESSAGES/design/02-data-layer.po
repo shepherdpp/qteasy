@@ -251,37 +251,35 @@ msgstr ""
 " Unterscheidung von Aktien, Indizes usw. verwendet wird."
 
 #: ../../source/design/02-data-layer.md:45
-#, fuzzy
 msgid ""
 "**完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 "
 "`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
-"**dtype_id**: wird aus den drei oben genannten Elementen mit der Regel "
-"„name_assettype_freq“ generiert, zum Beispiel „close_E_d“, „total_mv_E_q“. "
-"Strategien verwenden diese ID, wenn sie „get_data(dtype_id)“ aufrufen."
+"**Vollständige dtype_id**: Aus den oben genannten drei generiert, lautet die"
+" Regel `{wide_name}_{asset_type}_{freq}` (von rechts geteilt), z. B. "
+"`close_E_d`. Strategie `get_data` Der Suchschlüssel ist die vollständige ID;"
+" Auf der Forschungsseite kann ein breiter Name verwendet werden, und die "
+"vollständige ID wird geändert, wenn Unklarheiten bestehen."
 
 #: ../../source/design/02-data-layer.md:47
-#, fuzzy
 msgid "4.3 内置 DataType 与数据表/列的映射"
 msgstr ""
-"4.2 Zuordnung zwischen integrierten DataTypes und Datentabellen/-spalten"
+"4.3 Zuordnung zwischen integriertem DataType und Datentabellen/-spalten"
 
 #: ../../source/design/02-data-layer.md:49
-#, fuzzy
 msgid ""
 "系统内置大量 "
 "DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
 "ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
-"Das System verfügt über einen großen Satz integrierter DataTypes, die "
-"jeweils Spalten oder abgeleiteten Spalten in verschiedenen Datentabellen "
-"zugeordnet sind. Spezifische Tabellennamen und Spaltennamen und wie Sie "
-"diese erhalten, finden Sie unter *Herunterladen und Verwalten von "
-"historischen Finanzdaten* und in der Dokumentation „Datentypen und "
-"Datentabellen“ in den API-Dokumenten. Diese Serie betont nur: **Strategien "
-"referenzieren Daten nur über DataType (dtype_id) und hängen nicht direkt vom"
-" Tabellenschema ab**. Auf diese Weise müssen Sie bei der Weiterentwicklung "
-"des Schemas nur die Zuordnung anpassen, ohne den Strategiecode zu ändern."
+"Das System verfügt über eine große Anzahl integrierter DataType, die Spalten"
+" oder abgeleiteten Spalten verschiedener Datentabellen zugeordnet sind. "
+"Spezifische Tabellennamen und Spaltennamen finden Sie unter „Herunterladen "
+"und Verwalten historischer Finanzdaten“ und in der Liste nach "
+"Geschäftsvolumen; Diese Serie betont nur: **Strategien und Analysen "
+"referenzieren Daten über Informations-IDs und stützen sich nicht direkt auf "
+"die Tabellenstruktur**. Wenn sich die Tabellenstruktur weiterentwickelt, "
+"muss nur die Zuordnungsbeziehung angepasst werden."
 
 #: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
@@ -290,12 +288,11 @@ msgstr ""
 "Tabellen direkt zu lesen"
 
 #: ../../source/design/02-data-layer.md:53
-#, fuzzy
 msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
 msgstr ""
-"**Konsistenz**: Sowohl Backtesting als auch Live-Handel rufen Daten über "
-"denselben Pfad ab – „deklarieren Sie DataType + Engine-Injektionen nach "
-"Fenster“ – und vermeiden so zwei separate Logiksätze."
+"**Konsistenz**: Sowohl Backtesting als auch Live-Handel verwenden denselben "
+"Pfad „Deklarationsinformations-ID + Engine-Injektion nach Fenster“, um zwei "
+"Logiksätze zu vermeiden."
 
 #: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"

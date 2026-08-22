@@ -131,19 +131,18 @@ msgstr ""
 "lassen die Ergebnisse einfach „falsch“ aussehen."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:49
-#, fuzzy
 msgid ""
 "**选股是截面决策**：横向选股不是“对每只股票单独下判断”，而是“同一天从一堆股票里挑一批”。这意味着您的持仓集合每天都可能变：今天 10 只，明天 "
 "3 只，后天可能 0 只。如果您不把“每天入选篮子”显式固化下来（例如用 mask），您根本没法复盘“那天到底选了谁”。"
 msgstr ""
 "**Die Aktienauswahl ist eine Querschnittsentscheidung**: Bei der "
-"Querschnittsauswahl geht es nicht darum, „jede Aktie einzeln zu beurteilen“,"
-" sondern „am selben Tag eine Teilmenge aus einer Reihe von Aktien "
-"auszuwählen“. Das bedeutet, dass sich Ihr Bestand täglich ändern kann: 10 "
-"Aktien heute, 3 morgen und möglicherweise 0 übermorgen. Wenn Sie „jeden Tag "
-"den ausgewählten Korb“ nicht explizit verfestigen (z. B. mit einer Maske), "
-"können Sie einfach nicht überprüfen, „welche an diesem Tag tatsächlich "
-"ausgewählt wurden“."
+"horizontalen Aktienauswahl geht es nicht darum, „jede Aktie unabhängig zu "
+"beurteilen“, sondern „am selben Tag eine Reihe von Aktien aus einem Stapel "
+"von Aktien auszuwählen“. Das bedeutet, dass sich Ihr Positionssatz jeden Tag"
+" ändern kann: 10 Aktien heute, 3 Aktien morgen und 0 Aktien übermorgen. Wenn"
+" Sie den „täglichen Auswahlkorb“ nicht explizit verfestigen (z. B. mithilfe "
+"einer Maske), können Sie überhaupt nicht überprüfen, „wer an diesem Tag "
+"ausgewählt wurde“."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:50
 msgid ""
@@ -175,12 +174,12 @@ msgstr ""
 "ausgefüllt werden. Als nächstes beginnen wir mit der „Faktorkonstruktion“."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:57
-#, fuzzy
 msgid "先贴最终效果（我们最后会得到什么）"
-msgstr "0.5 Zeigen Sie zunächst das Endergebnis (was am Ende herauskommt)"
+msgstr ""
+"Veröffentlichen Sie zuerst den endgültigen Effekt (was werden wir am Ende "
+"bekommen)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:59
-#, fuzzy
 msgid "按本文做完，您会得到三个非常“研究友好”的产出："
 msgstr ""
 "Nachdem Sie diesem Artikel gefolgt sind, erhalten Sie drei sehr "
@@ -212,9 +211,8 @@ msgstr ""
 "Überprüfung und Erklärung zu erleichtern."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:67
-#, fuzzy
 msgid "目标（我们这篇文章要完成什么）"
-msgstr "1. Ziel (was dieser Artikel erreichen soll)"
+msgstr "Ziel (was wir mit diesem Artikel erreichen wollen)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:69
 msgid "获取多 shares + `000300.SH` 的 `HistoryPanel`"
@@ -250,11 +248,10 @@ msgstr ""
 " es erklärbar zu machen"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:75
-#, fuzzy
 msgid "文末给出一段「单函数可跑」的完整代码"
 msgstr ""
-"Am Ende stellen wir einen vollständigen Code bereit, der „als einzelne "
-"Funktion ausgeführt wird“."
+"Am Ende des Artikels wird ein vollständiger Code für „Eine einzelne Funktion"
+" kann ausgeführt werden“ angegeben."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:76
 msgid "明确研究口径边界：``portfolio`` 不是交易回测"
@@ -282,11 +279,10 @@ msgstr ""
 "[Tutorial 2.0](2.0-get-data.md) ab."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:88
-#, fuzzy
 msgid "准备数据：多 shares + benchmark（控制数量，让图可读）"
 msgstr ""
-"2. Daten vorbereiten: mehrere Aktien + Benchmark (kontrollieren Sie die "
-"Anzahl, um das Diagramm lesbar zu halten)"
+"Daten vorbereiten: mehrere Aktien + Benchmark (die Anzahl kontrollieren und "
+"die Grafik lesbar machen)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:90
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:142
@@ -294,9 +290,8 @@ msgstr ""
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:294
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:339
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:400
-#, fuzzy
 msgid "本节要解决什么"
-msgstr "7.1 Was dieser Abschnitt lösen soll"
+msgstr "Was wird in diesem Abschnitt gelöst?"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:92
 msgid "横向截面研究最常见的陷阱之一是：   **股票太多，一次性画图读不动；股票太少，又体现不出“横向筛选”的意义。**"
@@ -307,14 +302,13 @@ msgstr ""
 "nachvollziehen.**"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:95
-#, fuzzy
 msgid ""
 "所以我们建议先把样例控制在 30~80 只以内（实际您可以替换成自己的股票池）。   本节只做一件事：把数据拿到手并确认 `close` 存在。"
 msgstr ""
-"Daher empfehlen wir, die Stichprobe zunächst auf 30–80 Aktien zu beschränken"
-" (in der Praxis können Sie sie durch Ihren eigenen Aktienpool ersetzen).   "
-"In diesem Abschnitt wird nur eines getan: die Daten zur Hand nehmen und "
-"bestätigen, dass „Schließen“ vorhanden ist."
+"Daher empfehlen wir Ihnen, zunächst die Stichprobengröße innerhalb von 30 "
+"bis 80 Aktien zu kontrollieren (tatsächlich können Sie sie durch Ihren "
+"eigenen Aktienpool ersetzen).   In diesem Abschnitt wird nur eines erledigt:"
+" die Daten abrufen und bestätigen, dass `close` vorhanden ist."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:98
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:154
@@ -322,9 +316,8 @@ msgstr ""
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:298
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:347
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:407
-#, fuzzy
 msgid "最小必要原理"
-msgstr "7.2 Das Prinzip der Mindestnotwendigkeit"
+msgstr "Prinzip des geringsten Bedarfs"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:100
 msgid ""
@@ -343,16 +336,14 @@ msgstr ""
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:280
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:308
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:412
-#, fuzzy
 msgid "可运行代码 + 预期效果"
-msgstr "7.3 Ausführbarer Code + erwartete Ausgabe"
+msgstr "Ausführbarer Code + erwartete Ergebnisse"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:140
-#, fuzzy
 msgid "多因子构造（两条路线并列）：固定阈值代理版 + 可选真实估值版"
 msgstr ""
-"3. Multi-Faktor-Konstruktion (zwei Spuren parallel): Proxy-Version mit "
-"festem Schwellenwert + optionale True-Value-Version"
+"Multifaktor-Konstruktion (zwei Routen nebeneinander): Proxy-Version mit "
+"festem Schwellenwert + optionale Realbewertungsversion"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:144
 msgid ""
@@ -375,11 +366,10 @@ msgstr ""
 "Schwellenwerten**, um sicherzustellen, dass jeder sie durchlaufen kann"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:150
-#, fuzzy
 msgid "**路线 B（可选增强）**：如果您的本地数据源里已经有 PE/PB/EBITDA 等估值字段，就把它们替换进来"
 msgstr ""
-"**Track B (optionale Erweiterung)**: Wenn Ihre lokale Datenquelle bereits "
-"Bewertungsfelder wie PE/PB/EBITDA enthält, ersetzen Sie diese hier"
+"**Route B (optionale Erweiterung)**: Wenn Ihre lokale Datenquelle bereits "
+"Bewertungsfelder wie PE/PB/EBITDA enthält, ersetzen Sie diese durch diese"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:152
 msgid "两条路线最终都输出同样的 `cond_long/cond_short`，后面的流程完全一致。"
@@ -416,17 +406,15 @@ msgstr ""
 "Endbedingung ein „(M, L)“-Bool ist."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:165
-#, fuzzy
 msgid "路线 A：代理因子（固定阈值，推荐先跑通）"
 msgstr ""
-"3.3 Track A: Proxy-Faktoren (feste Schwellenwerte; empfohlen, dies zuerst "
-"zum Laufen zu bringen)"
+"Route A: Agenturfaktor (fester Schwellenwert, empfohlen, ihn zuerst zu "
+"durchlaufen)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:167
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:233
-#, fuzzy
 msgid "要解决什么"
-msgstr "7.1 Was dieser Abschnitt lösen soll"
+msgstr "Was zu lösen ist"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:169
 msgid "我们用三个“非常直觉”的代理因子，让读者快速进入状态："
@@ -481,51 +469,45 @@ msgstr ""
 "erhalten: „cond_long/cond_short (M,L bool)“."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:218
-#, fuzzy
 msgid ""
 "下一步，我们还需要做一个非常实用的 sanity check：**每天到底选中了多少只股票**。   如果这个数量经常是 "
 "0（空篮子），您的组合曲线会断断续续，结论也很不稳定；如果这个数量几乎总是全部股票，那筛选就没有意义了。"
 msgstr ""
-"Als nächstes müssen wir noch eine ganz praktische Plausibilitätsprüfung "
-"durchführen: **wie viele Aktien jeden Tag ausgewählt werden**.   Wenn diese "
-"Zahl oft 0 ist (ein leerer Korb), wird Ihre Portfoliokurve unregelmäßig sein"
-" und Ihre Schlussfolgerungen werden instabil sein; Wenn es sich bei dieser "
-"Zahl fast immer um alle Aktien handelt, ist das Screening bedeutungslos."
+"Als nächstes müssen wir eine sehr praktische Plausibilitätsprüfung "
+"durchführen: **wie viele Aktien werden jeden Tag ausgewählt**.   Wenn diese "
+"Zahl oft 0 ist (leerer Korb), wird Ihre Portfoliokurve unruhig und Ihre "
+"Schlussfolgerungen instabil; Wenn es sich bei dieser Zahl fast immer um alle"
+" Aktien handelt, macht ein Screening keinen Sinn."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:221
-#, fuzzy
 msgid "您可以加上这段检查（不改逻辑，只帮我们判断阈值是否“太严/太松”）："
 msgstr ""
-"Sie können diese Prüfung hinzufügen (sie ändert nichts an der Logik; sie "
-"hilft uns nur bei der Beurteilung, ob die Schwellenwerte „zu streng/zu "
-"locker“ sind):"
+"Sie können diese Prüfung hinzufügen (ohne die Logik zu ändern, sie hilft uns"
+" lediglich festzustellen, ob der Schwellenwert „zu streng/zu locker“ ist):"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:231
-#, fuzzy
 msgid "路线 B：真实估值因子（可选增强，字段名以 `hp.htypes` 为准）"
 msgstr ""
-"3.4 Route B: echte Bewertungsfaktoren (optionale Erweiterung; Feldnamen "
-"unterliegen „hp.htypes“)"
+"Route B: Wahrer Bewertungsfaktor (optionale Erweiterung, Feldname soll auf "
+"`hp.htypes` basieren)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:235
-#, fuzzy
 msgid ""
 "如果您的本地数据源里已经下载过估值字段（例如 PE/PB/EBITDA），那我们就可以把它们替换进来。   "
 "这一节我们不写死字段名，因为不同数据源/数据类型的 htype 命名可能不一样。最稳妥的方式是："
 msgstr ""
-"Wenn Ihre lokale Datenquelle bereits Bewertungsfelder heruntergeladen hat "
-"(z. B. PE/PB/EBITDA), können wir diese austauschen. In diesem Abschnitt "
-"werden wir Feldnamen nicht fest codieren, da die htype-Benennung je nach "
-"Datenquelle/Datentyp unterschiedlich sein kann. Der robusteste Ansatz ist:"
+"Wenn Sie Bewertungsfelder (z. B. PE/PB/EBITDA) aus Ihrer lokalen Datenquelle"
+" heruntergeladen haben, können wir diese ersetzen.   In diesem Abschnitt "
+"werden Feldnamen nicht fest codiert, da die htype-Namen verschiedener "
+"Datenquellen/Datentypen unterschiedlich sein können. Der sicherste Weg ist:"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:238
 msgid "先打印 `hp.htypes`"
 msgstr "Erster Druck `hp.htypes`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:239
-#, fuzzy
 msgid "找到您本地实际列名"
-msgstr "Finden Sie die tatsächlichen Spaltennamen in Ihrem lokalen Setup"
+msgstr "Finden Sie Ihren lokalen tatsächlichen Spaltennamen"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:240
 msgid "再按固定阈值写条件"
@@ -534,35 +516,29 @@ msgstr ""
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:242
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:352
-#, fuzzy
 msgid "可运行代码（示意）"
-msgstr "6.3 Ausführbarer Code (veranschaulichend)"
+msgstr "Ausführbarer Code (Abbildung)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:260
-#, fuzzy
 msgid "只要最终您仍然得到 `(M, L)` 的 `cond_long/cond_short`，后面流程就与路线 A 完全一致。"
 msgstr ""
-"Solange Sie immer noch „(M, L)“ „cond_long/cond_short“ erhalten, ist der "
-"Rest des Workflows genau der gleiche wie bei Route A."
+"Solange Sie immer noch `cond_long/cond_short` von `(M, L)` erhalten, ist der"
+" folgende Vorgang genau der gleiche wie Route A."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:262
-#, fuzzy
 msgid ""
 "如果您发现自己本地根本没有这些字段，也没关系：这正是我们把“代理因子版”放在正文主线的原因。路线 B 作为增强分支存在，但不依赖它也能完整跑通研究闭环。"
 msgstr ""
-"Wenn Sie feststellen, dass Ihre lokalen Daten einfach nicht über diese "
-"Felder verfügen, ist das in Ordnung: Genau aus diesem Grund haben wir die "
-"„Proxy-Faktor-Version“ in den Haupterzählpfad aufgenommen. Route B existiert"
-" als erweiterter Zweig, Sie können jedoch weiterhin die gesamte "
-"Forschungsschleife durchgängig ausführen, ohne sich darauf verlassen zu "
-"müssen."
+"Wenn Sie feststellen, dass diese Felder lokal nicht vorhanden sind, ist das "
+"in Ordnung: Aus diesem Grund fügen wir „Agent Factor Version“ in die "
+"Hauptzeile des Textes ein. Route B existiert als erweiterter Zweig, aber Sie"
+" können den geschlossenen Forschungskreislauf abschließen, ohne darauf "
+"angewiesen zu sein."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:266
-#, fuzzy
 msgid "横向筛选：条件组合 -> `where()` 研究 mask"
 msgstr ""
-"4. Querschnittsfilterung: Bedingungen kombinieren -> "
-"„where()“-Forschungsmaske"
+"Horizontale Filterung: Bedingungskombination -> `where()` Recherchemaske"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:270
 msgid "我们把 `cond_long/cond_short` 变成可直接喂给 `portfolio(mask=...)` 的研究 mask。"
@@ -581,23 +557,19 @@ msgstr ""
 "Aggregations- und Renditeberechnungen folgen dieser als Standard."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:277
-#, fuzzy
 msgid ""
 "这也是横向研究里最值得养成的一个习惯：**永远不要只保留一条“组合曲线”，要把“每天入选篮子”的规则也显式保留下来**。   mask "
 "就是这条规则。它让您能回答“那天到底选了谁”这种复盘问题。"
 msgstr ""
-"Dies ist auch eine der wertvollsten Gewohnheiten, die man sich bei der "
-"Querschnittsforschung aneignen sollte: **Behalten Sie niemals nur eine "
-"einzige „Portfoliokurve“ bei – behalten Sie ausdrücklich auch die Regel bei,"
-" „welche Namen jeden Tag in den Korb kommen“**. Die Maske ist diese Regel. "
-"Damit können Sie Bewertungsfragen beantworten wie „Wen genau haben wir an "
-"diesem Tag ausgewählt?“"
+"Dies ist auch die lohnenswerteste Gewohnheit in der horizontalen Forschung: "
+"**Behalten Sie nie nur eine „Kombinationskurve“ bei, sondern halten Sie sich"
+" auch explizit an die Regel „Jeden Tag in den Korb auswählen“**.   Maske ist"
+" diese Regel. Damit können Sie die Bewertungsfrage „Wen haben Sie an diesem "
+"Tag ausgewählt?“ beantworten."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:292
-#, fuzzy
 msgid "两组组合曲线 + benchmark：`portfolio(mask=...)`"
-msgstr ""
-"5. Zwei Sätze zusammengesetzter Kurven + Benchmark: „portfolio(mask=...)“."
+msgstr "Zwei Kombinationskurvensätze + Benchmark: `portfolio(mask=...)`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:296
 msgid "对每个交易日，把满足条件的股票集合聚合成一条组合曲线（long/short），并与 `000300.SH` 对比。"
@@ -619,13 +591,12 @@ msgstr ""
 " erleichtert so den Vergleich im selben Diagramm"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:303
-#, fuzzy
 msgid "您可以把它理解成：对每一天，把“当日入选的股票集合”做等权平均，得到一条曲线。   由于集合每天会变，所以这条曲线本质上是在回答一个问题："
 msgstr ""
-"Sie können es sich so vorstellen: Nehmen Sie für jeden Tag einen "
+"Sie können es so verstehen: Erstellen Sie für jeden Tag einen "
 "gleichgewichteten Durchschnitt der „An diesem Tag ausgewählten Aktien“, um "
 "eine Kurve zu erhalten.   Da sich die Menge jeden Tag ändert, beantwortet "
-"diese Kurve im Wesentlichen eine Frage:"
+"diese Kurve im Wesentlichen die Frage:"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:306
 msgid "如果我每天都只持有“符合条件的那一批”，这个动态篮子长期表现如何？"
@@ -634,11 +605,10 @@ msgstr ""
 " verhält sich dieser dynamische Korb dann auf lange Sicht?"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:337
-#, fuzzy
 msgid "`normalize / cum_return` + CAGR：给出可比较的年化摘要表"
 msgstr ""
-"6. „normalize / cum_return“ + CAGR: Bereitstellung einer vergleichbaren, auf"
-" Jahresbasis umgerechneten Übersichtstabelle"
+"`normalize / cum_return` + CAGR: Gibt eine vergleichbare, auf Jahresbasis "
+"umgerechnete Übersichtstabelle an"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:341
 msgid "我们既想“看曲线”，也想“有一个能复用的数字总结”。   所以我们做两件事："
@@ -666,19 +636,17 @@ msgstr ""
 "Diskussion; wir werden die Ableitung hier nicht erweitern.)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:375
-#, fuzzy
 msgid "建议您把它整理成一个小表（至少包含 LONG/SHORT/benchmark 三行），这样读者一眼就能比较："
 msgstr ""
-"Ich schlage vor, dass Sie es in einer kleinen Tabelle organisieren "
-"(mindestens mit drei Zeilen: LONG/SHORT/Benchmark), damit die Leser auf "
-"einen Blick vergleichen können:"
+"Es wird empfohlen, es in einer kleinen Tabelle zu organisieren (mit "
+"mindestens drei Zeilen LONG/SHORT/Benchmark), damit die Leser auf einen "
+"Blick vergleichen können:"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:398
-#, fuzzy
 msgid "可视化与解释：用 `plot(highlight=...)` 高亮“关键差异日”"
 msgstr ""
-"7. Visualisierung und Interpretation: Verwenden Sie „plot(highlight=...)“, "
-"um „wichtige Divergenztage“ hervorzuheben."
+"Visualisierung und Interpretation: Markieren Sie „Key Difference Days“ mit "
+"`plot(highlight=...)`"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:402
 msgid "横向截面研究做到最后，最需要解释的一类问题是：   **long 和 benchmark 差异最大的一段，到底发生了什么？**"
@@ -689,13 +657,12 @@ msgstr ""
 "abweichen?**"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:405
-#, fuzzy
 msgid "因此我们用 `highlight` 高亮一段“关键差异日”（例如累计收益最大点/最小点，或您自己挑的区间），把读者的注意力拉回图上。"
 msgstr ""
-"Deshalb verwenden wir „Hervorheben“, um ein „Tag der wichtigsten "
-"Divergenz“-Segment hervorzuheben (z. B. den Punkt der maximalen/minimalen "
-"kumulativen Rendite oder ein von Ihnen selbst gewähltes Intervall) und die "
-"Aufmerksamkeit des Lesers wieder auf das Diagramm zu lenken."
+"Daher verwenden wir `highlight`, um einen Zeitraum mit „wichtigen "
+"Differenztagen“ hervorzuheben (z. B. den Höchstpunkt/Minimalpunkt des "
+"kumulierten Einkommens oder einen Bereich Ihrer Wahl), um die Aufmerksamkeit"
+" des Lesers wieder auf das Diagramm zu lenken."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:409
 msgid ""
@@ -722,31 +689,28 @@ msgstr ""
 "Volatilität usw.)."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:422
-#, fuzzy
 msgid ""
 "如果您想更贴近“long vs benchmark 的分化”，可以用一个更实用的做法：先算超额曲线（long 与 benchmark "
 "的差值），再把超额曲线的最大点位置提出来，做成 1D bool 的 highlight 条件。（这里作为可选增强，不强制您在正文主线展开。）"
 msgstr ""
-"Wenn Sie sich stärker an der „Divergenz zwischen Long und Benchmark“ "
-"orientieren möchten, können Sie einen praktischeren Ansatz verwenden: "
-"Berechnen Sie zunächst die Überschuss-Rendite-Kurve (die Differenz zwischen "
-"Long und Benchmark), extrahieren Sie dann die Position des Maximalpunkts auf"
-" dieser Überschusskurve und wandeln Sie ihn in eine 1D-Bool-"
-"Hervorhebungsbedingung um. (Dies ist eine optionale Erweiterung; Sie müssen "
-"in der Haupterzählung nicht näher darauf eingehen.)"
+"Wenn Sie näher an die „Unterscheidung zwischen Long und Benchmark“ "
+"herankommen möchten, können Sie einen praktischeren Ansatz verwenden: "
+"Berechnen Sie zunächst die Überschusskurve (die Differenz zwischen Long und "
+"Benchmark) und extrahieren Sie dann die maximale Punktposition der "
+"Überschusskurve, um eine 1D-Bool-Hervorhebungsbedingung zu erstellen. (Dies "
+"ist eine optionale Erweiterung und zwingt Sie nicht dazu, die Hauptzeile des"
+" Textes zu erweitern.)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:426
-#, fuzzy
 msgid "完整代码（单函数可跑版本）"
-msgstr "8. Vollständiger Code (ausführbare Einzelfunktionsversion)"
+msgstr "Vollständiger Code (ausführbare Einzelfunktionsversion)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:428
-#, fuzzy
 msgid "下面给出一段“单函数可跑”的完整版本，方便您复制进 Notebook 一键运行。它覆盖："
 msgstr ""
-"Nachfolgend finden Sie eine vollständige „ausführbare "
-"Einzelfunktionsversion“, die Sie in ein Notebook kopieren und mit einem "
-"Klick ausführen können. Es umfasst:"
+"Nachfolgend finden Sie die vollständige Version „Eine einzelne Funktion kann"
+" ausgeführt werden“, die Sie bequem in Notebook kopieren und mit einem Klick"
+" ausführen können. Es umfasst:"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:430
 msgid "路线 A（代理因子固定阈值）主线；"
@@ -820,10 +784,10 @@ msgstr ""
 "Illustrationsvorschläge finden Sie im Anhang."
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:610
-#, fuzzy
 msgid "附录：插图索引（可选：在 Notebook 中生成后截图）"
 msgstr ""
-"Anhang: Abbildungsindex (empfohlen zur Erstellung/Screenshot im Notebook)"
+"Anhang: Abbildungsverzeichnis (optional: Screenshot nach Generierung im "
+"Notebook)"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md:612
 msgid "下列文件名为**建议**命名；仓库内未必已包含对应 png。在 Notebook 跑通各节后自行截图即可。"
@@ -842,9 +806,8 @@ msgid "建议放置位置"
 msgstr "Empfohlene Platzierung"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
-#, fuzzy
 msgid "您将看到什么"
-msgstr "Was Sie sehen werden"
+msgstr "was du sehen wirst"
 
 #: ../../source/tutorials/2.7-historypanel-advanced-horizontal-multifactor.md
 msgid "`3.2_minimal_run.png`"

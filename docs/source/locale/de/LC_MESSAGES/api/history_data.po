@@ -653,17 +653,14 @@ msgid "使用下载的数据——基础数据"
 msgstr "Verwenden Sie die heruntergeladenen Daten - Basisdaten"
 
 #: ../../source/api/history_data.rst:47
-#, fuzzy
 msgid ""
 "``qt.get_basic_info()`` 和 ``qt.get_stock_info()`` 提供按代码或名称查询股票/基金/指数等 "
 "基础信息的入口，可配合 ``filter_stock_codes()`` 与 ``filter_stocks()`` 构建资产池或 "
 "做前置筛选。截面属性（行业、上市日等）的标准化入口见下文 ``get_static_data``。"
 msgstr ""
-"„qt.get_basic_info()“ und „qt.get_stock_info()“ bieten Einstiegspunkte für "
-"die Abfrage grundlegender Informationen zu Aktien/Fonds/Indizes usw. nach "
-"Code oder Name. Sie können zusammen mit „filter_stock_codes()“ und "
-"„filter_stocks()“ verwendet werden, um einen Asset-Pool aufzubauen oder eine"
-" Vorfilterung durchzuführen."
+"„`qt.get_basic_info()`` 和 ``qt.get_stock_info()`` 提供按代码或名称查询股票/基金/指数等 "
+"基础信息的入口，可配合 ``filter_stock_codes()`` 与 ``filter_stocks()`` 构建资产池或 "
+"做前置筛选。截面属性（行业、上市日等）的标准化入口见下文 ``get_static_data`“."
 
 #: of qteasy.core.get_basic_info:1
 msgid "等同于get_stock_info()，根据输入的信息，查找股票、基金、指数或期货、期权的基本信息"
@@ -816,9 +813,8 @@ msgid "**DataFrame**"
 msgstr "**DataFrame**"
 
 #: ../../source/api/history_data.rst:60
-#, fuzzy
 msgid "使用下载的数据——按形状取数"
-msgstr "Verwenden Sie die heruntergeladenen Daten - Basisdaten"
+msgstr "Heruntergeladene Daten verwenden – Zahlen nach Form bringen"
 
 #: ../../source/api/history_data.rst:62
 msgid ""
@@ -859,18 +855,13 @@ msgstr ""
 "Sie unter :doc:`内置 DataType 完整清单 <../references/datatypes/index>`."
 
 #: ../../source/api/history_data.rst:71
-#, fuzzy
 msgid ""
 "``qteasy.history.get_history_panel()`` 面向已明确 ``DataType`` 列表与 "
 "``DataSource``、 需要直接组装 ``HistoryPanel`` 的偏低层场景；用户文档以公开三入口为主线。"
 msgstr ""
-"**Einstiegspunkte für den Datenabruf**: Für die tägliche Analyse, "
-"Strategiearbeit und Visualisierungsvorbereitung bevorzugen Sie "
-"„qt.get_history_data()“. „qteasy.history.get_history_panel()“ ist für "
-"Szenarios auf niedrigerer Ebene gedacht, in denen Sie bereits eine explizite"
-" „DataType“-Liste und „DataSource“ haben und direkt ein „HistoryPanel“ "
-"zusammenstellen müssen; Die Benutzerdokumente folgen hauptsächlich "
-"„get_history_data“ – siehe Kapitel HistoryPanel in „manage_data“."
+"Das Low-Level-Szenario von „`qteasy.history.get_history_panel()`` 面向已明确 "
+"``DataType`` 列表与 ``DataSource``、 需要直接组装 ``HistoryPanel`“; Die "
+"Benutzerdokumentation basiert auf den drei öffentlichen Eingängen."
 
 #: of qteasy.core.get_history_data:1
 msgid "根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。"
@@ -880,7 +871,6 @@ msgstr ""
 "Struktur zusammen, die direkt von der Strategie verwendet werden kann."
 
 #: of qteasy.core.get_history_data:3
-#, fuzzy
 msgid ""
 "本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
 "``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
@@ -889,15 +879,15 @@ msgid ""
 "的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。 关于数据类型推断、频率转换和 "
 "trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」相关章节。"
 msgstr ""
-"Sie können die erforderlichen Datentypen über „htype_names“ oder "
-"„data_types“ angeben und diese mit „shares“ / „symbols“, einem Zeitbereich "
-"und „freq“ kombinieren, um den Abrufumfang zu steuern; Abhängig von den "
-"Einstellungen von „as_data_frame“ und „group_by“ gibt die Funktion einen "
-"HistoryPanel oder ein Diktat von DataFrames zurück, gruppiert nach "
-"Instrument/Datentyp. Informationen zur erweiterten Verwendung wie "
-"Datentypinferenz, Frequenzkonvertierung und trade_time_only finden Sie in "
-"den entsprechenden Abschnitten in der Dokumentation „Historical Data "
-"Retrieval get_history_data“."
+"Dieser Eingang akzeptiert nur „`kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
+"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
+"``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 `⟦ CODE10⟧` / "
+"``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 "
+"``group_by``-Einstellung gibt die Funktion HistoryPanel oder ein Wörterbuch "
+"von DataFrames zurück, gruppiert nach Ziel/Datentyp. Einzelheiten zur "
+"erweiterten Verwendung wie Datentypinferenz, Frequenzkonvertierung und "
+"„trade_time_only“ finden Sie in den entsprechenden Kapiteln des Dokuments "
+"„Get_history_data“."
 
 #: of qteasy.core.get_history_data:11
 msgid ""
@@ -1213,14 +1203,13 @@ msgstr ""
 "Datenexploration und -visualisierung in Notebook erleichtert."
 
 #: of qteasy.core.get_kline:7
-#, fuzzy
 msgid ""
 "需要获取 K 线数据的证券代码，可以是逗号分隔的字符串或字符串列表，例如： ``'000001.SZ,000002.SZ'`` 或 "
 "``['000001.SZ', '000002.SZ']``。"
 msgstr ""
-"Sammlung von Sicherheitscodes; kann eine durch Kommas getrennte Zeichenfolge"
-" (z. B. „000001.SZ, 000002.SZ“) oder eine Liste (z. B. „[‘000001.SZ‘, "
-"‚000002.SZ‘]“ sein)."
+"Der Sicherheitscode, für den K-Line-Daten abgerufen werden müssen, kann eine"
+" durch Kommas getrennte Zeichenfolge oder eine Liste von Zeichenfolgen sein,"
+" zum Beispiel: „`'000001.SZ,000002.SZ'`` 或 ``['000001.SZ', '000002.SZ']`“."
 
 #: of qteasy.core.get_kline:10
 msgid ""

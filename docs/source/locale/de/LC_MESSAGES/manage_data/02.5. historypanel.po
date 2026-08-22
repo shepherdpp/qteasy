@@ -23,23 +23,22 @@ msgid "HistoryPanel（历史数据面板）"
 msgstr "HistoryPanel (historisches Datenpanel)"
 
 #: ../../source/manage_data/02.5. historypanel.md:3
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "本章介绍 **HistoryPanel**：在已理解 [DataType](02.%20datatypes.md) "
 "的前提下，如何把多标的、多指标、同一时间轴上的历史数据收拢为一块「面板」，并在策略研究、回测准备与可视化之间复用。阅读本章无需先读 [本地数据源 "
 "DataSource](3.%20datasource.md)，但若尚未向本地数据源填充数据，请先完成下载与配置后再使用 "
 "`get_history_data` 取数。"
 msgstr ""
-"In diesem Kapitel wird **HistoryPanel** vorgestellt: Aufbauend auf einem "
-"Verständnis von [DataType](2.%20datatypes.md) zeigt es, wie historische "
-"Daten aus mehreren Zielen, Metriken und derselben Zeitachse in einem "
-"einzigen „Panel“ konsolidiert und in der Strategieforschung, Backtesting-"
-"Vorbereitung und Visualisierung wiederverwendet werden können. Zum Lesen "
-"dieses Kapitels ist keine vorherige Lektüre von [Lokale "
-"Datenquelle](3.%20datasource.md) erforderlich. Wenn Sie Ihre lokale "
-"Datenquelle jedoch noch nicht mit Daten gefüllt haben, schließen Sie bitte "
-"den Download und die Konfiguration ab, bevor Sie „get_history_data“ zum "
-"Abrufen von Daten verwenden."
+"In diesem Kapitel wird **HistoryPanel** vorgestellt: Unter der "
+"Voraussetzung, [DataType](02.%20datatypes.md) zu verstehen, wie man Multi-"
+"Target-, Multi-Indikator- und historische Daten auf derselben Zeitachse in "
+"einem „Panel“ sammelt und diese zwischen Strategieforschung, Backtest-"
+"Vorbereitung und Visualisierung wiederverwendet. Es ist nicht erforderlich, "
+"[Lokale Datenquelle DataSource](3.%20datasource.md) zu lesen, bevor Sie "
+"dieses Kapitel lesen. Wenn die lokale Datenquelle jedoch nicht mit Daten "
+"gefüllt wurde, schließen Sie bitte den Download und die Konfiguration ab, "
+"bevor Sie `get_history_data` verwenden, um die Daten abzurufen."
 
 #: ../../source/manage_data/02.5. historypanel.md:7
 msgid ""
@@ -497,14 +496,15 @@ msgstr ""
 "**slice**; Exportieren eines einzelnen Frames: **to_share_frame**."
 
 #: ../../source/manage_data/02.5. historypanel.md:128
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "**下一章 [HistoryPanel 可视化](2.6.%20historypanel_visual.md)**：使用 **`hp.plot()`**"
 " 做静态或交互制图（请用 `plot`，勿依赖已弃用的 `candle`）。"
 msgstr ""
 "**Nächstes Kapitel [HistoryPanel "
-"Visualization](2.6.%20historypanel_visual.md)**: Verwenden von "
-"**`hp.plot()`** zum Erstellen statischer oder interaktiver Diagramme."
+"Visualisierung](2.6.%20historypanel_visual.md)**: Verwenden Sie "
+"**`hp.plot()`** für statisches oder interaktives Zeichnen (bitte verwenden "
+"Sie `plot`, verlassen Sie sich nicht auf den veralteten `candle`)."
 
 #: ../../source/manage_data/02.5. historypanel.md:129
 #, python-format
