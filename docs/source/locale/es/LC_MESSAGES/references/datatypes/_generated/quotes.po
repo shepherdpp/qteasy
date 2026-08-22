@@ -20,19 +20,26 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/quotes.md:6
 msgid "行情与复权"
-msgstr ""
+msgstr "Cotizaciones y Restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **358** 条。"
 msgstr ""
+"Este volumen se genera por `docs/scripts/generate_datatype_catalog.py` a "
+"partir de `qteasy.datatypes.get_dtype_map()` por **categoría de negocio**, "
+"con un total de **358** artículos."
 
 #: ../../source/references/datatypes/_generated/quotes.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"No lo modifique a mano; Vuelva a ejecutar el script de generación después de"
+" actualizar el tipo integrado. Para conocer el significado de las columnas y"
+" las lecturas recomendadas, consulte [Entrada de lista](../index.md). "
+"`acquisition_type` / `table_name` son solo para recarga comparativa."
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "name"
@@ -80,7 +87,7 @@ msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 累计分红"
-msgstr ""
+msgstr "Valor neto del fondo: dividendos acumulados"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "history"
@@ -104,7 +111,7 @@ msgstr "accum_nav"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 累计净值"
-msgstr ""
+msgstr "Valor neto del fondo – Valor neto acumulado"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "adj_nav"
@@ -112,7 +119,7 @@ msgstr "adj_nav"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 复权净值"
-msgstr ""
+msgstr "Valor neto del fondo - Valor neto reponderado"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "amount"
@@ -129,6 +136,7 @@ msgstr "E"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 成交额 （千元）"
 msgstr ""
+"Acciones Línea K de 15 minutos - volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_15min"
@@ -137,6 +145,7 @@ msgstr "stock_15min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 成交额 （千元）"
 msgstr ""
+"Fondo K-line de 15 minutos - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_15min"
@@ -149,6 +158,7 @@ msgstr "FT"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 成交额 （千元）"
 msgstr ""
+"Futuros Línea K de 15 minutos - volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_15min"
@@ -161,6 +171,7 @@ msgstr "IDX"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 成交额 （千元）"
 msgstr ""
+"Índice de línea K de 15 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_15min"
@@ -173,6 +184,7 @@ msgstr "OPT"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 成交额 （千元）"
 msgstr ""
+"Opción Línea K de 15 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_15min"
@@ -185,6 +197,7 @@ msgstr "1min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 成交额 （千元）"
 msgstr ""
+"Línea K de acciones de 60 segundos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_1min"
@@ -193,6 +206,7 @@ msgstr "stock_1min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 成交额 （千元）"
 msgstr ""
+"Fondo de línea K de 60 segundos: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_1min"
@@ -201,6 +215,7 @@ msgstr "fund_1min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 成交额 （千元）"
 msgstr ""
+"Futuros Línea K de 60 segundos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_1min"
@@ -209,6 +224,7 @@ msgstr "future_1min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 成交额 （千元）"
 msgstr ""
+"Índice de línea K de 60 segundos: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_1min"
@@ -216,7 +232,7 @@ msgstr "index_1min"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Opción vela de 60 segundos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_1min"
@@ -229,6 +245,7 @@ msgstr "30min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 成交额 （千元）"
 msgstr ""
+"Acciones Línea K de 30 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_30min"
@@ -237,6 +254,7 @@ msgstr "stock_30min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 成交额 （千元）"
 msgstr ""
+"Fondo K-line de 30 minutos: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_30min"
@@ -245,6 +263,7 @@ msgstr "fund_30min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 成交额 （千元）"
 msgstr ""
+"Futuros Línea K de 30 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_30min"
@@ -253,6 +272,7 @@ msgstr "future_30min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 成交额 （千元）"
 msgstr ""
+"Índice de línea K de 30 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_30min"
@@ -261,6 +281,7 @@ msgstr "index_30min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 成交额 （千元）"
 msgstr ""
+"Opción Línea K de 30 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_30min"
@@ -273,6 +294,7 @@ msgstr "5min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 成交额 （千元）"
 msgstr ""
+"Línea K de 5 minutos de acciones: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_5min"
@@ -280,7 +302,7 @@ msgstr "stock_5min"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Fondo K-line de 5 minutos: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_5min"
@@ -289,6 +311,7 @@ msgstr "fund_5min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 成交额 （千元）"
 msgstr ""
+"Futuros Línea K de 5 minutos - volumen de negociación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_5min"
@@ -297,6 +320,7 @@ msgstr "future_5min"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 成交额 （千元）"
 msgstr ""
+"Índice de línea K de 5 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_5min"
@@ -304,7 +328,7 @@ msgstr "index_5min"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Opción Línea K de 5 minutos: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_5min"
@@ -312,7 +336,7 @@ msgstr "options_5min"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Acciones diarias K-line - volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_daily"
@@ -320,7 +344,7 @@ msgstr "stock_daily"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Fondo diario K-line - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_daily"
@@ -328,7 +352,7 @@ msgstr "fund_daily"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Futuros diarios K-line - volumen de negociación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_daily"
@@ -336,7 +360,7 @@ msgstr "future_daily"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Índice diario K-line - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_daily"
@@ -344,7 +368,7 @@ msgstr "index_daily"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Opción diaria K-line - volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_daily"
@@ -356,7 +380,7 @@ msgstr "h"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Línea K horaria de acciones: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_hourly"
@@ -364,7 +388,7 @@ msgstr "stock_hourly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Fondo por hora K-line - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_hourly"
@@ -372,7 +396,7 @@ msgstr "fund_hourly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Futuros por hora K-line - volumen de negociación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_hourly"
@@ -380,7 +404,7 @@ msgstr "future_hourly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Índice horario K-line - facturación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_hourly"
@@ -388,7 +412,7 @@ msgstr "index_hourly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Opción de vela horaria - volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "options_hourly"
@@ -401,6 +425,7 @@ msgstr "m"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 成交额 （千元）"
 msgstr ""
+"Línea K mensual de acciones: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_monthly"
@@ -408,7 +433,7 @@ msgstr "stock_monthly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Fondo mensual K-line - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_monthly"
@@ -417,6 +442,7 @@ msgstr "fund_monthly"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 成交额 （千元）"
 msgstr ""
+"Línea K mensual de futuros: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_monthly"
@@ -424,7 +450,7 @@ msgstr "future_monthly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Índice mensual K-line - volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_monthly"
@@ -436,7 +462,7 @@ msgstr "w"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Línea K semanal de acciones: volumen de negociación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "stock_weekly"
@@ -444,7 +470,7 @@ msgstr "stock_weekly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Línea K semanal del fondo: volumen de transacciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "fund_weekly"
@@ -452,7 +478,7 @@ msgstr "fund_weekly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Línea K semanal de futuros: volumen de operaciones (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "future_weekly"
@@ -460,7 +486,7 @@ msgstr "future_weekly"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 成交额 （千元）"
-msgstr ""
+msgstr "Índice semanal K-line - facturación (miles de yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "index_weekly"
@@ -472,7 +498,7 @@ msgstr "ci_amount"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 成交额 （万元）"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC - facturación (10.000 yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_index_daily"
@@ -484,7 +510,7 @@ msgstr "ci_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 涨跌额"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC: aumento y disminución"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_close"
@@ -492,7 +518,7 @@ msgstr "ci_close"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 收盘价"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_high"
@@ -500,7 +526,7 @@ msgstr "ci_high"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 最高价"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_low"
@@ -508,7 +534,7 @@ msgstr "ci_low"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 最低价"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC - Precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_open"
@@ -516,7 +542,7 @@ msgstr "ci_open"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 开盘价"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_pct_change"
@@ -524,7 +550,7 @@ msgstr "ci_pct_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 涨跌幅"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC: aumento y disminución"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_pre_close"
@@ -532,7 +558,7 @@ msgstr "ci_pre_close"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 昨日收盘点位"
-msgstr ""
+msgstr "Línea K diaria del índice CITIC: punto de cierre de ayer"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ci_vol"
@@ -541,6 +567,7 @@ msgstr "ci_vol"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "中信指数日K线 - 成交量 （万股）"
 msgstr ""
+"Línea K diaria del índice CITIC: volumen de operaciones (10.000 acciones)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "close"
@@ -548,155 +575,155 @@ msgstr "close"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 收盘价"
-msgstr ""
+msgstr "Línea K de 15 minutos de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 收盘价"
-msgstr ""
+msgstr "Fondo Línea K de 15 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 收盘价"
-msgstr ""
+msgstr "Futuros Línea K de 15 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 收盘价"
-msgstr ""
+msgstr "Índice Línea K de 15 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 收盘价"
-msgstr ""
+msgstr "Opción Línea K de 15 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 收盘价"
-msgstr ""
+msgstr "Línea K de 60 segundos de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 收盘价"
-msgstr ""
+msgstr "Fondo Línea K de 60 segundos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 收盘价"
-msgstr ""
+msgstr "Futuros Línea K de 60 segundos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 收盘价"
-msgstr ""
+msgstr "Índice de línea K de 60 segundos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 收盘价"
-msgstr ""
+msgstr "Opción vela de 60 segundos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 收盘价"
-msgstr ""
+msgstr "Línea K de 30 minutos de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 收盘价"
-msgstr ""
+msgstr "Fondo Línea K de 30 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 收盘价"
-msgstr ""
+msgstr "Futuros Línea K de 30 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 收盘价"
-msgstr ""
+msgstr "Índice Línea K de 30 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 收盘价"
-msgstr ""
+msgstr "Opción Línea K de 30 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 收盘价"
-msgstr ""
+msgstr "Línea K de 5 minutos de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 收盘价"
-msgstr ""
+msgstr "Fondo Línea K de 5 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 收盘价"
-msgstr ""
+msgstr "Futuros Línea K de 5 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 收盘价"
-msgstr ""
+msgstr "Índice Línea K de 5 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 收盘价"
-msgstr ""
+msgstr "Opción Línea K de 5 minutos - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 收盘价"
-msgstr ""
+msgstr "Línea K diaria de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 收盘价"
-msgstr ""
+msgstr "Línea K diaria del fondo - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 收盘价"
-msgstr ""
+msgstr "Futuros línea K diaria - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 收盘价"
-msgstr ""
+msgstr "Índice diario K-line - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 收盘价"
-msgstr ""
+msgstr "Línea K del día de la opción - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 收盘价"
-msgstr ""
+msgstr "Línea K horaria de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 收盘价"
-msgstr ""
+msgstr "Fondo horario K-line - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 收盘价"
-msgstr ""
+msgstr "Futuros línea K horaria - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 收盘价"
-msgstr ""
+msgstr "Línea K de la hora del índice - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 收盘价"
-msgstr ""
+msgstr "Opción línea K horaria - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 收盘价"
-msgstr ""
+msgstr "Línea K mensual de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 收盘价"
-msgstr ""
+msgstr "Fondo mensual K-line - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 收盘价"
-msgstr ""
+msgstr "Futuros línea K mensual - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 收盘价"
-msgstr ""
+msgstr "Índice mensual K-line - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 收盘价"
-msgstr ""
+msgstr "Línea K semanal de acciones - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 收盘价"
-msgstr ""
+msgstr "Línea K semanal del fondo - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 收盘价"
-msgstr ""
+msgstr "Futuros línea K semanal - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 收盘价"
-msgstr ""
+msgstr "Línea K semanal del índice - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "close|%"
@@ -705,6 +732,8 @@ msgstr "close|%"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 15 minutos - Precio de cierre de la restauración -b: "
+"Después de la restauración f: Antes de la restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "adjustment"
@@ -713,62 +742,92 @@ msgstr "adjustment"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 15 minutos - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 60 segundos - precio de cierre de la restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 60 segundos - precio de cierre de la restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 30 minutos - Precio de cierre de la restauración -b: "
+"Después de la restauración f: Antes de la restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 30 minutos - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 5 minutos - Precio de cierre de la restauración -b: Después"
+" de la restauración f: Antes de la restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 5 minutos - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K diaria de stock - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K diaria del fondo - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K horaria de stock - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K horaria del fondo - precio de cierre de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K mensual de stock - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K mensual del fondo - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K semanal de stock - precio de cierre de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 复权收盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K semanal del fondo - precio de cierre de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "close_chg"
@@ -776,15 +835,15 @@ msgstr "close_chg"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 收盘价涨跌"
-msgstr ""
+msgstr "Línea K diaria de futuros: subida o bajada del precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 收盘价涨跌"
-msgstr ""
+msgstr "Línea K mensual de futuros: subida o bajada del precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 收盘价涨跌"
-msgstr ""
+msgstr "Línea K semanal de futuros: subida y bajada del precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "delf_settle"
@@ -792,15 +851,15 @@ msgstr "delf_settle"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 交割结算价"
-msgstr ""
+msgstr "Futuros línea K diaria - precio de liquidación de entrega"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 交割结算价"
-msgstr ""
+msgstr "Futuros mes K-line - precio de liquidación de entrega"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 交割结算价"
-msgstr ""
+msgstr "Futuros línea K semanal - precio de liquidación de entrega"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_amount"
@@ -809,6 +868,7 @@ msgstr "g_index_amount"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 成交额"
 msgstr ""
+"Cotizaciones diarias de la línea K del índice global: volumen de operaciones"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "global_index_daily"
@@ -820,7 +880,7 @@ msgstr "g_index_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 最低价"
-msgstr ""
+msgstr "Cotizaciones diarias de la línea K del índice global: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_close"
@@ -829,6 +889,7 @@ msgstr "g_index_close"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 收盘价"
 msgstr ""
+"Cotizaciones diarias de la línea K del índice global - Precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_high"
@@ -836,7 +897,7 @@ msgstr "g_index_high"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 最高价"
-msgstr ""
+msgstr "Cotizaciones diarias de la línea K del índice global: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_low"
@@ -849,6 +910,7 @@ msgstr "g_index_open"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 开盘价"
 msgstr ""
+"Cotizaciones diarias de la línea K del índice global - Precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_pct_change"
@@ -861,6 +923,8 @@ msgstr "g_index_pre_close"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 昨日收盘价"
 msgstr ""
+"Cotizaciones diarias de la línea K del índice global: precio de cierre de "
+"ayer"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_swing"
@@ -868,7 +932,7 @@ msgstr "g_index_swing"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 振幅"
-msgstr ""
+msgstr "Cotizaciones diarias de la línea K del índice global - Amplitud"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "g_index_vol"
@@ -877,6 +941,7 @@ msgstr "g_index_vol"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "全球指数日K线行情 - 成交量"
 msgstr ""
+"Cotizaciones diarias de la línea K del índice global: volumen de operaciones"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "high"
@@ -884,155 +949,155 @@ msgstr "high"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 最高价"
-msgstr ""
+msgstr "Stock K-line de 15 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 最高价"
-msgstr ""
+msgstr "Fondo de línea K de 15 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 最高价"
-msgstr ""
+msgstr "Futuros línea K de 15 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 最高价"
-msgstr ""
+msgstr "Índice Línea K de 15 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 最高价"
-msgstr ""
+msgstr "Opción Línea K de 15 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 最高价"
-msgstr ""
+msgstr "Línea K estándar de 60 segundos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 最高价"
-msgstr ""
+msgstr "Fondo de línea K de 60 segundos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 最高价"
-msgstr ""
+msgstr "Línea K de futuros de 60 segundos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 最高价"
-msgstr ""
+msgstr "Índice de línea K de 60 segundos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 最高价"
-msgstr ""
+msgstr "Opción vela de 60 segundos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 最高价"
-msgstr ""
+msgstr "Stock K-line de 30 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 最高价"
-msgstr ""
+msgstr "Fondo de línea K de 30 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 最高价"
-msgstr ""
+msgstr "Futuros línea K de 30 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 最高价"
-msgstr ""
+msgstr "Índice de línea K de 30 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 最高价"
-msgstr ""
+msgstr "Opción Línea K de 30 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 最高价"
-msgstr ""
+msgstr "Stock K-line de 5 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 最高价"
-msgstr ""
+msgstr "Fondo K-line de 5 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 最高价"
-msgstr ""
+msgstr "Futuros línea K de 5 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 最高价"
-msgstr ""
+msgstr "Índice de línea K de 5 minutos: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 最高价"
-msgstr ""
+msgstr "Opción Línea K de 5 minutos - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 最高价"
-msgstr ""
+msgstr "Stock diario K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 最高价"
-msgstr ""
+msgstr "Fondo diario K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 最高价"
-msgstr ""
+msgstr "Futuros diarios K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 最高价"
-msgstr ""
+msgstr "Índice diario K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 最高价"
-msgstr ""
+msgstr "Opción día K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 最高价"
-msgstr ""
+msgstr "Stock horario K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 最高价"
-msgstr ""
+msgstr "Fondo horario K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 最高价"
-msgstr ""
+msgstr "Futuros por hora K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 最高价"
-msgstr ""
+msgstr "Hora índice K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 最高价"
-msgstr ""
+msgstr "Opción línea K horaria - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 最高价"
-msgstr ""
+msgstr "Stock mensual K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 最高价"
-msgstr ""
+msgstr "Fondo mensual K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 最高价"
-msgstr ""
+msgstr "Futuros línea K mensual - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 最高价"
-msgstr ""
+msgstr "Índice mensual K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 最高价"
-msgstr ""
+msgstr "Stock semanal K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 最高价"
-msgstr ""
+msgstr "Fondo semanal K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 最高价"
-msgstr ""
+msgstr "Línea K semanal de futuros: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 最高价"
-msgstr ""
+msgstr "Índice semanal K-line - precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "high|%"
@@ -1041,66 +1106,98 @@ msgstr "high|%"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock línea K de 15 minutos - precio más alto de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Línea K de 15 minutos del fondo - el precio más alto de restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 60 segundos - precio más alto de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Fondo de línea K de 60 segundos - precio más alto de restauración - b: post-"
+"reanudación f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock línea K de 30 minutos - precio más alto de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 30 minutos - precio más alto de restauración - b: post-"
+"reanudación f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 5 minutos - precio más alto de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 5 minutos - precio más alto de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock diario Línea K - precio más alto de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Línea K diaria del fondo - precio más alto de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock horario K-line - precio más alto de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Fondo horario Línea K - precio más alto de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock mensual línea K - precio máximo de restauración - b: post-restauración"
+" f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Línea K mensual del fondo - precio más alto de la restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Stock semanal Línea K - precio más alto de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 复权最高价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K Semanal - Precio Más Alto de Restauración - b: Restauración "
+"Posterior f: Restauración Anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "low"
@@ -1108,155 +1205,155 @@ msgstr "low"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 最低价"
-msgstr ""
+msgstr "Stock K-line de 15 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 最低价"
-msgstr ""
+msgstr "Fondo Línea K de 15 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 最低价"
-msgstr ""
+msgstr "Futuros línea K a 15 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 最低价"
-msgstr ""
+msgstr "Índice Línea K de 15 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 最低价"
-msgstr ""
+msgstr "Opción Línea K de 15 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 最低价"
-msgstr ""
+msgstr "Línea K estándar de 60 segundos: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 最低价"
-msgstr ""
+msgstr "Fondo de línea K de 60 segundos: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 最低价"
-msgstr ""
+msgstr "Línea K de futuros de 60 segundos: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 最低价"
-msgstr ""
+msgstr "Índice de línea K de 60 segundos: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 最低价"
-msgstr ""
+msgstr "Opción vela de 60 segundos: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 最低价"
-msgstr ""
+msgstr "Stock K-line de 30 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 最低价"
-msgstr ""
+msgstr "Fondo de línea K de 30 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 最低价"
-msgstr ""
+msgstr "Futuros línea K de 30 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 最低价"
-msgstr ""
+msgstr "Índice Línea K de 30 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 最低价"
-msgstr ""
+msgstr "Opción Línea K de 30 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 最低价"
-msgstr ""
+msgstr "Stock K-line de 5 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 最低价"
-msgstr ""
+msgstr "Fondo K-line de 5 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 最低价"
-msgstr ""
+msgstr "Futuros línea K de 5 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 最低价"
-msgstr ""
+msgstr "Índice Línea K de 5 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 最低价"
-msgstr ""
+msgstr "Opción Línea K de 5 minutos - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 最低价"
-msgstr ""
+msgstr "Stock diario K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 最低价"
-msgstr ""
+msgstr "Fondo diario K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 最低价"
-msgstr ""
+msgstr "Futuros diarios K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 最低价"
-msgstr ""
+msgstr "Índice diario K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 最低价"
-msgstr ""
+msgstr "Opción día K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 最低价"
-msgstr ""
+msgstr "Stock horario K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 最低价"
-msgstr ""
+msgstr "Fondo horario K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 最低价"
-msgstr ""
+msgstr "Futuros por hora K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 最低价"
-msgstr ""
+msgstr "Hora índice K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 最低价"
-msgstr ""
+msgstr "Opción por hora K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 最低价"
-msgstr ""
+msgstr "Stock mensual K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 最低价"
-msgstr ""
+msgstr "Fondo mensual K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 最低价"
-msgstr ""
+msgstr "Futuros línea K mensual - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 最低价"
-msgstr ""
+msgstr "Índice mensual K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 最低价"
-msgstr ""
+msgstr "Stock semanal K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 最低价"
-msgstr ""
+msgstr "Fondo semanal K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 最低价"
-msgstr ""
+msgstr "Línea K semanal de futuros: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 最低价"
-msgstr ""
+msgstr "Índice semanal K-line - precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "low|%"
@@ -1265,66 +1362,103 @@ msgstr "low|%"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 15 minutos: el precio más bajo para la restauración de "
+"derechos - b: después de la restauración de derechos f: antes de la "
+"restauración de derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Línea K de 15 minutos del fondo - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 60 segundos - precio más bajo para la restauración de "
+"derechos - b: restauración posterior de derechos f: restauración anterior de"
+" derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Fondo de línea K de 60 segundos - precio más bajo de restauración - b: post-"
+"reanudación f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 30 minutos - el precio más bajo para la restauración de "
+"derechos - b: restauración posterior de derechos f: restauración previa de "
+"derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 30 minutos - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock K-line de 5 minutos: el precio más bajo para la restauración de "
+"derechos - b: después de la restauración de derechos f: antes de la "
+"restauración de derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 5 minutos - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock diario Línea K - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Línea K diaria del fondo - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock horario K-line - precio más bajo de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Fondo horario Línea K - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock mensual línea K - precio más bajo de restauración - b: post-"
+"restauración f: restauración previa"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Línea K mensual del fondo - precio más bajo de restauración - b: post-"
+"restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Stock semanal Línea K - el precio más bajo para la restauración de derechos "
+"- b: después de la restauración de derechos f: antes de la restauración de "
+"derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 复权最低价-b:后复权f:前复权"
 msgstr ""
+"Línea K Semanal del Fondo - Precio Mínimo de Restauración-b: Restauración "
+"Posterior f: Restauración Anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "net_asset"
@@ -1332,7 +1466,7 @@ msgstr "net_asset"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 资产净值"
-msgstr ""
+msgstr "Valor neto del fondo – Valor liquidativo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "oi"
@@ -1340,15 +1474,15 @@ msgstr "oi"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 持仓量（手）"
-msgstr ""
+msgstr "Futuros línea K diaria - interés abierto (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 持仓量（手）"
-msgstr ""
+msgstr "Futuros línea K mensual - interés abierto (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 持仓量（手）"
-msgstr ""
+msgstr "Futuros línea K semanal - interés abierto (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "oi_chg"
@@ -1356,15 +1490,15 @@ msgstr "oi_chg"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 持仓量变化"
-msgstr ""
+msgstr "Línea K diaria de futuros: cambios en el interés abierto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 持仓量变化"
-msgstr ""
+msgstr "Línea K mensual de futuros: cambios en el interés abierto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 持仓量变化"
-msgstr ""
+msgstr "Línea K semanal de futuros: cambios en el interés abierto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "open"
@@ -1372,155 +1506,155 @@ msgstr "open"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 开盘价"
-msgstr ""
+msgstr "Stock Línea K de 15 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 开盘价"
-msgstr ""
+msgstr "Fondo Línea K de 15 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 开盘价"
-msgstr ""
+msgstr "Futuros línea K de 15 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 开盘价"
-msgstr ""
+msgstr "Índice Línea K de 15 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 开盘价"
-msgstr ""
+msgstr "Opción Línea K de 15 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 开盘价"
-msgstr ""
+msgstr "Stock Línea K de 60 segundos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 开盘价"
-msgstr ""
+msgstr "Fondo K-line de 60 segundos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 开盘价"
-msgstr ""
+msgstr "Línea K de futuros de 60 segundos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 开盘价"
-msgstr ""
+msgstr "Índice de línea K de 60 segundos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 开盘价"
-msgstr ""
+msgstr "Opción vela de 60 segundos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 开盘价"
-msgstr ""
+msgstr "Stock Línea K de 30 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 开盘价"
-msgstr ""
+msgstr "Fondo Línea K de 30 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 开盘价"
-msgstr ""
+msgstr "Futuros línea K de 30 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 开盘价"
-msgstr ""
+msgstr "Índice Línea K de 30 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 开盘价"
-msgstr ""
+msgstr "Opción Línea K de 30 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 开盘价"
-msgstr ""
+msgstr "Stock Línea K de 5 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 开盘价"
-msgstr ""
+msgstr "Fondo Línea K de 5 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 开盘价"
-msgstr ""
+msgstr "Futuros Línea K de 5 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 开盘价"
-msgstr ""
+msgstr "Índice de línea K de 5 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 开盘价"
-msgstr ""
+msgstr "Opción Línea K de 5 minutos - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 开盘价"
-msgstr ""
+msgstr "Línea K diaria de acciones - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 开盘价"
-msgstr ""
+msgstr "Fondo diario K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 开盘价"
-msgstr ""
+msgstr "Futuros línea K diaria - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 开盘价"
-msgstr ""
+msgstr "Índice diario K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 开盘价"
-msgstr ""
+msgstr "Opción día K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 开盘价"
-msgstr ""
+msgstr "Línea K horaria de acciones - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 开盘价"
-msgstr ""
+msgstr "Fondo horario K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 开盘价"
-msgstr ""
+msgstr "Futuros por hora K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 开盘价"
-msgstr ""
+msgstr "Hora índice K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 开盘价"
-msgstr ""
+msgstr "Opción línea K horaria - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 开盘价"
-msgstr ""
+msgstr "Stock mensual K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 开盘价"
-msgstr ""
+msgstr "Fondo mensual K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 开盘价"
-msgstr ""
+msgstr "Futuros línea K mensual - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 开盘价"
-msgstr ""
+msgstr "Índice mensual K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 开盘价"
-msgstr ""
+msgstr "Línea K semanal de acciones - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 开盘价"
-msgstr ""
+msgstr "Fondo semanal K-line - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 开盘价"
-msgstr ""
+msgstr "Futuros línea K semanal - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 开盘价"
-msgstr ""
+msgstr "Índice semanal de la línea K - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "open|%"
@@ -1529,66 +1663,99 @@ msgstr "open|%"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 15 minutos - precio de apertura de la restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 15 minutos - precio de apertura de restitución de derechos "
+"- b: post-reanudación de derechos f: pre-reanudación de derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 60 segundos - precio de apertura de la restauración-b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 60 segundos - precio de apertura del restablecimiento de "
+"derechos - b: post-reanudación de derechos f: restablecimiento previo de "
+"derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock línea K de 30 minutos - precio de apertura de la restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 30 minutos - precio de apertura de restitución de derechos "
+"- b: post-reanudación de derechos f: pre-reanudación de derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock Línea K de 5 minutos - precio de apertura de la restauración - b: "
+"post-restauración f: restauración anterior"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo Línea K de 5 minutos - precio de apertura de restitución de derechos -"
+" b: post-reanudación de derechos f: pre-reanudación de derechos"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock diario Línea K - precio de apertura de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Línea K diaria del fondo - precio de apertura de la restauración de derechos"
+" - b: post-restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock horario línea K - precio de apertura de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo horario Línea K - precio de apertura de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock mensual línea K - precio de apertura de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo mensual línea K - precio de apertura de restauración de derechos - b: "
+"post-restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Stock semanal Línea K - precio de apertura de la restauración - b: post-"
+"restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 复权开盘价-b:后复权f:前复权"
 msgstr ""
+"Fondo semanal línea K - precio de apertura de restauración de derechos-b: "
+"post-restauración f: pre-restauración"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "settle"
@@ -1596,15 +1763,15 @@ msgstr "settle"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 结算价"
-msgstr ""
+msgstr "Futuros línea K diaria - precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 结算价"
-msgstr ""
+msgstr "Futuros línea K mensual - precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 结算价"
-msgstr ""
+msgstr "Futuros línea K semanal - precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "settle_chg"
@@ -1612,15 +1779,15 @@ msgstr "settle_chg"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 结算价涨跌"
-msgstr ""
+msgstr "Línea K diaria de futuros: subida y bajada del precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 结算价涨跌"
-msgstr ""
+msgstr "Línea K mensual de futuros: subida y bajada del precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 结算价涨跌"
-msgstr ""
+msgstr "Línea K semanal de futuros: subida y bajada del precio de liquidación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_amount"
@@ -1629,6 +1796,7 @@ msgstr "sw_amount"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 成交额 （万元）"
 msgstr ""
+"Línea K diaria del índice Shenwan: volumen de transacciones (10.000 yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_index_daily"
@@ -1640,7 +1808,7 @@ msgstr "sw_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 涨跌额"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: subida y bajada"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_close"
@@ -1648,7 +1816,7 @@ msgstr "sw_close"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 收盘价"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan - precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_float_mv"
@@ -1657,6 +1825,8 @@ msgstr "sw_float_mv"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 流通市值 （万元）"
 msgstr ""
+"Línea K diaria del índice Shenwan: valor de mercado circulante (10.000 "
+"yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_high"
@@ -1664,7 +1834,7 @@ msgstr "sw_high"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 最高价"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_low"
@@ -1672,7 +1842,7 @@ msgstr "sw_low"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 最低价"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_open"
@@ -1680,7 +1850,7 @@ msgstr "sw_open"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 开盘价"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan - precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_pb"
@@ -1688,7 +1858,7 @@ msgstr "sw_pb"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 市净率"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: relación precio-valor contable"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_pct_change"
@@ -1696,7 +1866,7 @@ msgstr "sw_pct_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 涨跌幅"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: aumento y disminución"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_pe"
@@ -1704,7 +1874,7 @@ msgstr "sw_pe"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 市盈率"
-msgstr ""
+msgstr "Línea K diaria del índice Shenwan: relación precio-beneficio"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_total_mv"
@@ -1713,6 +1883,7 @@ msgstr "sw_total_mv"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 总市值 （万元）"
 msgstr ""
+"Línea K diaria del índice Shenwan: valor total de mercado (10.000 yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "sw_vol"
@@ -1721,6 +1892,7 @@ msgstr "sw_vol"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "申万指数日K线 - 成交量 （万股）"
 msgstr ""
+"Línea K diaria del índice Shenwan: volumen de operaciones (10.000 acciones)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_avg_price"
@@ -1728,7 +1900,7 @@ msgstr "ths_avg_price"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 平均价"
-msgstr ""
+msgstr "Flush Index Daily K-Line - Precio promedio"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_index_daily"
@@ -1740,7 +1912,7 @@ msgstr "ths_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 最低价"
-msgstr ""
+msgstr "Flush Index Daily K-Line - Precio más bajo"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_close"
@@ -1748,7 +1920,7 @@ msgstr "ths_close"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 收盘价"
-msgstr ""
+msgstr "Flush Index Línea K diaria - Precio de cierre"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_float_mv"
@@ -1757,6 +1929,7 @@ msgstr "ths_float_mv"
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 流通市值 （万元）"
 msgstr ""
+"Flush Index Daily K-line - Valor de mercado de circulación (10.000 yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_high"
@@ -1764,7 +1937,7 @@ msgstr "ths_high"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 最高价"
-msgstr ""
+msgstr "Flush Index Daily K-Line - Precio más alto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_low"
@@ -1776,7 +1949,7 @@ msgstr "ths_open"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 开盘价"
-msgstr ""
+msgstr "Línea K diaria del índice Flush - Precio de apertura"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_pct_change"
@@ -1784,7 +1957,7 @@ msgstr "ths_pct_change"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 涨跌幅"
-msgstr ""
+msgstr "Línea K diaria del índice de descarga: aumento y disminución"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_total_mv"
@@ -1792,7 +1965,7 @@ msgstr "ths_total_mv"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 总市值 （万元）"
-msgstr ""
+msgstr "Flush Index Daily K-line - Valor total de mercado (10.000 yuanes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_turnover"
@@ -1800,7 +1973,7 @@ msgstr "ths_turnover"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 换手率"
-msgstr ""
+msgstr "Flush Index Daily K-Line - Tasa de rotación"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "ths_vol"
@@ -1808,7 +1981,7 @@ msgstr "ths_vol"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "同花顺指数日K线 - 成交量 （万股）"
-msgstr ""
+msgstr "Flush Index Daily K-line - Volumen de operaciones (10,000 acciones)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "total_netasset"
@@ -1816,7 +1989,7 @@ msgstr "total_netasset"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 累计资产净值"
-msgstr ""
+msgstr "Valor neto del fondo - Valor liquidativo acumulado"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "unit_nav"
@@ -1824,7 +1997,7 @@ msgstr "unit_nav"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金净值 - 单位净值"
-msgstr ""
+msgstr "Valor neto del fondo - Valor unitario neto"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "volume"
@@ -1832,152 +2005,153 @@ msgstr "volume"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票15分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Acciones Línea K de 15 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金15分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo K-line de 15 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货15分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Futuros Línea K de 15 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数15分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice Línea K de 15 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权15分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opción Línea K de 15 minutos - Volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票60秒K线 - 成交量 （手）"
-msgstr ""
+msgstr "Línea K de 60 segundos de acciones: volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金60秒K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo K-line de 60 segundos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货60秒K线 - 成交量 （手）"
 msgstr ""
+"Vela japonesa de 60 segundos de futuros: volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数60秒K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice de velas de 60 segundos: volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权60秒K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opción vela de 60 segundos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票30分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Acciones Línea K de 30 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金30分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo K-line de 30 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货30分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Futuros Línea K de 30 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数30分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice Línea K de 30 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权30分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opción Línea K de 30 minutos - Volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票5分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Acciones Línea K de 5 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金5分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo K-line de 5 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货5分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Futuros Línea K de 5 minutos - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数5分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice Línea K de 5 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权5分钟K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opción vela de 5 minutos - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票日K线 - 成交量 （手）"
-msgstr ""
+msgstr "Stock diario K-line - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金日K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo diario K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货日K线 - 成交量 （手）"
-msgstr ""
+msgstr "Futuros diarios K-line - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数日K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice diario K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权日K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opción diaria K-line - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票小时K线 - 成交量 （手）"
-msgstr ""
+msgstr "Línea K horaria de acciones - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金小时K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo horario K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货小时K线 - 成交量 （手）"
-msgstr ""
+msgstr "Futuros por hora K-line - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数小时K线 - 成交量 （手）"
-msgstr ""
+msgstr "Hora del índice K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期权小时K线 - 成交量 （手）"
-msgstr ""
+msgstr "Opciones por hora K-line - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票月K线 - 成交量 （手）"
-msgstr ""
+msgstr "Línea K mensual de acciones - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金月K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo mensual K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货月K线 - 成交量（手）"
-msgstr ""
+msgstr "Futuros línea K mensual - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数月K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice mensual K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "股票周K线 - 成交量 （手）"
-msgstr ""
+msgstr "Línea K semanal de acciones - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "基金周K线 - 成交量 （手）"
-msgstr ""
+msgstr "Fondo semanal K-line - volumen de operaciones (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "期货周K线 - 成交量（手）"
-msgstr ""
+msgstr "Futuros línea K semanal - volumen de negociación (lotes)"
 
 #: ../../source/references/datatypes/_generated/quotes.md
 msgid "指数周K线 - 成交量 （手）"
-msgstr ""
+msgstr "Índice semanal K-line - volumen de operaciones (lotes)"

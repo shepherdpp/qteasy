@@ -20,19 +20,24 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/static.md:6
 msgid "静态证券信息"
-msgstr ""
+msgstr "静的な有価証券情報"
 
 #: ../../source/references/datatypes/_generated/static.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **116** 条。"
 msgstr ""
+"このボリュームは、**ビジネス カテゴリ** ごとに `qteasy.datatypes.get_dtype_map()` から "
+"`docs/scripts/generate_datatype_catalog.py` によって生成され、合計 **116** のアイテムが含まれます。"
 
 #: ../../source/references/datatypes/_generated/static.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"手動で変更しないでください。組み込みタイプを更新した後、生成スクリプトを再実行してください。列の意味と推奨される読み方については、[リスト "
+"エントリ](../index.md) を参照してください。 `acquisition_type` / `table_name` "
+"は比較用リフィルのみです。"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "name"
@@ -80,7 +85,7 @@ msgstr "E"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 地域"
-msgstr ""
+msgstr "基本的な株式情報 - 地域"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "static"
@@ -108,7 +113,7 @@ msgstr "d"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 中签率"
-msgstr ""
+msgstr "新規上場情報 - 勝率"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "new_share"
@@ -124,7 +129,7 @@ msgstr "IDX"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基期"
-msgstr ""
+msgstr "インデックス基本情報 - 基準期間"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_basic"
@@ -136,7 +141,7 @@ msgstr "base_point"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 基点"
-msgstr ""
+msgstr "指数の基本情報 - ベーシスポイント"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "benchmark"
@@ -148,7 +153,7 @@ msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 业绩比较基准"
-msgstr ""
+msgstr "ファンド基本情報 - パフォーマンス比較ベンチマーク"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_basic"
@@ -160,7 +165,7 @@ msgstr "business_scope"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 经营范围"
-msgstr ""
+msgstr "会社概要 - 事業内容"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_company"
@@ -172,7 +177,7 @@ msgstr "c_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管费"
-msgstr ""
+msgstr "ファンド基本情報 - 保管手数料"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "call_put"
@@ -184,7 +189,7 @@ msgstr "OPT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 期权类型"
-msgstr ""
+msgstr "オプションの基本情報 - オプションの種類"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_basic"
@@ -196,7 +201,7 @@ msgstr "category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数类别"
-msgstr ""
+msgstr "インデックスの基本情報 - インデックスのカテゴリー"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "chairman"
@@ -204,7 +209,7 @@ msgstr "chairman"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 法人代表"
-msgstr ""
+msgstr "会社情報 - 法定代理人"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "city"
@@ -212,7 +217,7 @@ msgstr "city"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在城市"
-msgstr ""
+msgstr "会社情報 - 市"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "cnspell"
@@ -220,7 +225,7 @@ msgstr "cnspell"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 拼音缩写"
-msgstr ""
+msgstr "株式基本情報 - ピンイン略語"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "curr_type"
@@ -228,7 +233,7 @@ msgstr "curr_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易货币"
-msgstr ""
+msgstr "株式の基礎 - 取引通貨"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "custodian"
@@ -236,7 +241,7 @@ msgstr "custodian"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 托管人"
-msgstr ""
+msgstr "ファンド基本情報 - カストディアン"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "d_mode_desc"
@@ -248,7 +253,7 @@ msgstr "FT"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割方式说明"
-msgstr ""
+msgstr "先物基本情報～受け渡し方法解説～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "future_basic"
@@ -260,7 +265,7 @@ msgstr "d_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交割月份"
-msgstr ""
+msgstr "先物基本情報～受渡月～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "delist_date"
@@ -268,19 +273,19 @@ msgstr "delist_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 退市日期"
-msgstr ""
+msgstr "株式基本情報 - 上場廃止日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 退市日期"
-msgstr ""
+msgstr "ファンド基本情報 - 上場廃止日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最后交易日期"
-msgstr ""
+msgstr "先物基本情報 - 最終取引日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后交易日期"
-msgstr ""
+msgstr "オプション基本情報 - 最終取引日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "desc"
@@ -288,7 +293,7 @@ msgstr "desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 描述"
-msgstr ""
+msgstr "索引 基本情報 - 説明"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "due_date"
@@ -296,7 +301,7 @@ msgstr "due_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 到期日期"
-msgstr ""
+msgstr "ファンドの基本情報 – 満期日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "duration_year"
@@ -304,7 +309,7 @@ msgstr "duration_year"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续期"
-msgstr ""
+msgstr "ファンドの基本情報 - 期間"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "email"
@@ -312,7 +317,7 @@ msgstr "email"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 电子邮件"
-msgstr ""
+msgstr "会社情報 - メール"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "employees"
@@ -320,7 +325,7 @@ msgstr "employees"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 员工人数"
-msgstr ""
+msgstr "会社情報 - 従業員数"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "enname"
@@ -328,7 +333,7 @@ msgstr "enname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 英文全称"
-msgstr ""
+msgstr "基本的な株式情報 - 正式な英語名"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exchange"
@@ -336,15 +341,15 @@ msgstr "exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 交易所代码"
-msgstr ""
+msgstr "基本的な株式情報 - 為替コード"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易市场"
-msgstr ""
+msgstr "先物取引市場の基本情報"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 交易市场"
-msgstr ""
+msgstr "オプション取引市場の基本情報"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_price"
@@ -352,7 +357,7 @@ msgstr "exercise_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权价格"
-msgstr ""
+msgstr "オプションの基本情報 - 権利行使価格"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exercise_type"
@@ -360,7 +365,7 @@ msgstr "exercise_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 行权方式"
-msgstr ""
+msgstr "オプションの基礎知識～練習方法～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_date"
@@ -368,7 +373,7 @@ msgstr "exp_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 终止日期"
-msgstr ""
+msgstr "インデックスの基本情報 - 有効期限"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "exp_return"
@@ -376,7 +381,7 @@ msgstr "exp_return"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 预期收益率"
-msgstr ""
+msgstr "ファンドの基本情報 - 期待収益率"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "found_date"
@@ -384,7 +389,7 @@ msgstr "found_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 成立日期"
-msgstr ""
+msgstr "ファンドの基本情報 - 設立日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fullname"
@@ -392,7 +397,7 @@ msgstr "fullname"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票全称"
-msgstr ""
+msgstr "株式基本情報 - 完全銘柄名"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_name"
@@ -400,7 +405,7 @@ msgstr "fund_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 简称"
-msgstr ""
+msgstr "ファンド基本情報 - 略称"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fund_type"
@@ -408,7 +413,7 @@ msgstr "fund_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资类型"
-msgstr ""
+msgstr "ファンド基本情報 - 投資タイプ"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "funds"
@@ -416,7 +421,7 @@ msgstr "funds"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 募集资金（亿元）"
-msgstr ""
+msgstr "新規株式上場情報 - 資金調達（1億元）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "fut_code"
@@ -424,7 +429,7 @@ msgstr "fut_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约产品代码"
-msgstr ""
+msgstr "先物基本情報～約定商品コード～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "index_type"
@@ -432,7 +437,7 @@ msgstr "index_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 指数风格"
-msgstr ""
+msgstr "インデックスの基本情報 - インデックスのスタイル"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "industry"
@@ -440,7 +445,7 @@ msgstr "industry"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 所属行业"
-msgstr ""
+msgstr "株式基本情報 - 業界"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_pe"
@@ -448,7 +453,7 @@ msgstr "initial_pe"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行市盈率"
-msgstr ""
+msgstr "新規株式上場情報 発行株価収益率"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "initial_price"
@@ -456,7 +461,7 @@ msgstr "initial_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行价格"
-msgstr ""
+msgstr "新規株式上場情報 - 発行価格"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "introduction"
@@ -464,7 +469,7 @@ msgstr "introduction"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司介绍"
-msgstr ""
+msgstr "会社情報 - 会社紹介"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "invest_type"
@@ -472,7 +477,7 @@ msgstr "invest_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 投资风格"
-msgstr ""
+msgstr "ファンド基本情報 – 投資スタイル"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "IPO_amount"
@@ -480,7 +485,7 @@ msgstr "IPO_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 发行总量（万股）"
-msgstr ""
+msgstr "新規株式上場情報 発行済株式総数（10,000株）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ipo_date"
@@ -488,7 +493,7 @@ msgstr "ipo_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行日期"
-msgstr ""
+msgstr "IPO 情報 - オンライン発行日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "is_hs"
@@ -496,7 +501,7 @@ msgstr "is_hs"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 是否沪深港通标的"
-msgstr ""
+msgstr "株式の基本情報 - 上海・深圳・香港ストックコネクトの対象かどうか"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_amount"
@@ -504,7 +509,7 @@ msgstr "issue_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行份额(亿)"
-msgstr ""
+msgstr "ファンドの基本情報 発行済株式数（1億株）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "issue_date"
@@ -512,11 +517,11 @@ msgstr "issue_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 发行日期"
-msgstr ""
+msgstr "ファンドの基本情報 - 発行日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上市日期"
-msgstr ""
+msgstr "IPO情報 - 上場日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_ddate"
@@ -524,11 +529,11 @@ msgstr "last_ddate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最后交割日"
-msgstr ""
+msgstr "先物基本情報～最終受渡し日～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后交割日期"
-msgstr ""
+msgstr "オプションの基本情報 - 最終納期"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "last_edate"
@@ -536,7 +541,7 @@ msgstr "last_edate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最后行权日期"
-msgstr ""
+msgstr "オプションに関する基本情報 - 最終行使日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "limit_amount"
@@ -544,7 +549,7 @@ msgstr "limit_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 个人申购上限（万股）"
-msgstr ""
+msgstr "新規株式上場情報 個人募集枠（10,000株）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_date"
@@ -552,23 +557,23 @@ msgstr "list_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市日期"
-msgstr ""
+msgstr "株式基本情報 - 上場日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 上市时间"
-msgstr ""
+msgstr "ファンド基本情報 - 上場時期"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 上市日期"
-msgstr ""
+msgstr "先物基本情報～上場日～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 发布日期"
-msgstr ""
+msgstr "インデックス 基本情報 - 発売日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 开始交易日期"
-msgstr ""
+msgstr "オプション基本情報 - 取引開始日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_price"
@@ -576,7 +581,7 @@ msgstr "list_price"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 挂牌基准价"
-msgstr ""
+msgstr "オプションの基本情報 - 出品基本価格"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "list_status"
@@ -584,7 +589,7 @@ msgstr "list_status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 上市状态 L上市 D退市 P暂停上市"
-msgstr ""
+msgstr "株式基本情報 - 上場状況 L 上場 D 上場廃止 P 上場停止"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "m_fee"
@@ -592,7 +597,7 @@ msgstr "m_fee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理费"
-msgstr ""
+msgstr "ファンドの基本情報 - 運用手数料"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "main_business"
@@ -600,7 +605,7 @@ msgstr "main_business"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 主要业务及产品"
-msgstr ""
+msgstr "会社情報 - 主な事業と製品"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "management"
@@ -608,7 +613,7 @@ msgstr "management"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 管理人"
-msgstr ""
+msgstr "ファンド基本情報 - マネージャー"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "manager"
@@ -616,7 +621,7 @@ msgstr "manager"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 总经理"
-msgstr ""
+msgstr "会社情報 - 部長"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market"
@@ -624,15 +629,15 @@ msgstr "market"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 市场类型"
-msgstr ""
+msgstr "株式の基本情報 - 市場の種類"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - E场内O场外"
-msgstr ""
+msgstr "ファンドの基本情報 - E オンサイト O オフサイト"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 市场"
-msgstr ""
+msgstr "指数基本情報 - マーケット"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "market_amount"
@@ -640,7 +645,7 @@ msgstr "market_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "新股上市信息 - 上网发行总量（万股）"
-msgstr ""
+msgstr "新規株式上場情報 - インターネット発行総額（10,000株）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "maturity_date"
@@ -648,7 +653,7 @@ msgstr "maturity_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 到期日"
-msgstr ""
+msgstr "オプションの基本 - 有効期限"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_amount"
@@ -656,7 +661,7 @@ msgstr "min_amount"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 起点金额(万元)"
-msgstr ""
+msgstr "ファンド基本情報 - 開始金額（10,000元）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "min_price_chg"
@@ -664,7 +669,7 @@ msgstr "min_price_chg"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 最小价格波幅"
-msgstr ""
+msgstr "オプションの基本 - 最小価格ボラティリティ"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "multiplier"
@@ -672,15 +677,15 @@ msgstr "multiplier"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 合约乘数(只适用于国债期货、指数期货)"
-msgstr ""
+msgstr "先物に関する基本情報 - 約定乗数（国債先物および指数先物のみに適用）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 中文简称"
-msgstr ""
+msgstr "先物基本情報 - 中国語略語"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约名称"
-msgstr ""
+msgstr "オプションの基本情報 - 契約名"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "office"
@@ -688,7 +693,7 @@ msgstr "office"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 办公室"
-msgstr ""
+msgstr "会社情報 - オフィス"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_code"
@@ -696,7 +701,7 @@ msgstr "opt_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 标的合约代码"
-msgstr ""
+msgstr "オプションの基本情報 - 基礎となる契約コード"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "opt_type"
@@ -704,7 +709,7 @@ msgstr "opt_type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约类型"
-msgstr ""
+msgstr "オプションの基本情報 - 契約種類"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "p_value"
@@ -712,7 +717,7 @@ msgstr "p_value"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 面值"
-msgstr ""
+msgstr "ファンド基本情報 - 額面金額"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "per_unit"
@@ -720,11 +725,11 @@ msgstr "per_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易单位(每手)"
-msgstr ""
+msgstr "先物基本情報 - 取引単位（1ロットあたり）"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 合约单位"
-msgstr ""
+msgstr "オプションの基本情報 - 契約単位"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "province"
@@ -732,7 +737,7 @@ msgstr "province"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 所在省份"
-msgstr ""
+msgstr "会社情報 - 州"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "publisher"
@@ -740,7 +745,7 @@ msgstr "publisher"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 发布方"
-msgstr ""
+msgstr "インデックスの基本情報 - 出版社"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "purc_startdate"
@@ -748,7 +753,7 @@ msgstr "purc_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常申购起始日"
-msgstr ""
+msgstr "ファンド基本情報 - 毎日の購読開始日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit"
@@ -756,11 +761,11 @@ msgstr "quote_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 报价单位"
-msgstr ""
+msgstr "先物基本情報 - 気配単位"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 报价单位"
-msgstr ""
+msgstr "オプションの基本情報 - 見積単位"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "quote_unit_desc"
@@ -768,7 +773,7 @@ msgstr "quote_unit_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 最小报价单位说明"
-msgstr ""
+msgstr "先物基礎知識～最低建値単位のご説明～"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "redm_startdate"
@@ -776,7 +781,7 @@ msgstr "redm_startdate"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 日常赎回起始日"
-msgstr ""
+msgstr "ファンド基本情報 - 毎日の償還開始日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "reg_capital"
@@ -784,7 +789,7 @@ msgstr "reg_capital"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册资本"
-msgstr ""
+msgstr "会社情報 - 資本金"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "s_month"
@@ -792,7 +797,7 @@ msgstr "s_month"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期权基本信息 - 结算月"
-msgstr ""
+msgstr "オプションの基本 - 決済月"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "secretary"
@@ -800,7 +805,7 @@ msgstr "secretary"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 董秘"
-msgstr ""
+msgstr "会社情報 - 取締役秘書"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "setup_date"
@@ -808,7 +813,7 @@ msgstr "setup_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 注册日期"
-msgstr ""
+msgstr "会社情報 - 登録日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "status"
@@ -816,7 +821,7 @@ msgstr "status"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 存续状态D摘牌 I发行 L已上市"
-msgstr ""
+msgstr "ファンドの基本情報 - 存在状況 D 上場廃止 I 発行済 L 上場済"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_name"
@@ -824,7 +829,7 @@ msgstr "stock_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票名称"
-msgstr ""
+msgstr "株式基本情報 - 銘柄名"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "stock_symbol"
@@ -832,7 +837,7 @@ msgstr "stock_symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票基本信息 - 股票代码"
-msgstr ""
+msgstr "株式基本情報 - 銘柄コード"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw|%"
@@ -840,7 +845,7 @@ msgstr "sw|%"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类筛选 - %"
-msgstr ""
+msgstr "神湾産業分類スクリーニング - %"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "selection"
@@ -856,7 +861,7 @@ msgstr "sw_industry_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 行业代码"
-msgstr ""
+msgstr "神湾産業分類 - 産業コード"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_industry_name"
@@ -864,7 +869,7 @@ msgstr "sw_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 名称"
-msgstr ""
+msgstr "神湾産業分類 - 名前"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level"
@@ -872,7 +877,7 @@ msgstr "sw_level"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 级别"
-msgstr ""
+msgstr "神湾産業分類 - レベル"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_level|%"
@@ -884,7 +889,7 @@ msgstr "sw_parent_code"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 上级行业代码"
-msgstr ""
+msgstr "神湾産業分類 - 上位産業規範"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_published"
@@ -892,7 +897,7 @@ msgstr "sw_published"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 是否发布"
-msgstr ""
+msgstr "神湾産業分類 - 公開するかどうか"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "sw_source"
@@ -900,7 +905,7 @@ msgstr "sw_source"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "申万行业分类 - 分类版本"
-msgstr ""
+msgstr "神湾産業分類 - 分類バージョン"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "symbol"
@@ -908,7 +913,7 @@ msgstr "symbol"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易标识"
-msgstr ""
+msgstr "先物に関する基本情報 - 取引識別"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_category"
@@ -916,7 +921,7 @@ msgstr "ths_category"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "股票同花顺行业分类"
-msgstr ""
+msgstr "株式フラッシュの産業分類"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_weight"
@@ -928,7 +933,7 @@ msgstr "ths_industry_count"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 股票数量"
-msgstr ""
+msgstr "水洗業界分類の基本情報 - 株式数"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_index_basic"
@@ -940,7 +945,7 @@ msgstr "ths_industry_date"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 发布日期"
-msgstr ""
+msgstr "水洗産業分類の基本情報 - 発売日"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_exchange"
@@ -948,7 +953,7 @@ msgstr "ths_industry_exchange"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 交易所"
-msgstr ""
+msgstr "水洗業種分類の基本情報 - 取引所"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "ths_industry_name"
@@ -956,7 +961,7 @@ msgstr "ths_industry_name"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "同花顺行业分类基本信息 - 行业名称"
-msgstr ""
+msgstr "水洗業種分類の基本情報 - 業種名"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_time_desc"
@@ -964,7 +969,7 @@ msgstr "trade_time_desc"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易时间说明"
-msgstr ""
+msgstr "先物基本情報 - 取引時間の説明"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trade_unit"
@@ -972,7 +977,7 @@ msgstr "trade_unit"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "期货基本信息 - 交易计量单位"
-msgstr ""
+msgstr "先物に関する基本情報 - 取引測定単位"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "trustee"
@@ -980,7 +985,7 @@ msgstr "trustee"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 受托人"
-msgstr ""
+msgstr "ファンド基本情報 - 受託者"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "type"
@@ -988,7 +993,7 @@ msgstr "type"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "基金基本信息 - 基金类型"
-msgstr ""
+msgstr "ファンドの基本情報 – ファンドの種類"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "website"
@@ -996,7 +1001,7 @@ msgstr "website"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "公司信息 - 公司主页"
-msgstr ""
+msgstr "会社情報 - 会社ホームページ"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "weight_rule"
@@ -1004,4 +1009,4 @@ msgstr "weight_rule"
 
 #: ../../source/references/datatypes/_generated/static.md
 msgid "指数基本信息 - 加权方式"
-msgstr ""
+msgstr "インデックスの基本情報 - 重み付け方法"

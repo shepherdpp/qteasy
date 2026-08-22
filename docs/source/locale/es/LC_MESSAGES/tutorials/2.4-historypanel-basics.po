@@ -20,19 +20,25 @@ msgstr ""
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:1
 msgid "HistoryPanel 数据面板基础操作"
-msgstr ""
+msgstr "HistoryPanel Operaciones básicas del panel de datos"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:3
 msgid "在完成前两章「入门」和「获取并管理金融数据」之后，我们已经可以："
 msgstr ""
+"Después de completar los dos primeros capítulos \"Cómo comenzar\" y "
+"\"Obtener y administrar datos financieros\", ya podemos:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:5
 msgid "在本地配置好数据源并下载所需的历史数据；"
 msgstr ""
+"Configure la fuente de datos localmente y descargue los datos históricos "
+"requeridos;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:6
 msgid "使用 `get_history_data()` 或 `get_kline()` 获取价格、成交量等 **History** 行情。"
 msgstr ""
+"Utilice `get_history_data()` o `get_kline()` para obtener cotizaciones "
+"**Historial** como precio, volumen de operaciones, etc."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:8
 #, python-format
@@ -42,52 +48,81 @@ msgid ""
 "`get_static_data`。详见 [DataType 概念章](../manage_data/02.%20datatypes.md) 与 [教程"
 " 2.0](2.0-get-data.md)。"
 msgstr ""
+"**Límite**: `HistoryPanel` **Solo come la forma del Historial** (tiempo × "
+"objetivo). Utilice `get_reference_data` como referencia, como macro, fondos "
+"en dirección norte, `close-000300.SH` (devuelve series de tiempo, no el "
+"\"objetivo de tercera dimensión\" del panel); utilice `get_static_data` para"
+" estática, como industria, fecha de cotización, etc. Para obtener más "
+"detalles, consulte el [DataType Capítulo "
+"conceptual](../manage_data/02.%20datatypes.md) y el [Tutorial 2.0](2.0-get-"
+"data.md)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:10
 msgid ""
 "接下来，我们将通过本篇及后续章节，重点介绍 `HistoryPanel` "
 "对象的使用方法。我们将通过本章掌握**`HistoryPanel`**的基本属性与基本操作，再进入更加进阶的量化因子分析与可视化工作流。"
 msgstr ""
+"A continuación, nos centraremos en el uso del objeto `HistoryPanel` en este "
+"capítulo y en los siguientes. Dominaremos las propiedades básicas y las "
+"operaciones básicas de **`HistoryPanel`** a lo largo de este capítulo y "
+"luego ingresaremos a un flujo de trabajo de visualización y análisis de "
+"factores cuantitativos más avanzados."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:12
 msgid ""
 "**关于 `HistoryPanel`**：`HistoryPanel` 是 `qteasy` "
 "提供的**三维历史数据容器**（它将不同投资标的（shares）在一段历史时期内（hdates）的多种不同历史数据指标(htypes)集中在一个三维ndarray中），提供众多API供取数之后统一管理、切片、扩列与对齐，以及金融统计分析。"
 msgstr ""
+"**Acerca de `HistoryPanel`**: `HistoryPanel` es un **contenedor de datos "
+"históricos tridimensionales** proporcionado por `qteasy` (recopila una "
+"variedad de diferentes indicadores de datos históricos (htypes) de "
+"diferentes objetivos de inversión (acciones) en un período histórico "
+"(hdates) en un ndarray tridimensional). Proporciona numerosas API para "
+"gestión unificada, segmentación, expansión de columnas y alineación después "
+"de la recuperación de datos, así como análisis estadístico financiero."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:14
 msgid "**本篇覆盖**："
-msgstr ""
+msgstr "**Este artículo cubre**:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:15
 msgid "创建面板并查看结构（`shape` / `shares` / `hdates` / `htypes`）；"
 msgstr ""
+"Crear paneles y ver estructuras (`shape` / `shares` / `hdates` / `htypes`);"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:16
 msgid ""
 "切片与筛选（推荐 `subpanel` / `loc` / 列访问；旧名 `slice` / `segment` / `isegment` "
 "仍可用但已弃用）；"
 msgstr ""
+"División y filtrado (recomendado `subpanel` / `loc` / acceso a columnas; los"
+" nombres antiguos `slice` / `segment` / `isegment` todavía están disponibles"
+" pero están obsoletos);"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:17
 msgid "用 `drop` / `rename` 删除或重命名标的与指标标签；"
 msgstr ""
+"Utilice `drop` / `rename` para eliminar o cambiar el nombre de las etiquetas"
+" de objetivo e indicador;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:18
 msgid "列读写与 `assign` 扩列，以及简单列表达式 `expr`；"
 msgstr ""
+"Lectura y escritura de columnas y expansión de columnas con `assign` y "
+"expresiones de columna simples `expr`;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:19
 msgid "缺失填充（`ffill` / `bfill` / `dropna`）与可变性约定；"
 msgstr ""
+"Falta relleno (`ffill` / `bfill` / `dropna`) y convenciones de mutabilidad;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:20
 msgid "`align_to` 对齐两块面板；"
-msgstr ""
+msgstr "`align_to` Alinear dos paneles;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:21
 msgid "与 `DataFrame` 互转。"
-msgstr ""
+msgstr "Convierta a `DataFrame`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:23
 msgid ""
@@ -97,92 +132,133 @@ msgid ""
 "Operator](2.5-historypanel-data-analysis.md#从-historypanel-研究到-strategy--"
 "operator迁移路径)。"
 msgstr ""
+"**Nota**: Para conocer la tasa de rendimiento, el indicador de línea K, la "
+"máscara `where`, la prueba aproximada combinada, el backtest completo, etc.,"
+" consulte [Usar HistoryPanel para operar y analizar datos históricos] "
+"(2.5-historypanel-data-analysis.md); el backtest completo se entrega a "
+"`Operator` / `Backtester`, y la ruta de migración se puede encontrar en [De "
+"HistoryPanel Investigación a Estrategia / Operator](2.5-historypanel-data-"
+"analysis.md# Ruta de migración de -historypanel-research a -strategy--"
+"operator)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:25
 msgid ""
 "更完整的 API 说明可参考 [HistoryPanel API 参考](../api/HistoryPanel.rst)（含「列属性访问、比较与 "
 "``loc``」与 ``where`` 专节）。"
 msgstr ""
+"Para obtener una descripción más completa de la API, consulte [HistoryPanel "
+"Referencia de API](../api/HistoryPanel.rst) (incluida la sección \"Acceso a "
+"atributos de columna, comparación y ``loc``」与 ``where``\")."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:29
 msgid "数据检查——创建您的第一块 HistoryPanel"
-msgstr ""
+msgstr "Inspección de datos: crea tu primer bloque HistoryPanel"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:31
 msgid ""
 "若您已经完成了 [获取并管理金融数据](2.0-get-data.md) 的学习，并下载了**最小数据集**，可按本节 checklist "
 "确认：本地数据已就绪，且您能创建并「看见」一块 `HistoryPanel`。"
 msgstr ""
+"Si completó el estudio de [Obtener y administrar datos financieros] "
+"(2.0-get-data.md) y descargó el **conjunto de datos mínimo**, puede "
+"confirmar de acuerdo con la lista de verificación de esta sección: los datos"
+" locales están listos y puede crear y \"ver\" una parte de `HistoryPanel`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:33
 msgid ""
 "**前置条件**：已配置好 `tushare_token`，且已下载 [最小数据集清单](2.0-get-data.md#最小数据集清单供-25-使用)"
 " 中的表（至少含 `index_daily` 或 `stock_daily`）。"
 msgstr ""
+"**Requisito previo**: se ha configurado `tushare_token` y se han descargado "
+"las tablas en la [Lista de conjuntos de datos mínimos] (2.0-get-"
+"data.md#Lista de conjuntos de datos mínimos para -25 usos) (que contienen al"
+" menos `index_daily` o `stock_daily`)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:35
 msgid "**本节目标**："
-msgstr ""
+msgstr "**Objetivo de esta sección**:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:37
 msgid "用 `get_kline(..., as_panel=True)` 得到 `HistoryPanel`"
-msgstr ""
+msgstr "Utilice `get_kline(..., as_panel=True)` para obtener `HistoryPanel`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:38
 msgid "打印 `shape` / `shares` / `htypes` 并理解三维含义"
 msgstr ""
+"Imprima `shape` / `shares` / `htypes` y comprenda el significado "
+"tridimensional"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:39
 msgid "用 `print(hp)` 看见「多 DataFrame 堆叠」的直观输出"
 msgstr ""
+"Utilice `print(hp)` para ver el resultado intuitivo de \"Apilamiento de "
+"múltiples marcos de datos\""
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:58
 msgid ""
 "当上面的代码能正常打印 `shape` 与面板内容时，说明您下载的数据已经可以完成本篇后续操作。下文各节默认沿用同一块 `hp`（双标的、2023 年 "
 "1 月），以减少重复取数。"
 msgstr ""
+"Cuando el código anterior puede imprimir `shape` y el contenido del panel "
+"normalmente, significa que los datos que descargó pueden completar las "
+"operaciones posteriores de este artículo. Las siguientes secciones utilizan "
+"el mismo bloque `hp` (con doble etiqueta, enero de 2023) de forma "
+"predeterminada para reducir la duplicación de números."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:60
 msgid ""
 "**注**：若 `get_kline` 返回时间长度很短或报错，请先回到 [获取并管理金融数据](2.0-get-data.md) "
 "补齐数据。因子计算、组合粗对比等请进入 [玩数据与因子分析](2.5-historypanel-data-analysis.md)。"
 msgstr ""
+"**Nota**: Si el tiempo de devolución de `get_kline` es muy corto o se "
+"informa un error, regrese a [Obtener y administrar datos financieros] "
+"(2.0-get-data.md) para completar los datos. Para cálculos de factores, "
+"comparaciones aproximadas combinadas, etc., ingrese [Datos de reproducción y"
+" análisis de factores] (2.5-historypanel-data-analysis.md)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:62
 msgid "可运行出图预览见仓库根目录 `examples/historypanel_basic_plot.py`（单标的全年示例，参数可按本节改写）。"
 msgstr ""
+"Para obtener una vista previa del dibujo ejecutable, consulte el directorio "
+"raíz del almacén `examples/historypanel_basic_plot.py` (un ejemplo de un año"
+" completo de una oferta única, los parámetros se pueden reescribir de "
+"acuerdo con esta sección)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:66
 msgid "三维结构：HistoryPanel 是什么"
-msgstr ""
+msgstr "Estructura tridimensional: ¿Qué es HistoryPanel?"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:68
 msgid "了解如何创建面板之后，接下来需要建立对数据结构的心智模型。"
 msgstr ""
+"Una vez que comprenda cómo crear un panel, lo siguiente que deberá hacer es "
+"crear un modelo mental de la estructura de datos."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:70
 msgid "`HistoryPanel` 在内存中对应一个三维 `numpy.ndarray`，三条轴依次为："
 msgstr ""
+"`HistoryPanel` corresponde a un `numpy.ndarray` tridimensional en la "
+"memoria, y los tres ejes son:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "轴"
-msgstr ""
+msgstr "eje"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "含义"
-msgstr ""
+msgstr "significado"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "常用属性"
-msgstr ""
+msgstr "Propiedades comunes"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "第 0 维"
-msgstr ""
+msgstr "Dimensión 0"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "投资标的（证券代码等）"
-msgstr ""
+msgstr "Objetivo de inversión (código de seguridad, etc.)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`shares`"
@@ -190,11 +266,11 @@ msgstr "`shares`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "第 1 维"
-msgstr ""
+msgstr "Dimensión 1"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "时间（历史日期或时刻）"
-msgstr ""
+msgstr "Hora (fecha o momento histórico)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`hdates`"
@@ -202,11 +278,11 @@ msgstr "`hdates`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "第 2 维"
-msgstr ""
+msgstr "Dimensión 2"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "数据类型（如 `open`、`close`、`vol`）"
-msgstr ""
+msgstr "Tipo de datos (como `open`, `close`, `vol`)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`htypes`"
@@ -218,42 +294,62 @@ msgid ""
 "数据类型数**，与上表顺序一致。可以把它理解为：许多张「时间 × "
 "指标」的二维表，在**标的**方向上再叠一层；同一面板内，各标的、各指标在时间上是对齐的。"
 msgstr ""
+"`hp.shape` devuelve **`(M, L, N)`**, correspondiente a **número de acciones "
+"× duración × número de tipos de datos**, que es coherente con el orden de la"
+" tabla anterior. Puede entenderse como: muchas tablas bidimensionales de "
+"\"tiempo × indicador\", apiladas en una capa en la dirección del objetivo; "
+"en el mismo panel, cada meta y cada indicador están alineados en el tiempo."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:80
 msgid "打印 `hp` 可以直观地看到它的数据结构——每只股票一张小表，整块面板再把这些表堆叠起来："
 msgstr ""
+"Imprima `hp` y podrá ver intuitivamente su estructura de datos: una pequeña "
+"tabla para cada acción y todo el panel apila estas tablas:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:112
 msgid "与 [获取并管理金融数据](2.0-get-data.md) 中默认的 **`dict[str, DataFrame]`** 相比："
 msgstr ""
+"En comparación con el **`dict[str, DataFrame]`** predeterminado en [Obtener "
+"y administrar datos financieros](2.0-get-data.md):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:114
 msgid "需要**快速查看单标的**时，用 `get_history_data` 默认返回的 dict 很方便；"
 msgstr ""
+"Cuando necesite **ver rápidamente** una sola etiqueta, es muy conveniente "
+"usar el dict devuelto por `get_history_data` de forma predeterminada;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:115
 msgid ""
 "需要**多标的、多指标统一切片与运算**时，用 `HistoryPanel`（`as_panel=True` / "
 "`as_data_frame=False`）更合适。"
 msgstr ""
+"Cuando se requiere un corte unificado y un cálculo de múltiples estándares y"
+" múltiples indicadores, es más apropiado usar `HistoryPanel` "
+"(`as_panel=True` / `as_data_frame=False`)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:117
 msgid ""
 "**提示**：空面板、单标的、单列指标都是合法边界；`hp.values` 才是底层 `(M, L, N)` 数组，切片操作通常返回新的 "
 "`HistoryPanel`，而不是裸 `ndarray`。"
 msgstr ""
+"**Consejo**: Los paneles vacíos, los indicadores de una sola etiqueta y de "
+"una sola columna son límites legales; `hp.values` es la matriz `(M, L, N)` "
+"subyacente, y las operaciones de corte generalmente devuelven un nuevo "
+"`HistoryPanel`, no un `ndarray` simple."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:121
 msgid "获得 HistoryPanel 的三种方式"
-msgstr ""
+msgstr "Tres formas de obtener HistoryPanel"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:123
 msgid "创建入口建议在本节省一次理清，后文不再重复。"
 msgstr ""
+"Se recomienda aclarar la creación de la entrada en este artículo y no "
+"repetirlo más adelante."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "方式"
-msgstr ""
+msgstr "Forma"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "API"
@@ -261,11 +357,11 @@ msgstr "API"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "适用场景"
-msgstr ""
+msgstr "Escenarios aplicables"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "A（K线数据）"
-msgstr ""
+msgstr "A (datos de línea K)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`qt.get_kline(..., as_panel=True)`"
@@ -273,11 +369,11 @@ msgstr "`qt.get_kline(..., as_panel=True)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "标准 OHLCV，教程主线"
-msgstr ""
+msgstr "Estándar OHLCV, principal línea de tutoriales"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "B（其他数据）"
-msgstr ""
+msgstr "B (otros datos)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`qt.get_history_data(..., as_data_frame=False)`"
@@ -285,11 +381,11 @@ msgstr "`qt.get_history_data(..., as_data_frame=False)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "自定义 `htype_names`"
-msgstr ""
+msgstr "Personalizado ⟦CÓDIGO0⟧"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "C（教学演示）"
-msgstr ""
+msgstr "C (demostración didáctica)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`HistoryPanel(values, levels, rows, columns)`"
@@ -297,7 +393,7 @@ msgstr "`HistoryPanel(values, levels, rows, columns)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "合成小面板、教学演示"
-msgstr ""
+msgstr "Pequeño panel de síntesis, demostración didáctica."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:131
 #, python-format
@@ -309,14 +405,27 @@ msgid ""
 "[DataType](../manage_data/02.%20datatypes.md) 与 "
 "[内置清单](../references/datatypes/index.md)。"
 msgstr ""
+"**Método A** (igual que §0): `qt.get_kline` es azúcar sintáctico para OHLCV "
+"estándar, lo que facilita la obtención rápida del panel de la línea K. "
+"`qteasy` también tiene más de mil DataType integrados (como `pe` / `pb` / "
+"`eps`). Utilice `get_history_data` de la ruta B cuando necesite estos campos"
+" **Historial**. No incluya propiedades macro y de sección transversal en el "
+"panel; use `get_reference_data` / `get_static_data` respectivamente. Los "
+"conceptos de tipos de datos, tablas seleccionadas y una lista completa se "
+"pueden encontrar en [DataType](../manage_data/02.%20datatypes.md) y [Lista "
+"incorporada](../references/datatypes/index.md)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:143
 msgid "**方式 B**：需要获取更多数据类型时，直接指定数据类型 ID（`htype_names`）："
 msgstr ""
+"**Método B**: Cuando necesite obtener más tipos de datos, especifique "
+"directamente el ID del tipo de datos (`htype_names`):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:155
 msgid "**方式 C**：不依赖本地数据源，用小型数组构造面板（便于理解标签与 `shape`）："
 msgstr ""
+"**Método C**: No confíe en fuentes de datos locales, utilice matrices "
+"pequeñas para construir paneles (etiquetas fáciles de entender y `shape`):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:179
 #, python-format
@@ -324,48 +433,66 @@ msgid ""
 "**提示**：日常研究优先方式 A / B；方式 C 的更多说明见参考文档 "
 "[HistoryPanel（历史数据面板）](../manage_data/02.5.%20historypanel.md)。"
 msgstr ""
+"**Consejo**: Priorice los métodos A/B para la investigación diaria; para "
+"obtener más instrucciones sobre el método C, consulte el documento de "
+"referencia [HistoryPanel(Panel de datos "
+"históricos)](../manage_data/02.5.%20historypanel.md)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:183
 msgid "查看面板：打印、首尾行与单标的宽表"
 msgstr ""
+"Panel de vista: Imprimir, tabla amplia de primera y última fila y etiquetas "
+"individuales"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:185
 msgid "有了面板之后，下一步是「看见数据」——打印结构、截取时间轴首尾、把单标的切成熟悉的 `DataFrame`。"
 msgstr ""
+"Después de tener el panel, el siguiente paso es \"ver los datos\": imprimir "
+"la estructura, interceptar el principio y el final de la línea de tiempo y "
+"cortar la marca única en el familiar `DataFrame`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:201
 msgid "如需快速统计概览，可调用："
-msgstr ""
+msgstr "Para obtener una descripción estadística rápida, llame a:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:209
 msgid "切片与筛选：缩小标的、时间与指标范围"
 msgstr ""
+"Segmentación y filtrado: reducción del alcance de los objetivos, el tiempo y"
+" los indicadores"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:211
 msgid ""
 "多标的研究中，您经常需要「只看某几只股票」「只看某段日期」「只看 close 列」。推荐使用 **`subpanel` / `loc` / "
 "列访问**，可读且与方括号索引语义一致。"
 msgstr ""
+"En la investigación de objetivos múltiples, a menudo es necesario \"mirar "
+"sólo determinadas acciones\", \"mirar sólo una fecha determinada\" y \"mirar"
+" sólo la columna de cierre\". Se recomienda utilizar **`subpanel` / `loc` / "
+"acceso a columna**, que es legible y coherente con la semántica del índice "
+"de corchetes."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:213
 msgid "**注意**：下列推荐方法默认返回**新的** `HistoryPanel`，不会修改原对象。"
 msgstr ""
+"**Nota**: Los siguientes métodos recomendados devuelven el **nuevo** "
+"`HistoryPanel` de forma predeterminada y no modificarán el objeto original."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "操作"
-msgstr ""
+msgstr "funcionar"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "推荐 API"
-msgstr ""
+msgstr "API recomendada"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "作用轴"
-msgstr ""
+msgstr "Eje de acción"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "按名筛选"
-msgstr ""
+msgstr "Filtrar por nombre"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`hp.subpanel(shares=..., htypes=...)`"
@@ -373,23 +500,23 @@ msgstr "`hp.subpanel(shares=..., htypes=...)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "标的 / 指标"
-msgstr ""
+msgstr "Objetivo/Indicador"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "按日期 / 行号"
-msgstr ""
+msgstr "Por fecha/número de línea"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`hp.loc[...]` 或 `hp.subpanel(hdates=...)`"
-msgstr "`hp.loc[...]` 或 `hp.subpanel(hdates=...)`"
+msgstr "⟦CÓDIGO0⟧ 或 ⟦CÓDIGO1⟧"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "时间"
-msgstr ""
+msgstr "tiempo"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "取列 / 子面板"
-msgstr ""
+msgstr "Recuperar columnas/subpanel"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`hp['close']`、`hp.close`"
@@ -397,11 +524,11 @@ msgstr "`hp['close']`、`hp.close`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "指标 → 子面板"
-msgstr ""
+msgstr "Indicadores → Subpanel"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "通用索引"
-msgstr ""
+msgstr "índice universal"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`hp[i, j, k]` / `subpanel`"
@@ -409,11 +536,13 @@ msgstr "`hp[i, j, k]` / `subpanel`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "三维（简要）"
-msgstr ""
+msgstr "3D (breve)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:222
 msgid "下面从 §0 的 `hp` 切出「仅 close + 仅平安银行 + 最近 10 个交易日」："
 msgstr ""
+"Lo siguiente elimina \"solo cerrar + solo Ping An Bank + los últimos 10 días"
+" hábiles\" de `hp` en §0:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:243
 msgid ""
@@ -421,6 +550,13 @@ msgid ""
 "`where` 生成 bool 掩码，再交给带 `mask=` 的研究接口——详见 [生成研究用 bool 掩码](2.5-historypanel-"
 "data-analysis.md#生成研究用-bool-掩码where)。"
 msgstr ""
+"Acerca de `hp.loc`: solo filtra a lo largo del eje de tiempo (hdates), lo "
+"que equivale a `hp[:, :, key]`. Para condiciones de cuadrícula (como "
+"\"precio de cierre > un cierto umbral\"), utilice `where` para generar una "
+"máscara bool y luego envíela a la interfaz de investigación con `mask=`; "
+"para obtener más detalles, consulte [Generar máscara bool para "
+"investigación] (2.5-historypanel-data-analysis.md#Generar máscara-bool para "
+"investigación dónde)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:245
 msgid ""
@@ -429,50 +565,72 @@ msgid ""
 " `subpanel(hdates=...)`；`isegment` → `hp[:, :, start:end]` / "
 "`subpanel`）。绘图请用 `plot`；旧名 `candle` 已弃用并委托 `plot`。"
 msgstr ""
+"**Alias ​​​​compatibles (obsoletos)**: `slice` / `segment` / `isegment` "
+"todavía funcionan, pero emitirán el inglés `DeprecationWarning`. Para "
+"códigos nuevos, utilice las API recomendadas en la tabla anterior (`slice` →"
+" `subpanel`; `segment` → `loc` / `subpanel(hdates=...)`; `isegment` → `hp[:,"
+" :, start:end]` / `subpanel`). Utilice `plot` para dibujar; el antiguo "
+"nombre `candle` ha quedado obsoleto en favor de `plot`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:249
 msgid "删除与重命名标签：`drop` / `rename`"
-msgstr ""
+msgstr "Eliminar y cambiar el nombre de las etiquetas: `drop` / `rename`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:251
 msgid ""
 "当您需要从面板中拿掉某些指标/标的，或把列名改成更短的研究名时，使用 `drop` / "
 "`rename`。二者均返回**新**面板，不修改原对象，也不改写 `hdates`。"
 msgstr ""
+"Utilice `drop` / `rename` cuando necesite eliminar ciertos "
+"indicadores/objetivos del panel, o cambiar los nombres de las columnas por "
+"nombres de estudio más cortos. Ambos regresan al panel **nuevo** sin "
+"modificar el objeto original ni sobrescribir `hdates`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:267
 msgid ""
 "**提示**：`re_label` 是**原地**整轴重赋（保留旧 API）；日常「只改几个名字」请优先 `rename`。更多签名见 "
 "[HistoryPanel API：drop / rename](../api/HistoryPanel.rst)。"
 msgstr ""
+"**Consejo**: `re_label` es una reasignación **in situ** de todo el eje "
+"(conservando la API anterior); para \"cambiar solo algunos nombres\" "
+"diariamente, dé prioridad a `rename`. Consulte [HistoryPanel API: "
+"drop/rename](../api/HistoryPanel.rst) para obtener más firmas."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:271
 msgid "列访问、写入与 `assign` 扩列"
-msgstr ""
+msgstr "Acceso a columnas, escritura y expansión de columnas `assign`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:273
 msgid "除了读取已有列，研究中经常需要**写入**或**派生**新列（价差、比值等）。"
 msgstr ""
+"Además de leer las columnas existentes, la investigación a menudo requiere "
+"escribir o derivar nuevas columnas (spreads, ratios, etc.)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:275
 msgid "**只读访问**："
-msgstr ""
+msgstr "**Acceso de sólo lectura**:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:277
 msgid "列名为合法 Python 标识符时：`hp.close` 等价于 `hp['close']`；"
 msgstr ""
+"Cuando el nombre de la columna es un identificador legal de Python: "
+"`hp.close` es equivalente a `hp['close']`;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:278
 msgid "复权列名含 `|`（如 `close|b`）时，须用方括号：`hp['close|b']`。"
 msgstr ""
+"Cuando el nombre del listado de restauración contiene `|` (como `close|b`), "
+"se deben usar corchetes: `hp['close|b']`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:280
 msgid "**写入 / 覆盖**（原地修改当前面板）："
-msgstr ""
+msgstr "**Escribir/Sobrescribir** (modificar el panel actual en su lugar):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:290
 msgid "**`assign`：一次派生多列**（默认返回新面板）："
 msgstr ""
+"**`assign`: deriva varias columnas a la vez** (vuelve al nuevo panel de "
+"forma predeterminada):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:307
 msgid ""
@@ -480,14 +638,26 @@ msgid ""
 "线技术指标](2.5-historypanel-data-analysis.md#叠加-k-线技术指标)；更完整的 `assign` 示例亦见该篇「在 "
 "HistoryPanel 中派生新列」一节。"
 msgstr ""
+"**Nota**: `assign` utiliza semántica de \"sobrescritura\" para los nombres "
+"de columnas existentes. Para columnas ampliadas de indicadores técnicos "
+"(promedios móviles, MACD, etc.), utilice `hp.kline.*`, consulte [Indicadores"
+" técnicos de línea K superpuestos] (2.5-historypanel-data-"
+"analysis.md#Indicadores técnicos de línea K superimpuestos); Para obtener un"
+" ejemplo de `assign` más completo, consulte también la sección \"Derivar "
+"nuevas columnas en HistoryPanel\" de este artículo."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:309
 msgid "**`expr`：简单列名算术**（默认返回新面板）："
 msgstr ""
+"**`expr`: Aritmética de nombre de columna simple** (el valor predeterminado "
+"regresa al nuevo panel):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:311
 msgid "当新列只是现有 **identifier** 列名的加减乘除时，可用更短的 `expr`："
 msgstr ""
+"Cuando la nueva columna es solo la suma, resta, multiplicación y división de"
+" nombres de columnas de **identificador** existentes, se puede usar un "
+"`expr` más corto:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:319
 msgid ""
@@ -495,68 +665,107 @@ msgid ""
 "`hp['close|b']`。时序位移、`pct_change`、缺失清洗等见 [时序变换与缺失处理](2.5-historypanel-data-"
 "analysis.md#时序变换与缺失处理shift--diff--pct_change--dropna)。"
 msgstr ""
+"**Consejo**: Cuando el nombre de la columna de restauración contiene `|` "
+"(como `close|b`), `expr` no se puede analizar, continúe usando `assign` o "
+"`hp['close|b']`. Para el desplazamiento de series temporales, `pct_change`, "
+"falta de limpieza, etc., consulte [Transformación de series temporales y "
+"procesamiento faltante] (2.5-historypanel-data-analysis.md# Transformación "
+"de series temporales y procesamiento faltante shift--diff--pct_change--"
+"dropna)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:323
 msgid "两块面板对齐：`align_to` 与合并前纪律"
 msgstr ""
+"Alineación de dos paneles: `align_to` con disciplina previa a la fusión"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:325
 msgid ""
 "当您手里有两块 `HistoryPanel`（例如不同时间拉取、或不同股票池），想做逐元素运算时，需要特别注意：直接对 `.values` 做 "
 "NumPy 运算**不会**自动对齐 `shares` 与 `hdates`，可能出现「看起来能算、其实错行」的 silent bug。"
 msgstr ""
+"Cuando tiene dos piezas de `HistoryPanel` (por ejemplo, extraídas en "
+"diferentes momentos o de diferentes grupos de stock) y desea realizar "
+"operaciones elemento por elemento, debe prestar especial atención: realizar "
+"operaciones NumPy directamente en `.values` no alineará automáticamente "
+"`shares` y `hdates`, y puede haber un error silencioso que \"parece estar "
+"calculado, pero en realidad es incorrecto\"."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:327
 msgid "因此建议固定流程：**先对齐，再计算**。"
 msgstr ""
+"Por lo tanto, se recomienda arreglar el proceso: **Alinear primero, luego "
+"calcular**."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:354
 msgid ""
 "**提示**：多表拼 `close` + `pb`、手工同构列名等见 [多源数据拼成 HistoryPanel](2.5-historypanel-"
 "data-analysis.md#多源数据拼成-historypanel价格--基本面示例)；日线升周线等频率转换见该篇「对齐与重采样」相关小节。"
 msgstr ""
+"**Consejo**: Para la ortografía de varias tablas `close` + `pb`, nombres de "
+"columnas isomórficas manuales, etc., consulte [Ortografía de datos de "
+"múltiples fuentes HistoryPanel](2.5-historypanel-data-analysis.md#Ortografía"
+" de datos de múltiples fuentes-precio del panel de historial--ejemplo "
+"fundamental); para la conversión de frecuencia, como líneas ascendentes "
+"diarias y semanales, consulte la sección correspondiente de \"Alineación y "
+"remuestreo\" de este artículo."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:358
 msgid "与 pandas 互转"
-msgstr ""
+msgstr "Convertir hacia y desde pandas"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:360
 msgid "`HistoryPanel` 与 pandas 生态衔接的常用路径（**推荐名**）："
 msgstr ""
+"`HistoryPanel` Rutas comunes para conectarse con el ecosistema de pandas "
+"(**nombre recomendado**):"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:377
 msgid ""
 "**兼容别名（仍可用，行为不变）**：`unstack` ≡ `to_df_dict`；`flatten` / "
 "`flatten_to_dataframe` ≡ `to_multi_index_dataframe`。新代码请写推荐名。"
 msgstr ""
+"**Alias ​​compatibles (aún disponibles, comportamiento sin cambios)**: "
+"`unstack` ≡ `to_df_dict`; ⟦CÓDIGO2⟧ / ⟦CÓDIGO3⟧ ≡ ⟦CÓDIGO4⟧. Por favor "
+"escriba el nombre recomendado para el nuevo código."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:379
 msgid ""
 "在 `DataFrame` 上完成分析后，若要把结果写回面板：可用 `assign` / `__setitem__` 把 `(M, L)` "
 "数组写回，或重新 `get_kline` / `get_history_data` 取数后再派生。"
 msgstr ""
+"Después de completar el análisis en `DataFrame`, si desea volver a escribir "
+"los resultados en el panel: puede usar `assign` / `__setitem__` para volver "
+"a escribir la matriz `(M, L)`, o volver a buscar el `get_kline` / "
+"`get_history_data` y luego derivarlo."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:381
 msgid ""
 "**提示**：发表级截面回归、长表导出等见 [导出到 pandas / statsmodels](2.5-historypanel-data-"
 "analysis.md#导出到-pandas--statsmodels宽表长表与截面回归)。"
 msgstr ""
+"**Consejo**: Para regresión transversal a nivel de publicación, exportación "
+"de tablas largas, etc., consulte [Exportar a "
+"pandas/statsmodels](2.5-historypanel-data-analysis.md#Exportar a-pandas--"
+"statsmodels tabla larga, tabla ancha y regresión transversal)."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:385
 msgid "副本语义与 `inplace`"
-msgstr ""
+msgstr "La semántica de copia es la misma que `inplace`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:387
 msgid "初学时容易混淆：「调用了方法，原面板到底改没改？」下面这张表帮助您建立默认预期："
 msgstr ""
+"Es fácil confundirse cuando aprende por primera vez: \"Después de llamar a "
+"un método, ¿se ha cambiado el panel original?\" La siguiente tabla le ayuda "
+"a establecer expectativas predeterminadas:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "默认行为"
-msgstr ""
+msgstr "Comportamiento predeterminado"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "说明"
-msgstr ""
+msgstr "ilustrar"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`subpanel` / `head` / `tail` / `loc`"
@@ -564,11 +773,14 @@ msgstr "`subpanel` / `head` / `tail` / `loc`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "返回**新**面板"
-msgstr ""
+msgstr "Volver al panel **Nuevo**"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "不修改原对象；旧名 `slice`/`segment`/`isegment` 同为新面板但已弃用"
 msgstr ""
+"El objeto original no se modifica; el nombre anterior "
+"`slice`/`segment`/`isegment` también es un panel nuevo pero ha quedado "
+"obsoleto."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`drop` / `rename`"
@@ -576,7 +788,7 @@ msgstr "`drop` / `rename`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "不改原对象与 `hdates`"
-msgstr ""
+msgstr "No cambie el objeto original y `hdates`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`assign(..., inplace=False)` / `expr(...)`"
@@ -584,7 +796,7 @@ msgstr "`assign(..., inplace=False)` / `expr(...)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "推荐分析链用法"
-msgstr ""
+msgstr "Uso recomendado de la cadena de análisis"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`assign(..., inplace=True)` / `hp['col'] = ...`"
@@ -592,11 +804,11 @@ msgstr "`assign(..., inplace=True)` / `hp['col'] = ...`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "**原地**修改"
-msgstr ""
+msgstr "**Modificar en su lugar**"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "覆盖同名列"
-msgstr ""
+msgstr "Sobrescribir columnas con el mismo nombre"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`kline.*(inplace=True)`"
@@ -604,11 +816,13 @@ msgstr "`kline.*(inplace=True)`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "**原地**扩列"
-msgstr ""
+msgstr "**Expansión de columnas in situ**"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "详见后续玩数据教程"
 msgstr ""
+"Para obtener más información, consulte el tutorial siguiente sobre cómo "
+"jugar con datos."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`fillna` / `ffill` / `fillinf`"
@@ -616,11 +830,11 @@ msgstr "`fillna` / `ffill` / `fillinf`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "**默认原地**（`inplace=True`）"
-msgstr ""
+msgstr "**Predeterminado en su lugar** (`inplace=True`)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "历史约定；`inplace=False` 返回拷贝"
-msgstr ""
+msgstr "Acuerdo histórico; `inplace=False` Devolver copia"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`bfill`"
@@ -628,11 +842,11 @@ msgstr "`bfill`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "返回**新**面板（`inplace=False`）"
-msgstr ""
+msgstr "Volver al panel **Nuevo** (`inplace=False`)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "与 `ffill` 默认不同，请留意"
-msgstr ""
+msgstr "Es diferente del valor predeterminado de `ffill`, tenga en cuenta que"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`shift` / `diff` / `pct_change` / `dropna`"
@@ -641,64 +855,82 @@ msgstr "`shift` / `diff` / `pct_change` / `dropna`"
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "无原地参数；详见 2.5 时序节"
 msgstr ""
+"Sin parámetros locales; consulte la Sección 2.5 Tiempo para obtener más "
+"detalles"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:410
 msgid ""
 "**提示**：做因子分析时，建议默认 `inplace=False`（及对填充方法显式传 `inplace=False`），保留原始 OHLCV "
 "面板，便于对比与回退。"
 msgstr ""
+"**Consejo**: Al realizar un análisis factorial, se recomienda establecer de "
+"forma predeterminada `inplace=False` (y pasar explícitamente `inplace=False`"
+" al método de llenado) y conservar el panel OHLCV original para facilitar la"
+" comparación y la reversión."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:414
 msgid "小结与下一步"
-msgstr ""
+msgstr "Resumen y próximos pasos"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:416
 msgid "读完本章，您应该已经对 `HistoryPanel` 对象有了一个初步的直观印象，并学会了："
 msgstr ""
+"Después de leer este capítulo, debería tener una impresión intuitiva "
+"preliminar del objeto `HistoryPanel` y aprender:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:418
 msgid "创建数据面板，解读 `shape` / `shares` / `hdates` / `htypes`；"
 msgstr ""
+"Crear un panel de datos e interpretar `shape` / `shares` / `hdates` / "
+"`htypes`;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:419
 msgid "用 `subpanel` / `loc` / 列访问做切片筛选（避开已弃用的 `slice`/`segment`/`isegment`）；"
 msgstr ""
+"Utilice el acceso a la columna `subpanel` / `loc` / para dividir el filtrado"
+" (evitando el obsoleto `slice`/`segment`/`isegment`);"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:420
 msgid "用 `drop` / `rename` 删除或重命名标签；"
 msgstr ""
+"Utilice `drop` / `rename` para eliminar o cambiar el nombre de las "
+"etiquetas;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:421
 msgid "用 `__setitem__` / `assign` / `expr` 增加或派生列；"
 msgstr ""
+"Utilice `__setitem__` / `assign` / `expr` para agregar o derivar columnas;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:422
 msgid "用 `ffill` / `bfill` / `dropna` 清理缺失，并分清默认是否原地修改；"
 msgstr ""
+"Utilice `ffill` / `bfill` / `dropna` para limpiar las partes que faltan y "
+"distinguir si el valor predeterminado se modifica en su lugar;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:423
 msgid "用 `align_to` 在运算前对齐两块面板；"
 msgstr ""
+"Utilice `align_to` para alinear los dos paneles antes de la operación;"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:424
 msgid "将面板与 `DataFrame` / `dict` 互转。"
-msgstr ""
+msgstr "Convierta el panel hacia y desde `DataFrame` / `dict`."
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:426
 msgid "**建议的下一步**："
-msgstr ""
+msgstr "**Próximos pasos sugeridos**:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "方向"
-msgstr ""
+msgstr "dirección"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "链接"
-msgstr ""
+msgstr "Enlace"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "玩数据 / 因子分析"
-msgstr ""
+msgstr "Jugar con datos/análisis factorial"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid ""
@@ -708,19 +940,29 @@ msgid ""
 "[统计聚合补齐](2.5-historypanel-data-analysis.md#统计聚合补齐sum--median--var--"
 "quantile)）"
 msgstr ""
+"[Utilice HistoryPanel para operar y analizar datos "
+"históricos](2.5-historypanel-data-analysis.md) (Se recomienda comenzar desde"
+" el circuito cerrado de \"inspección de datos\"; para conocer el tiempo, "
+"consulte [Transformación de series temporales y procesamiento "
+"faltante](2.5-historypanel-data-analysis.md#Transformación de series "
+"temporales y procesamiento faltante shift--diff--pct_change--dropna); para "
+"simetría estadística, consulte [Finalización de la agregación "
+"estadística](2.5-historypanel-data-analysis.md#Suma de finalización de la "
+"agregación estadística--mediana--var--cuantil))"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "可视化深入"
-msgstr ""
+msgstr "Visualización en profundidad"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 #, python-format
 msgid "[HistoryPanel 可视化](../manage_data/02.6.%20historypanel_visual.md)"
 msgstr ""
+"[HistoryPanel Visualización](../manage_data/02.6.%20historypanel_visual.md)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "纵向 / 横向 / 事件进阶"
-msgstr ""
+msgstr "Retrato / Paisaje / Evento Avanzado"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid ""
@@ -728,10 +970,14 @@ msgid ""
 "[横截面选股因子](2.7-historypanel-advanced-horizontal-multifactor.md) / "
 "[事件型因子](2.8-historypanel-advanced-event-kline-pattern.md)"
 msgstr ""
+"[Factor de sincronización vertical](2.6-historypanel-advanced-vertical-"
+"timeaxis.md) / [Factor de selección de acciones "
+"transversal](2.7-historypanel-advanced-horizontal-multifactor.md) / [Factor "
+"de tipo de evento](2.8-historypanel-advanced-event-kline-pattern.md)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "正式回测"
-msgstr ""
+msgstr "Prueba retrospectiva formal"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid ""
@@ -739,18 +985,22 @@ msgid ""
 "analysis.md#从-historypanel-研究到-strategy--operator迁移路径) 或 "
 "[开始您的第一个交易策略](3-start-first-strategy.md)"
 msgstr ""
+"[De HistoryPanel Investigación a Estrategia / Operator](2.5-historypanel-"
+"data-analysis.md#From-historypanel-Study to-strategy--operator migration "
+"path) o [Comience su primera estrategia comercial](3-start-first-"
+"strategy.md)"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:435
 msgid "**可运行示例**："
-msgstr ""
+msgstr "**Ejemplo ejecutable**:"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "脚本"
-msgstr ""
+msgstr "guion"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "对应"
-msgstr ""
+msgstr "corresponder"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`examples/historypanel_basic_plot.py`"
@@ -758,7 +1008,7 @@ msgstr "`examples/historypanel_basic_plot.py`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "§0 创建 + 出图预览"
-msgstr ""
+msgstr "§0 Crear + Vista previa"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "`examples/data_playground_e2e.py`"
@@ -766,10 +1016,14 @@ msgstr "`examples/data_playground_e2e.py`"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md
 msgid "下一篇「玩数据」最小闭环"
-msgstr ""
+msgstr "Artículo siguiente \"Jugando con Datos\" Lazo Cerrado Mínimo"
 
 #: ../../source/tutorials/2.4-historypanel-basics.md:442
 msgid ""
 "若考虑是否增加独立「因子评价」API 封装，可阅读设计说明 [HistoryPanel 与可选 FactorResearch "
 "层](../design/10-historypanel-factor-research-layer.md)。"
 msgstr ""
+"Si está considerando agregar un paquete API de \"evaluación de factores\" "
+"independiente, puede leer la descripción del diseño [HistoryPanel y la capa "
+"FactorResearch opcional] (../design/10-historypanel-factor-research-"
+"layer.md)."

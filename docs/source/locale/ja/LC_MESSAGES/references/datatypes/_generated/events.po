@@ -20,19 +20,24 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/events.md:6
 msgid "交易行为与事件"
-msgstr ""
+msgstr "取引アクションとイベント"
 
 #: ../../source/references/datatypes/_generated/events.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **132** 条。"
 msgstr ""
+"このボリュームは、**ビジネス カテゴリ** ごとに `qteasy.datatypes.get_dtype_map()` から "
+"`docs/scripts/generate_datatype_catalog.py` によって生成され、合計 **132** のアイテムが含まれます。"
 
 #: ../../source/references/datatypes/_generated/events.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"手動で変更しないでください。組み込みタイプを更新した後、生成スクリプトを再実行してください。列の意味と推奨される読み方については、[リスト "
+"エントリ](../index.md) を参照してください。 `acquisition_type` / `table_name` "
+"は比較用リフィルのみです。"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "name"
@@ -80,7 +85,7 @@ msgstr "E"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-基准日"
-msgstr ""
+msgstr "実施基準日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "history"
@@ -104,7 +109,7 @@ msgstr "base_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-基准股本（万）"
-msgstr ""
+msgstr "実装 - 基本資本 (10,000)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "history_panel,strategy"
@@ -116,7 +121,7 @@ msgstr "block_trade_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交金额"
-msgstr ""
+msgstr "ブロック取引 - 取引金額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_signal"
@@ -132,7 +137,7 @@ msgstr "block_trade_buyer"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 买方营业部"
-msgstr ""
+msgstr "一括取引 - バイヤー営業部"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_price"
@@ -140,7 +145,7 @@ msgstr "block_trade_price"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交价"
-msgstr ""
+msgstr "ブロックトランザクション - トランザクション価格"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_seller"
@@ -148,7 +153,7 @@ msgstr "block_trade_seller"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 卖方营业部"
-msgstr ""
+msgstr "一括取引 - セラー営業部"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "block_trade_vol"
@@ -156,7 +161,7 @@ msgstr "block_trade_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "大宗交易 - 成交量（万股）"
-msgstr ""
+msgstr "ブロック取引 - 出来高 (10,000 株)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy"
@@ -164,7 +169,7 @@ msgstr "buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买入额（元）"
-msgstr ""
+msgstr "龍虎リスト機関詳細 - 購入金額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_inst"
@@ -176,7 +181,7 @@ msgstr "buy_elg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单买入金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 超大型注文購入金額（1万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "direct"
@@ -192,7 +197,7 @@ msgstr "buy_elg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单买入量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 超大口注文買付数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_lg_amount"
@@ -200,7 +205,7 @@ msgstr "buy_lg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单买入金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 大量注文購入金額（万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_lg_vol"
@@ -208,7 +213,7 @@ msgstr "buy_lg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单买入量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 大量注文の買付数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_md_amount"
@@ -216,7 +221,7 @@ msgstr "buy_md_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单买入金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 仲値購入金額（万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_md_vol"
@@ -224,7 +229,7 @@ msgstr "buy_md_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单买入量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 中口買付数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_rate"
@@ -232,7 +237,7 @@ msgstr "buy_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买入占总成交比例"
-msgstr ""
+msgstr "ドラゴンとタイガーのリスト機関の詳細 - 総取引に対する購入の割合"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_sm_amount"
@@ -240,7 +245,7 @@ msgstr "buy_sm_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单买入金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 小口購入金額（1万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "buy_sm_vol"
@@ -248,7 +253,7 @@ msgstr "buy_sm_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单买入量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 小口注文買付数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div"
@@ -256,7 +261,7 @@ msgstr "cash_div"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股分红（税后）"
-msgstr ""
+msgstr "実施 - 1株当たり配当金（税引き後）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_approved"
@@ -264,7 +269,7 @@ msgstr "cash_div_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股分红（税后）"
-msgstr ""
+msgstr "株主総会承認 - 1株当たり配当金（税引き後）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_planned"
@@ -272,7 +277,7 @@ msgstr "cash_div_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股分红（税后）"
-msgstr ""
+msgstr "計画 - 1株当たり配当金（税引後）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax"
@@ -280,7 +285,7 @@ msgstr "cash_div_tax"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股分红（税前）"
-msgstr ""
+msgstr "実施 - 1株当たり配当金（税引前）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax_approved"
@@ -288,7 +293,7 @@ msgstr "cash_div_tax_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股分红（税前）"
-msgstr ""
+msgstr "株主総会承認 - 1株当たり配当金（税引前）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "cash_div_tax_planned"
@@ -296,7 +301,7 @@ msgstr "cash_div_tax_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股分红（税前）"
-msgstr ""
+msgstr "計画 - 1株当たり配当金（税引前）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "change_reason"
@@ -304,7 +309,7 @@ msgstr "change_reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "业绩变动原因"
-msgstr ""
+msgstr "パフォーマンスの変化の理由"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "forecast"
@@ -316,7 +321,7 @@ msgstr "cur_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股票 - 当前最新证券名称"
-msgstr ""
+msgstr "株式 - 現在の最新の銘柄名"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_status"
@@ -332,7 +337,7 @@ msgstr "down_limit"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "跌停板 - 跌停价"
-msgstr ""
+msgstr "下限 - 下限価格"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_limit"
@@ -344,7 +349,7 @@ msgstr "ex_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-除权除息日"
-msgstr ""
+msgstr "実装 - 権利落ちおよび配当落ち日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "exalter"
@@ -352,7 +357,7 @@ msgstr "exalter"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 营业部名称"
-msgstr ""
+msgstr "龍虎一覧 組織詳細 - 営業部名"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "first_ann_date"
@@ -360,7 +365,7 @@ msgstr "first_ann_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "首次公告日"
-msgstr ""
+msgstr "最初の発表日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_amount"
@@ -368,7 +373,7 @@ msgstr "hk_top10_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 累计成交额（元）"
-msgstr ""
+msgstr "南向き取引トップ 10 - 累積取引高 (元)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_stock"
@@ -380,7 +385,7 @@ msgstr "hk_top10_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 收盘价"
-msgstr ""
+msgstr "香港ストックコネクトトップ10取引 - 終値"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_net_amount"
@@ -388,7 +393,7 @@ msgstr "hk_top10_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 净买入金额（元）"
-msgstr ""
+msgstr "南向き取引上位 10 件 - 純購入額 (元)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_p_change"
@@ -396,7 +401,7 @@ msgstr "hk_top10_p_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 涨跌幅"
-msgstr ""
+msgstr "香港ストックコネクトのトップ10取引 - 変更点"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_rank"
@@ -404,7 +409,7 @@ msgstr "hk_top10_rank"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 排名"
-msgstr ""
+msgstr "サウスバウンド取引トップ 10 - ランキング"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_amount"
@@ -412,7 +417,7 @@ msgstr "hk_top10_sh_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 沪市成交额（元）"
-msgstr ""
+msgstr "南行き取引トップ10 - 上海証券取引所取引高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_buy"
@@ -420,7 +425,7 @@ msgstr "hk_top10_sh_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市净买入金额（元）"
-msgstr ""
+msgstr "南行き取引トップ10 - 深セン証券取引所の純購入額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_net_amount"
@@ -428,7 +433,7 @@ msgstr "hk_top10_sh_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 沪市净买入额（元）"
-msgstr ""
+msgstr "南行き取引トップ10 - 上海証券取引所の純購入額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sh_sell"
@@ -440,7 +445,7 @@ msgstr "hk_top10_sz_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市成交金额（元）"
-msgstr ""
+msgstr "南行き取引トップ10 - 深セン証券取引所取引額(元)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hk_top10_sz_net_amount"
@@ -448,7 +453,7 @@ msgstr "hk_top10_sz_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "港股通十大成交 - 深市净买入额（元）"
-msgstr ""
+msgstr "南行き取引トップ10 - 深セン証券取引所の純購入額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "imp_ann_date"
@@ -456,7 +461,7 @@ msgstr "imp_ann_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-实施公告日"
-msgstr ""
+msgstr "実装 - 実装発表日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "is_HS_top10"
@@ -464,7 +469,7 @@ msgstr "is_HS_top10"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜"
-msgstr ""
+msgstr "上海・深セン・香港ストックコネクトの取引銘柄上位10銘柄がリストに掲載"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "hs_top10_stock"
@@ -476,7 +481,7 @@ msgstr "is_suspended"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "停复牌类型：S-停牌，R-复牌"
-msgstr ""
+msgstr "取引停止と取引再開の種類：S-取引停止、R-取引再開"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_suspend"
@@ -492,7 +497,7 @@ msgstr "None"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "是否交易日-市场代码：%"
-msgstr ""
+msgstr "取引日かどうか - 市場コード: %"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "reference"
@@ -516,7 +521,7 @@ msgstr "last_parent_net"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "上年同期归属母公司净利润"
-msgstr ""
+msgstr "前年同期の親会社に帰属する当期純利益"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "manager_title"
@@ -524,7 +529,7 @@ msgstr "manager_title"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 岗位"
-msgstr ""
+msgstr "会社役員情報 - 役職"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "event_multi_stat"
@@ -544,7 +549,7 @@ msgstr "FD"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 出生年份"
-msgstr ""
+msgstr "ファンドマネージャー - 誕生年"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "fund_manager"
@@ -556,7 +561,7 @@ msgstr "managers_birthday"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 出生年月"
-msgstr ""
+msgstr "会社役員情報 - 生年月日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_edu"
@@ -564,11 +569,11 @@ msgstr "managers_edu"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 学历"
-msgstr ""
+msgstr "会社役員情報 – 学歴"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 学历"
-msgstr ""
+msgstr "ファンドマネージャー - 学歴"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_gender"
@@ -576,11 +581,11 @@ msgstr "managers_gender"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 性别"
-msgstr ""
+msgstr "会社役員情報 - 性別"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 性别"
-msgstr ""
+msgstr "ファンドマネージャー - 性別"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_lev"
@@ -588,7 +593,7 @@ msgstr "managers_lev"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 岗位类别"
-msgstr ""
+msgstr "会社役員情報 - 職種"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_name"
@@ -596,11 +601,11 @@ msgstr "managers_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 高管姓名"
-msgstr ""
+msgstr "会社役員情報 - 役員氏名"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理姓名"
-msgstr ""
+msgstr "ファンドマネージャー名"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_national"
@@ -608,7 +613,7 @@ msgstr "managers_national"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 国籍"
-msgstr ""
+msgstr "会社役員情報 – 国籍"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "managers_resume"
@@ -616,11 +621,11 @@ msgstr "managers_resume"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "公司高管信息 - 个人简历"
-msgstr ""
+msgstr "会社役員情報 - 履歴書"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 简历"
-msgstr ""
+msgstr "ファンドマネージャー - 履歴書"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqchl"
@@ -628,7 +633,7 @@ msgstr "margin_detail_rqchl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券偿还量(股)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 貸株返済額（株）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail"
@@ -640,7 +645,7 @@ msgstr "margin_detail_rqmcl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券卖出量(股,份,手)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 有価証券貸借取引高（株式、株式、口数）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqye"
@@ -648,7 +653,7 @@ msgstr "margin_detail_rqye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券余额(元)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 貸株残高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rqyl"
@@ -656,7 +661,7 @@ msgstr "margin_detail_rqyl"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融券余量（股）"
-msgstr ""
+msgstr "信用取引・有価証券貸借取引の詳細 - 有価証券貸借証拠金（株式）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzche"
@@ -664,7 +669,7 @@ msgstr "margin_detail_rzche"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资偿还额(元)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 融資返済額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzmre"
@@ -672,7 +677,7 @@ msgstr "margin_detail_rzmre"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资买入额(元)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 信用購入金額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzrqye"
@@ -680,7 +685,7 @@ msgstr "margin_detail_rzrqye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资融券余额(元)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 信用取引・貸株残高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "margin_detail_rzye"
@@ -688,7 +693,7 @@ msgstr "margin_detail_rzye"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "融资融券交易明细 - 融资余额(元)"
-msgstr ""
+msgstr "信用取引・貸株取引の詳細 - 融資残高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "nationality"
@@ -696,7 +701,7 @@ msgstr "nationality"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "基金经理 - 国籍"
-msgstr ""
+msgstr "ファンドマネージャー - 国籍"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_buy"
@@ -704,7 +709,7 @@ msgstr "net_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 净成交额（元）"
-msgstr ""
+msgstr "龍虎リストに掲載されている金融機関の詳細 - 純取引高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_mf_amount"
@@ -712,7 +717,7 @@ msgstr "net_mf_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 净流入额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 純流入（万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_mf_vol"
@@ -720,7 +725,7 @@ msgstr "net_mf_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 净流入量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れの方向 - 純流入額（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_profit_max"
@@ -728,7 +733,7 @@ msgstr "net_profit_max"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润上限(万元)"
-msgstr ""
+msgstr "予想純利益上限（1万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "net_profit_min"
@@ -736,7 +741,7 @@ msgstr "net_profit_min"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润下限(万元)"
-msgstr ""
+msgstr "予想純利益の下限（1万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "p_change_max"
@@ -744,7 +749,7 @@ msgstr "p_change_max"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润变动幅度上限(%)"
-msgstr ""
+msgstr "予想純利益増減率の上限（％）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "p_change_min"
@@ -752,7 +757,7 @@ msgstr "p_change_min"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预告净利润变动幅度下限(%)"
-msgstr ""
+msgstr "予想純利益変動幅の下限値(%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "pay_date"
@@ -760,7 +765,7 @@ msgstr "pay_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-派息日"
-msgstr ""
+msgstr "実施 - 配当支払日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "pre_trade_day|%"
@@ -768,7 +773,7 @@ msgstr "pre_trade_day|%"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "上一交易日"
-msgstr ""
+msgstr "最終取引日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "reason"
@@ -776,7 +781,7 @@ msgstr "reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 上榜理由"
-msgstr ""
+msgstr "龍虎リストに掲載された機関の詳細 - リストに掲載された理由"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "record_date"
@@ -784,7 +789,7 @@ msgstr "record_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-股权登记日"
-msgstr ""
+msgstr "実施資本登録日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell"
@@ -792,7 +797,7 @@ msgstr "sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 卖出额（元）"
-msgstr ""
+msgstr "龍虎リスト機関詳細 - 売上高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_elg_amount"
@@ -800,7 +805,7 @@ msgstr "sell_elg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单卖出金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 超大型注文（万元）の売却額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_elg_vol"
@@ -808,7 +813,7 @@ msgstr "sell_elg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 特大单卖出量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 特大注文の売り高（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_lg_amount"
@@ -816,7 +821,7 @@ msgstr "sell_lg_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单卖出金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 大口注文売上高（万元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_lg_vol"
@@ -824,7 +829,7 @@ msgstr "sell_lg_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 大单卖出量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 大量注文の売り数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_md_amount"
@@ -832,7 +837,7 @@ msgstr "sell_md_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单卖出金额（万元）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 中注文の売却金額（10,000元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_md_vol"
@@ -840,7 +845,7 @@ msgstr "sell_md_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 中单卖出量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 中口注文の販売数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_rate"
@@ -848,7 +853,7 @@ msgstr "sell_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 卖出占总成交比例"
-msgstr ""
+msgstr "龍虎リスト掲載機関の詳細 - 総取引額に占める売上高の割合"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_sm_amount"
@@ -856,7 +861,7 @@ msgstr "sell_sm_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单卖出金额（万元）"
-msgstr ""
+msgstr "個別株の資金の流れ - 小口注文（万元）の売却額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "sell_sm_vol"
@@ -864,7 +869,7 @@ msgstr "sell_sm_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "个股资金流向 - 小单卖出量（手）"
-msgstr ""
+msgstr "個別銘柄の資金の流れ - 小口注文の売付数量（ロット）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "side"
@@ -872,7 +877,7 @@ msgstr "side"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜机构明细 - 买卖类型0：买入金额最大的前5名， 1：卖出金额最大的前5名"
-msgstr ""
+msgstr "龍虎リスト 機関詳細 - 取引タイプ 0: 買付額上位5社、1: 売付額上位5社"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate"
@@ -880,7 +885,7 @@ msgstr "stk_bo_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股送股比例"
-msgstr ""
+msgstr "実施・1株当たりの賞与株式比率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate_approved"
@@ -888,7 +893,7 @@ msgstr "stk_bo_rate_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股送股比例"
-msgstr ""
+msgstr "株主総会承認 - 1株当たり賞与株式比率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_bo_rate_planned"
@@ -896,7 +901,7 @@ msgstr "stk_bo_rate_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股送股比例"
-msgstr ""
+msgstr "プラン - 1株当たり賞与株式比率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate"
@@ -904,7 +909,7 @@ msgstr "stk_co_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股转增比例"
-msgstr ""
+msgstr "導入シェア換算率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate_approved"
@@ -912,7 +917,7 @@ msgstr "stk_co_rate_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股转增比例"
-msgstr ""
+msgstr "株主総会承認 1株当たり換算比率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_co_rate_planned"
@@ -920,7 +925,7 @@ msgstr "stk_co_rate_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股转增比例"
-msgstr ""
+msgstr "プランシェア換算率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div"
@@ -928,7 +933,7 @@ msgstr "stk_div"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "实施-每股送转"
-msgstr ""
+msgstr "一株当たりの実行譲渡"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div_approved"
@@ -936,7 +941,7 @@ msgstr "stk_div_approved"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东大会批准-每股送转"
-msgstr ""
+msgstr "株主総会承認 - 1株当たり譲渡"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stk_div_planned"
@@ -944,7 +949,7 @@ msgstr "stk_div_planned"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "预案-每股送转"
-msgstr ""
+msgstr "一株当たりの計画譲渡"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_after_ratio"
@@ -952,7 +957,7 @@ msgstr "stock_holder_trade_after_ratio"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动后占流通比例（%）"
-msgstr ""
+msgstr "株主間取引 - 変更後の発行部数の割合（%）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade"
@@ -964,7 +969,7 @@ msgstr "stock_holder_trade_after_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动后持股"
-msgstr ""
+msgstr "株主取引 - 異動後の所有株式数"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_avg_price"
@@ -972,7 +977,7 @@ msgstr "stock_holder_trade_avg_price"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 平均价格"
-msgstr ""
+msgstr "株主取引 - 平均価格"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_begin_date"
@@ -980,7 +985,7 @@ msgstr "stock_holder_trade_begin_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 增减持开始日期"
-msgstr ""
+msgstr "株主間取引 - 保有株式増減開始日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_change_ratio"
@@ -988,7 +993,7 @@ msgstr "stock_holder_trade_change_ratio"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 占流通比例（%）"
-msgstr ""
+msgstr "株主間取引 - 発行部数の割合(%)"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_change_vol"
@@ -996,7 +1001,7 @@ msgstr "stock_holder_trade_change_vol"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 变动数量"
-msgstr ""
+msgstr "株主取引 - 数量変更"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_close_date"
@@ -1004,7 +1009,7 @@ msgstr "stock_holder_trade_close_date"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 增减持结束日期"
-msgstr ""
+msgstr "株主取引 - 増減終了日"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_in_de"
@@ -1012,7 +1017,7 @@ msgstr "stock_holder_trade_in_de"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 类型IN增持DE减持"
-msgstr ""
+msgstr "株主取引 - タイプ IN 増加 DE 減少"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_name"
@@ -1020,7 +1025,7 @@ msgstr "stock_holder_trade_name"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 股东名称"
-msgstr ""
+msgstr "株主取引 - 株主名"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_total_share"
@@ -1028,7 +1033,7 @@ msgstr "stock_holder_trade_total_share"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 持股总数"
-msgstr ""
+msgstr "株主取引 - 保有株式総数"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "stock_holder_trade_type"
@@ -1036,7 +1041,7 @@ msgstr "stock_holder_trade_type"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "股东交易 - 股东类型G高管P个人C公司"
-msgstr ""
+msgstr "株主取引 - 株主種類 G 役員 P 個人 C 株式会社"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "summary"
@@ -1044,7 +1049,7 @@ msgstr "summary"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "业绩预告摘要"
-msgstr ""
+msgstr "業績予想の概要"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "suspend_timing"
@@ -1052,7 +1057,7 @@ msgstr "suspend_timing"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "日内停牌时间段"
-msgstr ""
+msgstr "日中取引停止時間帯"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_amount"
@@ -1060,7 +1065,7 @@ msgstr "top10_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 成交金额（元）"
-msgstr ""
+msgstr "上海・深圳・香港ストックコネクトの取引銘柄上位10銘柄がリストに掲載 - 取引額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_buy"
@@ -1068,7 +1073,7 @@ msgstr "top10_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 买入金额（元）"
-msgstr ""
+msgstr "上海・深圳・香港ストックコネクトの取引銘柄上位10銘柄がリストに掲載 - 購入金額（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_change"
@@ -1076,7 +1081,7 @@ msgstr "top10_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 涨跌额"
-msgstr ""
+msgstr "上海・深セン・香港ストックコネクトの取引銘柄上位10銘柄がリストに掲載 - 価格推移"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_close"
@@ -1084,7 +1089,7 @@ msgstr "top10_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 收盘价"
-msgstr ""
+msgstr "上海-深セン-香港ストックコネクトの取引銘柄上位10銘柄 - 終値"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_net_amount"
@@ -1092,7 +1097,7 @@ msgstr "top10_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 净成交金额（元）"
-msgstr ""
+msgstr "上海・深セン・香港ストックコネクトの取引銘柄上位10銘柄がリストに掲載 - 純取引高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_rank"
@@ -1100,7 +1105,7 @@ msgstr "top10_rank"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 资金排名"
-msgstr ""
+msgstr "上海・深圳・香港ストックコネクトの取引銘柄トップ10 - 資金調達ランキング"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top10_sell"
@@ -1108,7 +1113,7 @@ msgstr "top10_sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "沪深港通十大成交股上榜 - 卖出金额（元）"
-msgstr ""
+msgstr "上海・深セン・香港ストックコネクトの取引銘柄上位10銘柄 - 売上高（元）"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_amount"
@@ -1116,7 +1121,7 @@ msgstr "top_list_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 总成交额"
-msgstr ""
+msgstr "龍虎一覧 取引内容 – 総取引量"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list"
@@ -1128,7 +1133,7 @@ msgstr "top_list_amount_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜成交额占比"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 龍虎一覧 取引量割合"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_close"
@@ -1136,7 +1141,7 @@ msgstr "top_list_close"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 收盘价"
-msgstr ""
+msgstr "ドラゴンタイガーリスト取引詳細 - 終値"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_float_values"
@@ -1144,7 +1149,7 @@ msgstr "top_list_float_values"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 当日流通市值"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 現在の流通相場"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_amount"
@@ -1152,7 +1157,7 @@ msgstr "top_list_l_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细- 龙虎榜成交额"
-msgstr ""
+msgstr "龍虎リスト取引明細 - 龍虎リスト取引量"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_buy"
@@ -1160,7 +1165,7 @@ msgstr "top_list_l_buy"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜买入额"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 龍虎一覧 買取金額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_l_sell"
@@ -1168,7 +1173,7 @@ msgstr "top_list_l_sell"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜卖出额"
-msgstr ""
+msgstr "龍虎目録 取引内容 - 龍虎目録 販売金額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_net_amount"
@@ -1176,7 +1181,7 @@ msgstr "top_list_net_amount"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜净买入额"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 龍虎一覧 純買取金額"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_net_rate"
@@ -1184,7 +1189,7 @@ msgstr "top_list_net_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 龙虎榜净买额占比"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 龍虎一覧 純買取比率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_pct_change"
@@ -1192,7 +1197,7 @@ msgstr "top_list_pct_change"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 涨跌幅"
-msgstr ""
+msgstr "龍虎一覧 取引明細 - 増減"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_reason"
@@ -1200,7 +1205,7 @@ msgstr "top_list_reason"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 上榜理由"
-msgstr ""
+msgstr "龍虎一覧 取引内容 - 上場理由"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "top_list_turnover_rate"
@@ -1208,7 +1213,7 @@ msgstr "top_list_turnover_rate"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "龙虎榜交易明细 - 换手率"
-msgstr ""
+msgstr "龍虎一覧 取引内容 – 回転率"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "trade_cal"
@@ -1216,7 +1221,7 @@ msgstr "trade_cal"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "交易日历"
-msgstr ""
+msgstr "取引カレンダー"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "up_limit"
@@ -1224,4 +1229,4 @@ msgstr "up_limit"
 
 #: ../../source/references/datatypes/_generated/events.md
 msgid "涨停板 - 涨停价"
-msgstr ""
+msgstr "日次指値ボード - 日次指値価格"

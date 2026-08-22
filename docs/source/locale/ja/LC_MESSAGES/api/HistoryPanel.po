@@ -77,13 +77,15 @@ msgstr "典型的な書き方の例::"
 
 #: ../../source/api/HistoryPanel.rst:30
 msgid "兼容 API（已弃用）"
-msgstr ""
+msgstr "互換性のある API (非推奨)"
 
 #: ../../source/api/HistoryPanel.rst:32
 msgid ""
 "下列方法仍保留兼容行为，但会发出英文 ``DeprecationWarning`` （含 ``use … instead``）。**新代码请使用右侧推荐"
 " API**："
 msgstr ""
+"次のメソッドは互換性のある動作を保持していますが、英語の ``DeprecationWarning`` （含 ``use … instead`` "
+"を生成します。 **新しいコードの場合は、右側の推奨 API を使用してください**:"
 
 #: ../../source/api/HistoryPanel.rst:34
 msgid "``slice(...)`` → :meth:`~qteasy.HistoryPanel.subpanel`"
@@ -100,18 +102,21 @@ msgstr ""
 #: ../../source/api/HistoryPanel.rst:36
 msgid ""
 "``isegment(...)`` → ``panel[:, :, start:end]`` 或 ``subpanel(hdates=...)``"
-msgstr ""
-"``isegment(...)`` → ``panel[:, :, start:end]`` 或 ``subpanel(hdates=...)``"
+msgstr "`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧`"
 
 #: ../../source/api/HistoryPanel.rst:37
 msgid ""
 "``candle(...)`` → :meth:`~qteasy.HistoryPanel.plot` （``candle`` 现委托 "
 "``plot``，不再抛出 ``NotImplementedError``）"
 msgstr ""
+"``candle(...)`` → :meth:`~qteasy.HistoryPanel.plot` （``candle`` 现委托 "
+"``plot``，不再抛出 ``NotImplementedError``)"
 
 #: ../../source/api/HistoryPanel.rst:39
 msgid "``slice`` / ``segment`` / ``isegment`` 仅增加警告，**未**改写原实现（避免语义漂移）。"
 msgstr ""
+"``slice`` / ``segment`` / ``isegment`` は警告を追加するだけで、元の実装を書き換えません (セマンティック "
+"ドリフトを避けるため)。"
 
 #: of qteasy.history.HistoryPanel:1
 msgid "qteasy 中用于统一管理多标的、多时间点、多数据类型历史数据的三维数据容器。"
@@ -551,11 +556,10 @@ msgstr ""
 "を使用してローソク足や出来高などのチャート タイプを出力するかどうかを制御することをお勧めします。"
 
 #: of qteasy.history.HistoryPanel.candle:7
-#, fuzzy
 msgid "本方法在内部委托给 ``plot()``，行为与 ``plot()`` 保持一致，仅作为语义化别名存在。"
 msgstr ""
-"内部的には、このメソッドは視覚化サブモジュールの統合されたエントリ ポイントに委任されます。その動作は ``plot()`` "
-"と一貫しており、セマンティック エイリアスとしてのみ存在します。"
+"このメソッドは、一貫性を保つために内部的に ``plot()``，行为与 ``plot()`` に委任されており、セマンティック "
+"エイリアスとしてのみ存在します。"
 
 #: of qteasy.HistoryPanel.column_count:1
 msgid "获取HistoryPanel的列数量或历史数据数量"
@@ -665,9 +669,8 @@ msgid "*一个dataframe，以share和htype为列的多重索引，只包含后ro
 msgstr "* 列として share と htype のマルチインデックスを持ち、最後の row_count 行のみを含むデータフレーム*"
 
 #: of qteasy.HistoryPanel.hdate_count:1
-#, fuzzy
 msgid "获取 HistoryPanel 的历史日期（hdates）数量"
-msgstr "HistoryPanel 内の履歴データの種類の数を取得します"
+msgstr "HistoryPanel の歴史的な日付 (hdates) の数を取得します"
 
 #: of qteasy.HistoryPanel.hdates:1
 msgid "获取HistoryPanel的历史日期时间戳list"
@@ -698,15 +701,17 @@ msgid ""
 "获取 HistoryPanel 的一个整数下标日期片段（已弃用，请用 ``panel[:, :, start:end]`` 或 "
 "``subpanel(hdates=...)``）。"
 msgstr ""
+"HistoryPanel の整数の添字付き日付フラグメントを取得します (非推奨、``panel[:, :, start:end]`` 或 "
+"``subpanel(hdates=...)`` を使用します)。"
 
 #: of qteasy.history.HistoryPanel.isegment:3
-#, fuzzy
 msgid ""
 "start_index 和 end_index 都是 int，表示日期序号，返回这两个序号之间的所有数据； 返回类型为 "
 "HistoryPanel，包含所有 share 和 htypes 的数据。"
 msgstr ""
-"2 つのシーケンス番号間のすべてのデータを返します。返される型は、すべての share および htypes データを含む HistoryPanel "
-"です。"
+"start_index と end_index はどちらも int で、日付のシリアル番号を表し、これら 2 "
+"つのシリアル番号の間にあるすべてのデータを返します。戻り値の型は HistoryPanel で、すべての share および htypes "
+"データが含まれます。"
 
 #: of qteasy.history.HistoryPanel.isegment:6
 msgid "开始日期序号"
@@ -916,15 +921,16 @@ msgstr "日付辞書"
 #: of qteasy.history.HistoryPanel.segment:1
 msgid "获取 HistoryPanel 的一个日期片段（已弃用，请用 ``loc`` 或 ``subpanel(hdates=...)``）。"
 msgstr ""
+"HistoryPanel から日付フラグメントを取得します (非推奨。``loc`` 或 ``subpanel(hdates=...)`` "
+"を使用します)。"
 
 #: of qteasy.history.HistoryPanel.segment:3
-#, fuzzy
 msgid ""
 "start_date 和 end_date 都是日期型数据，返回这两个日期之间的所有数据； 返回类型为 HistoryPanel，包含所有 share "
 "和 htypes 的数据。"
 msgstr ""
-"これにより、2 つの日付間のすべてのデータが返されます。返されるタイプは、すべての share および htypes データを含む "
-"HistoryPanel です。"
+"start_date と end_date は両方とも日付型データであり、これら 2 つの日付間のすべてのデータを返します。戻り値の型は "
+"HistoryPanel で、すべての share および htypes データが含まれます。"
 
 #: of qteasy.HistoryPanel.shape:1
 msgid "获取HistoryPanel的各个维度的尺寸"
@@ -940,11 +946,11 @@ msgstr "HistoryPanel - 在庫リストのレイヤーラベルを返します"
 
 #: of qteasy.history.HistoryPanel.slice:1
 msgid "获取 HistoryPanel 的股票或数据类型片段（已弃用，请用 ``subpanel(...)``）。"
-msgstr ""
+msgstr "HistoryPanel のストックまたはデータ型フラグメントを取得します (非推奨、``subpanel(...)`` を使用します)。"
 
 #: of qteasy.history.HistoryPanel.slice:3
 msgid "shares 和 htypes 可以为列表或逗号分隔字符串，表示需要获取的股票或数据类型。"
-msgstr ""
+msgstr "share と htypes には、取得する必要がある株式またはデータ型を示すリストまたはカンマ区切りの文字列を指定できます。"
 
 #: of qteasy.history.HistoryPanel.slice:5
 msgid "需要的股票列表"
@@ -1123,6 +1129,9 @@ msgid ""
 "仅为转置。``var`` 默认 ``ddof=1`` （与 ``std`` 对齐）；``quantile`` 仅接受标量 ``q`` 且 ``0 <= "
 "q <= 1``。"
 msgstr ""
+"次のメソッドは、HistoryPanel の 3D データに対してパンダのような統計関数を提供します。 "
+"`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦CO "
+"DE8⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧⟦コード13⟧⟦コード14⟧⟦コード16⟧⟦コード15⟧⟦コード16⟧⟦コード17⟧⟦コード18⟧⟦コード19⟧⟦コード20⟧⟦コード23⟧⟦コード21⟧⟦コード22⟧⟦コード23⟧⟦コード24⟧⟦コード25⟧⟦コード26⟧⟦コード27⟧`。"
 
 #: ../../source/api/HistoryPanel.rst:55
 msgid ""
@@ -1130,6 +1139,9 @@ msgid ""
 "``DataFrame``；:class:`~qteasy.history.HistoryPanelRolling` 的 ``sum`` 返回滚动后的 "
 "``HistoryPanel``。"
 msgstr ""
+"区別に注意してください: パネルレベル:meth:`~qteasy.HistoryPanel.sum` は "
+"``DataFrame``；:class:`~qteasy.history.HistoryPanelRolling` 的 ``sum`` 返回滚动后的 "
+"``HistoryPanel`` を返します。"
 
 #: of qteasy.history.HistoryPanel.describe:1
 msgid "对 HistoryPanel 进行基础统计描述，类似 pandas.DataFrame.describe。"
@@ -1229,146 +1241,141 @@ msgid "按指定维度聚合后的最大值结果表。"
 msgstr "指定されたディメンションに沿って集計した後の最大値の結果テーブル。"
 
 #: of qteasy.history.HistoryPanel.sum:1
-#, fuzzy
 msgid "按标的或数据类型对 HistoryPanel 进行求和统计。"
-msgstr "シェアまたはデータ タイプごとに、HistoryPanel の平均統計を計算します。"
+msgstr "ターゲットまたはデータ型ごとに、HistoryPanel の合計統計を実行します。"
 
 #: of qteasy.history.HistoryPanel.sum:3
 msgid "统计维度，语义同 ``mean()``：沿 hdates 聚合；``htype`` 时返回转置表。"
 msgstr ""
+"統計ディメンションは ``mean()``：沿 hdates 聚合；``htype`` と同じセマンティクスを持ち、転置されたテーブルを返します。"
 
 #: of qteasy.history.HistoryPanel.sum:5
-#, fuzzy
 msgid "是否在求和时忽略 NaN。"
-msgstr "平均を計算するときに NaN を無視するかどうか。"
+msgstr "合計するときに NaN を無視するかどうか。"
 
 #: of qteasy.history.HistoryPanel.sum:8
-#, fuzzy
 msgid "按指定维度聚合后的求和结果表。"
-msgstr "指定されたディメンションに沿って集計した後の平均結果テーブル。"
+msgstr "指定されたディメンションによって集計された合計結果のテーブル。"
 
 #: of qteasy.history.HistoryPanel.median:1
-#, fuzzy
 msgid "按标的或数据类型对 HistoryPanel 进行中位数统计。"
-msgstr "シェアまたはデータ タイプごとに、HistoryPanel の平均統計を計算します。"
+msgstr "HistoryPanel でターゲットまたはデータ タイプごとに中央値統計を実行します。"
 
 #: of qteasy.history.HistoryPanel.median:5
-#, fuzzy
 msgid "是否在计算中位数时忽略 NaN。"
-msgstr "平均を計算するときに NaN を無視するかどうか。"
+msgstr "中央値を計算するときに NaN を無視するかどうか。"
 
 #: of qteasy.history.HistoryPanel.median:8
-#, fuzzy
 msgid "按指定维度聚合后的中位数结果表。"
-msgstr "指定されたディメンションに沿って集計した後の平均結果テーブル。"
+msgstr "指定されたディメンションによって集計された結果の中央値の表。"
 
 #: of qteasy.history.HistoryPanel.var:1
-#, fuzzy
 msgid "按标的或数据类型对 HistoryPanel 进行方差统计。"
-msgstr "シェアまたはデータ タイプごとに、HistoryPanel の平均統計を計算します。"
+msgstr "ターゲットまたはデータ型ごとに HistoryPanel の分散統計を実行します。"
 
 #: of qteasy.history.HistoryPanel.var:5
-#, fuzzy
 msgid "是否在计算方差时忽略 NaN。"
-msgstr "標準偏差を計算するときに NaN を無視するかどうか。"
+msgstr "分散を計算するときに NaN を無視するかどうか。"
 
 #: of qteasy.history.HistoryPanel.var:7
 msgid "自由度修正，与 ``std()`` 默认一致。"
-msgstr ""
+msgstr "自由度の修正。デフォルトでは ``std()`` と一致します。"
 
 #: of qteasy.history.HistoryPanel.var:10
-#, fuzzy
 msgid "按指定维度聚合后的方差结果表。"
-msgstr "指定されたディメンションに沿って集計した後の標準偏差結果テーブル。"
+msgstr "指定されたディメンションによる集計後の分散結果の表。"
 
 #: of qteasy.history.HistoryPanel.quantile:1
-#, fuzzy
 msgid "按标的或数据类型对 HistoryPanel 计算分位数。"
-msgstr "シェアまたはデータ タイプごとに、HistoryPanel の平均統計を計算します。"
+msgstr "基礎となるデータ型またはデータ型に基づいて、HistoryPanel の分位数を計算します。"
 
 #: of qteasy.history.HistoryPanel.quantile:3
 msgid "分位点，须满足 ``0 <= q <= 1``（仅支持标量）。"
-msgstr ""
+msgstr "分位点。``0 <= q <= 1`` を満たす必要があります (スカラーのみがサポートされます)。"
 
 #: of qteasy.history.HistoryPanel.quantile:7
-#, fuzzy
 msgid "是否在计算分位数时忽略 NaN。"
-msgstr "平均を計算するときに NaN を無視するかどうか。"
+msgstr "分位数を計算するときに NaN を無視するかどうか。"
 
 #: of qteasy.history.HistoryPanel.quantile:10
-#, fuzzy
 msgid "按指定维度聚合后的分位数结果表。"
-msgstr "指定されたディメンションに沿って集計した後の平均結果テーブル。"
+msgstr "指定されたディメンションによって集計された分位結果のテーブル。"
 
 #: of qteasy.history.HistoryPanel.quantile:13
 msgid "``q`` 越界或 ``by`` 非法。"
-msgstr ""
+msgstr "``q`` 越界或 ``by`` は不正です。"
 
 #: ../../source/api/HistoryPanel.rst:77
 msgid "相关与协方差 （corr / cov）"
-msgstr ""
+msgstr "相関と共分散 (corr/cov)"
 
 #: ../../source/api/HistoryPanel.rst:79
 msgid ""
 "对指定 ``htype``，将每个 share 的时间序列视为一列，返回 ``shares × shares`` 相关 / 协方差矩阵 "
 "（``DataFrame``，index/columns 均为 ``shares``）。空面板返回空表。"
 msgstr ""
+"``htype``，将每个 share 的时间序列视为一列，返回 ``shares × shares`` 相关 / 协方差矩阵 "
+"（``DataFrame``，index/columns 均为 ``shares``)を指定します。空のパネルは空のテーブルを返します。"
 
 #: ../../source/api/HistoryPanel.rst:81
 msgid ""
 "与 :mod:`qteasy.research` 中的 ``factor_ic`` "
 "（**逐日截面**相关）语义不同：本方法是**跨时间、标的两两**的时序矩阵。"
 msgstr ""
+"セマンティクスは ``factor_ic`` (**daily cross-section** related) in "
+":mod:`qteasy.research` とは異なります。このメソッドは **時間とターゲットのペアにわたる**時系列行列です。"
 
 #: of qteasy.history.HistoryPanel.corr:1
 msgid "对指定 htype，在 share 维上计算时序两两相关系数矩阵。"
-msgstr ""
+msgstr "指定された htype について、シェア次元の時系列ペア相関係数行列を計算します。"
 
 #: of qteasy.history.HistoryPanel.corr:3
 msgid ""
 "将每个标的在该 ``htype`` 上的时间序列视为一列，返回 ``shares × shares`` 相关矩阵。 与 "
 "``qteasy.research.factor_ic``（逐日截面相关）语义不同。"
 msgstr ""
+"``htype`` 上的时间序列视为一列，返回 ``shares × shares`` 相关矩阵。 与 "
+"``qteasy.research.factor_ic`` (日次クロスセクション相関) セマンティクスは異なります。"
 
 #: of qteasy.history.HistoryPanel.corr:6 qteasy.history.HistoryPanel.cov:5
 msgid "参与计算的数据类型列名。"
-msgstr ""
+msgstr "計算に関与するデータ型列の名前。"
 
 #: of qteasy.history.HistoryPanel.corr:8
 msgid "相关系数方法。"
-msgstr ""
+msgstr "相関係数法。"
 
 #: of qteasy.history.HistoryPanel.corr:10
 msgid "计算每对相关所需的最少有效观测数，透传给 pandas。"
-msgstr ""
+msgstr "相関関係の各ペアに必要な有効な観測値の最小数を計算し、それらを透過的にパンダに渡します。"
 
 #: of qteasy.history.HistoryPanel.corr:13 qteasy.history.HistoryPanel.cov:12
 msgid "index/columns 均为 ``shares``；空面板返回空表。"
-msgstr ""
+msgstr "インデックス/列は両方とも ``shares``;空のパネルは空のテーブルを返します。"
 
 #: of qteasy.history.HistoryPanel.corr:16
 msgid "未知 ``htype``、非法 ``method`` / ``min_periods``。"
-msgstr ""
+msgstr "不明な``htype``、非法 ``method`` / ``min_periods``。"
 
 #: of qteasy.history.HistoryPanel.cov:1
 msgid "对指定 htype，在 share 维上计算时序两两协方差矩阵。"
-msgstr ""
+msgstr "指定された htype の共有次元の時系列ペア共分散行列を計算します。"
 
 #: of qteasy.history.HistoryPanel.cov:3
 msgid "语义同 ``corr``：每个标的一条时间序列，返回 ``shares × shares`` 协方差矩阵。"
-msgstr ""
+msgstr "セマンティクスは ``corr``：每个标的一条时间序列，返回 ``shares × shares`` 共分散行列と同じです。"
 
 #: of qteasy.history.HistoryPanel.cov:7
 msgid "计算每对协方差所需的最少有效观测数，透传给 pandas。"
-msgstr ""
+msgstr "共分散の各ペアに必要な有効な観測値の最小数を計算し、透過的に pandas に渡します。"
 
 #: of qteasy.history.HistoryPanel.cov:9
 msgid "自由度修正，透传给 ``DataFrame.cov``。"
-msgstr ""
+msgstr "自由度の修正。透過的に ``DataFrame.cov`` に渡されます。"
 
 #: of qteasy.history.HistoryPanel.cov:15
 msgid "未知 ``htype``、非法 ``min_periods``。"
-msgstr ""
+msgstr "不明な``htype``、非法 ``min_periods``。"
 
 #: ../../source/api/HistoryPanel.rst:89
 msgid "研究与掩码 （where）"
@@ -1689,7 +1696,7 @@ msgstr "短い例 (:meth:`~qteasy.HistoryPanel.where` と一緒に使用でき�
 
 #: ../../source/api/HistoryPanel.rst:170
 msgid "列表达式：expr"
-msgstr ""
+msgstr "列式: expr"
 
 #: ../../source/api/HistoryPanel.rst:172
 msgid ""
@@ -1697,41 +1704,44 @@ msgid ""
 "及数字字面量（AST 白名单，无任意 ``eval``）。默认 ``inplace=False`` 返回新面板。含 ``|`` 的复权列名请用 "
 ":meth:`~qteasy.HistoryPanel.assign` 或 ``hp['close|b']``。"
 msgstr ""
+"`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧ `|`` 的复权列名请用 "
+":meth:`~qteasy.HistoryPanel.assign` 或 ``hp['close|b']``。"
 
 #: of qteasy.history.HistoryPanel.expr:1
 msgid "用受限列名算术表达式派生新列并写入 ``new_htype``。"
-msgstr ""
+msgstr "制限された列名の算術式を使用して新しい列を派生し、``new_htype`` と書き込みます。"
 
 #: of qteasy.history.HistoryPanel.expr:3
 msgid ""
 "仅允许现有 **identifier** 列名与 ``+ - * / **``、一元正负号、括号及数字字面量。 含 ``|`` 等非标识符复权列名请使用"
 " :meth:`assign` 或括号赋值。"
 msgstr ""
+"``+ - * / **``、一元正负号、括号及数字字面量。 含 ``|`` 等非标识符复权列名请使用 :meth:`assign` "
+"または括弧を使用して割り当てることができるのは、既存の **identifier** 列名のみです。"
 
 #: of qteasy.history.HistoryPanel.expr:6
 msgid "输出列名，必须为非空 Python 标识符；已存在则覆盖。"
-msgstr ""
+msgstr "出力列名は空ではない Python 識別子である必要があります。すでに存在する場合は上書きされます。"
 
 #: of qteasy.history.HistoryPanel.expr:8
 msgid "算术表达式，如 ``'(high + low) / 2'``。"
-msgstr ""
+msgstr "``'(high + low) / 2'`` などの算術式。"
 
 #: of qteasy.history.HistoryPanel.expr:10
-#, fuzzy
 msgid "True 时原地写入并返回 ``self``；False 时返回新面板。"
-msgstr "True の場合、プリセット列を元のパネルに追加し、元のパネルを返します。 False の場合、追加された列を含む新しいパネルを返します。"
+msgstr "True の場合、その場で書き込み、``self`` を返します。 False の場合、新しいパネルに戻ります。"
 
 #: of qteasy.history.HistoryPanel.expr:13
 msgid "含 ``new_htype`` 列的面板。"
-msgstr ""
+msgstr "列「`new_htype`」のあるパネル。"
 
 #: of qteasy.history.HistoryPanel.expr:16
 msgid "空面板、非法列名/表达式、或不支持的语法时抛出（英文消息）。"
-msgstr ""
+msgstr "空のパネル、無効な列名/式、またはサポートされていない構文 (英語のメッセージ) の場合にスローされます。"
 
 #: ../../source/api/HistoryPanel.rst:181
 msgid "时序变换：shift / diff / pct_change"
-msgstr ""
+msgstr "タイミング変換:shift/diff/pct_change"
 
 #: ../../source/api/HistoryPanel.rst:183
 msgid ""
@@ -1739,6 +1749,9 @@ msgid ""
 "``HistoryPanel``，``shape`` 与轴标签不变。``periods`` 须为非零整数；``htypes=None`` "
 "表示全部列，指定时未选中列保持原值拷贝。"
 msgstr ""
+"時間軸 (``hdates``，axis=1）对指定列做位移、一阶差分或百分比变化；均返回**新** "
+"``HistoryPanel``，``shape`` 与轴标签不变。``periods`` 须为非零整数；``htypes=None``) "
+"に沿って、すべての列を表します。指定すると、選択されていない列は元の値のコピーを保持します。"
 
 #: ../../source/api/HistoryPanel.rst:185
 msgid ""
@@ -1746,78 +1759,84 @@ msgid ""
 ":meth:`~qteasy.HistoryPanel.returns` 的区别：前者对任意列做通用百分比变化，不绑定价格语义、不调用 "
 "``_resolve_price_htype``；后者面向价格列并解析复权根名。"
 msgstr ""
+":meth:`~qteasy.HistoryPanel.pct_change` と "
+":meth:`~qteasy.HistoryPanel.returns` の違い: "
+"前者は任意の列で一般的なパーセント変更を行い、価格セマンティクスを拘束せず、``_resolve_price_htype`` "
+"を呼び出しません。後者は価格列を対象とし、重み付けされたルート名を解析します。"
 
 #: of qteasy.history.HistoryPanel.shift:1
 msgid "沿时间轴（hdates）位移指定列；正 ``periods`` 为向后看历史（与 pandas 一致）。"
-msgstr ""
+msgstr "指定された列を時間軸に沿ってシフトします (hdates)。肯定的な ``periods`` は歴史を遡ります (パンダと一致します)。"
 
 #: of qteasy.history.HistoryPanel.shift:3
 msgid "返回新 ``HistoryPanel``，shape/轴标签不变，移位空位为 ``fill_value``。 未指定的列保持原值拷贝。"
 msgstr ""
+"新しい``HistoryPanel``，shape/轴标签不变，移位空位为 "
+"``fill_value``を返します。指定されていない列は、元の値のコピーを保持します。"
 
 #: of qteasy.history.HistoryPanel.shift:6
 msgid "非零整数位移步数；负值表示向前看未来。"
-msgstr ""
+msgstr "ゼロ以外の整数の変位ステップ数。負の値は将来を見据えることを意味します。"
 
 #: of qteasy.history.HistoryPanel.shift:8
 msgid "要位移的列；``None`` 表示全部列。"
-msgstr ""
+msgstr "シフトされる列。 ``None`` はすべての列を意味します。"
 
 #: of qteasy.history.HistoryPanel.shift:10
-#, fuzzy
 msgid "空位填充值。"
-msgstr "充填値"
+msgstr "ギャップフィル値。"
 
 #: of qteasy.history.HistoryPanel.diff:10
 #: qteasy.history.HistoryPanel.pct_change:11
 #: qteasy.history.HistoryPanel.shift:13
-#, fuzzy
 msgid "新面板；空面板返回空 ``HistoryPanel()``。"
-msgstr ""
-"空のパネルの場合 (``is_empty``), indexing with any key returns an empty "
-"``HistoryPanel``)。"
+msgstr "新しいパネル。空のパネルは空の ``HistoryPanel()`` を返します。"
 
 #: of qteasy.history.HistoryPanel.diff:1
 msgid "一阶差分：``x[t] - x[t-periods]``；``htypes=None`` 时对全部列。"
-msgstr ""
+msgstr "最初の違い: すべての列の ``x[t] - x[t-periods]``；``htypes=None``。"
 
 #: of qteasy.history.HistoryPanel.diff:3
 msgid "前 ``periods`` 行（正位移）为 NaN；返回新面板，未选中列保持原值。"
-msgstr ""
+msgstr "最初の ``periods`` 行 (正の変位) は NaN です。新しいパネルに戻ると、選択されていない列は元の値を保持します。"
 
 #: of qteasy.history.HistoryPanel.diff:5
 msgid "非零整数差分步数。"
-msgstr ""
+msgstr "ゼロ以外の整数の差分ステップ数。"
 
 #: of qteasy.history.HistoryPanel.diff:7
 msgid "要差分的列；``None`` 表示全部列。"
-msgstr ""
+msgstr "区別される列。 ``None`` はすべての列を表します。"
 
 #: of qteasy.history.HistoryPanel.pct_change:1
 msgid "列级百分比变化：``(x[t] / x[t-periods]) - 1``。"
-msgstr ""
+msgstr "列レベルの変更パーセント: ``(x[t] / x[t-periods]) - 1``。"
 
 #: of qteasy.history.HistoryPanel.pct_change:3
 msgid ""
 "与 :meth:`returns` 的区别：不绑定价格语义、不调用 ``_resolve_price_htype``； "
 "可对任意列做通用百分比变化。除零结果遵循 NumPy（``±inf``）。"
 msgstr ""
+":meth:`returns` との違い: 価格セマンティクスはバインドされておらず、``_resolve_price_htype``； "
+"可对任意列做通用百分比变化。除零结果遵循 NumPy（``±inf`` は呼び出されません)。"
 
 #: of qteasy.history.HistoryPanel.pct_change:6
 msgid "非零整数间隔步数。"
-msgstr ""
+msgstr "ゼロ以外の整数の間隔ステップ数。"
 
 #: of qteasy.history.HistoryPanel.pct_change:8
 msgid "要计算的列；``None`` 表示全部列。"
-msgstr ""
+msgstr "計算される列。 ``None`` はすべての列を意味します。"
 
 #: ../../source/api/HistoryPanel.rst:194
 msgid "缺失值：fillna / ffill / fillinf / bfill / dropna"
-msgstr ""
+msgstr "欠損値: fillna/ffill/fillinf/bfill/dropna"
 
 #: ../../source/api/HistoryPanel.rst:196
 msgid "填充与丢弃缺失时请注意**可变性契约**（与 pandas 默认 copy 习惯不同的部分已用 ``inplace=`` 显式化）："
 msgstr ""
+"不足している部分を埋めたり破棄したりするときは、**可変性コントラクト**に注意してください (パンダのデフォルトのコピー習慣と異なる部分は "
+"``inplace=`` で明示されています)。"
 
 #: ../../source/api/HistoryPanel.rst:202
 msgid "API"
@@ -1829,7 +1848,7 @@ msgstr "默认 ``inplace``"
 
 #: ../../source/api/HistoryPanel.rst:204
 msgid "说明"
-msgstr ""
+msgstr "説明する"
 
 #: ../../source/api/HistoryPanel.rst:205
 msgid "``fillna`` / ``ffill`` / ``fillinf``"
@@ -1841,7 +1860,7 @@ msgstr "``True``"
 
 #: ../../source/api/HistoryPanel.rst:207
 msgid "历史默认原地；``inplace=False`` 返回拷贝"
-msgstr ""
+msgstr "履歴はデフォルトで元の場所に戻ります。 ``inplace=False`` はコピーに戻ります"
 
 #: ../../source/api/HistoryPanel.rst:208
 msgid "``bfill``"
@@ -1853,7 +1872,7 @@ msgstr "``False``"
 
 #: ../../source/api/HistoryPanel.rst:210
 msgid "新 API，默认返回新对象"
-msgstr ""
+msgstr "新しい API、デフォルトで新しいオブジェクトを返す"
 
 #: ../../source/api/HistoryPanel.rst:211
 msgid "``dropna``"
@@ -1861,11 +1880,11 @@ msgstr "``dropna``"
 
 #: ../../source/api/HistoryPanel.rst:212
 msgid "（无该参数）"
-msgstr ""
+msgstr "(このパラメータなし)"
 
 #: ../../source/api/HistoryPanel.rst:213
 msgid "始终返回新面板；可能缩短某一维"
-msgstr ""
+msgstr "常に新しいパネルを返します。 1 つの寸法が短縮される可能性があります"
 
 #: ../../source/api/HistoryPanel.rst:215
 msgid ""
@@ -1873,123 +1892,123 @@ msgid ""
 "``subset`` （``subset`` 仅在 ``axis='hdates'`` 时限制参与判断的 "
 "``htypes``）；若某轴被删空则返回空面板。"
 msgstr ""
+"``dropna`` 支持 ``axis='hdates'|'shares'|'htypes'``，以及 ``how`` / ``thresh`` / "
+"`⟦CODE8 ⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧⟦コード13⟧`);軸が削除されると、空のパネルが返されます。"
 
 #: of qteasy.history.HistoryPanel.fillna:1
-#, fuzzy
 msgid "使用 ``with_val`` 填充 HistoryPanel 中的所有 NaN 值。"
-msgstr "HistoryPanel の Nan 値は with_value で埋められます"
+msgstr "HistoryPanel のすべての NaN 値を ``with_val`` で埋めます。"
 
 #: of qteasy.history.HistoryPanel.fillinf:3
 #: qteasy.history.HistoryPanel.fillna:3
-#, fuzzy
 msgid "填充值。"
-msgstr "充填値"
+msgstr "値を埋めます。"
 
 #: of qteasy.history.HistoryPanel.ffill:5
 #: qteasy.history.HistoryPanel.fillinf:5 qteasy.history.HistoryPanel.fillna:5
 msgid "True 时原地修改并返回 ``self``；False 时返回新面板且不修改原对象。"
 msgstr ""
+"True の場合、その場で変更して ``self`` を返します。 False の場合、元のオブジェクトを変更せずに新しいパネルを返します。"
 
 #: of qteasy.history.HistoryPanel.bfill:10 qteasy.history.HistoryPanel.ffill:8
 #: qteasy.history.HistoryPanel.fillinf:8 qteasy.history.HistoryPanel.fillna:8
 msgid "填充后的面板。"
-msgstr ""
+msgstr "塗りつぶされたパネル。"
 
 #: of qteasy.history.HistoryPanel.ffill:1
-#, fuzzy
 msgid "前向填充缺失值：用缺失值以前的最近有效数据填充。"
-msgstr "欠損値を前方に埋めます。履歴データに欠損値がある場合、欠損値の前にある最新の有効なデータを使用して欠損値を埋めます。"
+msgstr "欠損値の前方埋め込み: 欠損値の前に最新の有効なデータを入力します。"
 
 #: of qteasy.history.HistoryPanel.ffill:3
 msgid "第一行仍为 NaN、无前序有效数据时使用的填充值。"
-msgstr ""
+msgstr "最初の行がまだ NaN で、先行する有効なデータがない場合に使用されるパディング値。"
 
 #: of qteasy.history.HistoryPanel.fillinf:1
-#, fuzzy
 msgid "使用 ``with_val`` 填充 HistoryPanel 中的所有 Inf 值。"
-msgstr "with_value を使用して、HistoryPanel 内のすべての inf 値を入力します。"
+msgstr "HistoryPanel のすべての Inf 値を ``with_val`` で埋めます。"
 
 #: of qteasy.history.HistoryPanel.bfill:1
 msgid "沿时间轴后向填充缺失值；末行仍缺时使用 ``init_val``。"
-msgstr ""
+msgstr "欠損値を時間軸に沿って逆方向に埋めます。最後の行がまだ見つからない場合は、``init_val`` を使用してください。"
 
 #: of qteasy.history.HistoryPanel.bfill:3
-#, fuzzy
 msgid "默认 ``inplace=False``（返回新面板），与历史 ``ffill`` 默认原地相对照。"
-msgstr ""
-"``inplace=False``, return a new panel with the added columns; when "
-"``inplace=True``のときは元のパネルに戻します。"
+msgstr "デフォルトの ``inplace=False``（返回新面板），与历史 ``ffill`` は、デフォルトでインプレース比較を行います。"
 
 #: of qteasy.history.HistoryPanel.bfill:5
 msgid "末行仍为 NaN、无后续有效数据时使用的填充值。"
-msgstr ""
+msgstr "最後の行がまだ NaN で、後続の有効なデータがない場合に使用されるパディング値。"
 
 #: of qteasy.history.HistoryPanel.bfill:7
-#, fuzzy
 msgid "True 时原地修改并返回 ``self``；False 时返回新面板。"
-msgstr "True の場合、プリセット列を元のパネルに追加し、元のパネルを返します。 False の場合、追加された列を含む新しいパネルを返します。"
+msgstr "True の場合、その場で変更して ``self`` を返します。 False の場合、新しいパネルに戻ります。"
 
 #: of qteasy.history.HistoryPanel.dropna:1
 msgid "按轴丢弃含缺失值的切片，返回可能缩短某一维的新面板。"
-msgstr ""
+msgstr "欠損値のあるスライスを軸ごとに破棄し、1 つの次元を短縮する可能性がある新しいパネルを返します。"
 
 #: of qteasy.history.HistoryPanel.dropna:3
 msgid "丢弃所沿的轴。"
-msgstr ""
+msgstr "描画に使用した軸を破棄します。"
 
 #: of qteasy.history.HistoryPanel.dropna:5
 msgid "``any``：切片中存在任一 NaN 则丢弃；``all``：切片全为 NaN 才丢弃。 若给出 ``thresh`` 则忽略本参数。"
 msgstr ""
+"``any``：切片中存在任一 NaN 则丢弃；``all``：切片全为 NaN 才丢弃。 若给出 ``thresh`` はこのパラメータを無視します。"
 
 #: of qteasy.history.HistoryPanel.dropna:8
 msgid "切片上非 NaN 个数小于该阈值则丢弃；指定时忽略 ``how``。"
-msgstr ""
+msgstr "スライス上の非 NaN の数がこのしきい値未満の場合、スライスは破棄されます。 ``how`` を指定しても無視されます。"
 
 #: of qteasy.history.HistoryPanel.dropna:10
 msgid "仅 ``axis='hdates'`` 时可用：限制参与判定的 ``htypes``。"
-msgstr ""
+msgstr "``axis='hdates'`` 时可用：限制参与判定的 ``htypes`` のみ。"
 
 #: of qteasy.history.HistoryPanel.dropna:13
 msgid "新面板；若某轴被删空则返回空面板。"
-msgstr ""
+msgstr "新しいパネル。軸が削除されると、空のパネルが返されます。"
 
 #: of qteasy.history.HistoryPanel.dropna:16
 msgid "``axis`` / ``how`` 非法，或在非 ``hdates`` 轴上使用 ``subset``。"
-msgstr ""
+msgstr "``axis`` / ``how`` 非法，或在非 ``hdates`` 轴上使用 ``subset``。"
 
 #: ../../source/api/HistoryPanel.rst:228
 msgid "轴标签：drop / rename"
-msgstr ""
+msgstr "軸ラベル: 削除/名前変更"
 
 #: ../../source/api/HistoryPanel.rst:230
 msgid ""
 ":meth:`~qteasy.HistoryPanel.drop` 与 :meth:`~qteasy.HistoryPanel.rename` "
 "均返回**新** ``HistoryPanel``，不修改原对象，也不改写 ``hdates``。"
 msgstr ""
+":meth:`~qteasy.HistoryPanel.drop` と :meth:`~qteasy.HistoryPanel.rename` "
+"は両方とも **new** ``HistoryPanel``，不修改原对象，也不改写 ``hdates`` を返します。"
 
 #: ../../source/api/HistoryPanel.rst:232
 msgid ""
 "``drop(*, htypes=, shares=, errors='raise'|'ignore')``：至少指定 ``htypes`` 或 "
 "``shares`` 一侧；标签精确匹配（含 ``close|b``）；某轴删空则返回空面板。"
 msgstr ""
+"``drop(*, htypes=, shares=, errors='raise'|'ignore')``：至少指定 ``htypes`` 或 "
+"``shares`` 一侧；标签精确匹配（含 ``close|b``);軸を削除すると、空のパネルが返されます。"
 
 #: ../../source/api/HistoryPanel.rst:233
 msgid ""
 "``rename(*, htypes=, shares=)``：映射式重命名，未映射标签保持不变；目标冲突或两源同目标时抛出英文 "
 "``ValueError``。"
-msgstr ""
+msgstr "「⟦コード0⟧⟦コード1⟧⟦コード2⟧」。"
 
 #: ../../source/api/HistoryPanel.rst:235
 msgid ""
 "与 :meth:`~qteasy.HistoryPanel.re_label` 的对照：``re_label`` "
 "为**原地**整轴重赋（保留）；``rename`` 为映射式便捷 API（默认新对象）。"
 msgstr ""
+":meth:`~qteasy.HistoryPanel.re_label` との比較: ``re_label`` "
+"为**原地**整轴重赋（保留）；``rename`` はマップされた便利な API (デフォルトの新しいオブジェクト) です。"
 
 #: of qteasy.history.HistoryPanel.drop:1
-#, fuzzy
 msgid "按 htypes 和/或 shares 标签删除列/标的，返回新 HistoryPanel。"
-msgstr ""
-"htypes / share / hdates の 3 つの軸に沿ってスライスし、正しい軸ラベルを持つサブ``HistoryPanel`` を返します。"
+msgstr "htypes および/またはshares タグによって列/オブジェクトを削除し、新しい HistoryPanel を返します。"
 
 #: of qteasy.history.HistoryPanel.drop:3
 msgid ""
@@ -1997,54 +2016,59 @@ msgid ""
 "``close|b`` 等非标识符）；``str`` 可用逗号串。 若某一轴删至长度 0，返回空 ``HistoryPanel()``。更多细节见文档 "
 "HistoryPanel 章节。"
 msgstr ""
+"片側には少なくとも htype または share を指定します。両方を同時に削除できます。元のオブジェクトは変更されず、hdate "
+"も削除されません。タグは、正確な列/ターゲット名 (``close|b`` 等非标识符）；``str`` 可用逗号串。 若某一轴删至长度 0，返回空 "
+"``HistoryPanel()`` を含む) によって照合されます。詳細については、ドキュメント セクション HistoryPanel "
+"を参照してください。"
 
 #: of qteasy.history.HistoryPanel.drop:7
 msgid "待删除的数据类型标签；None 表示不删 htypes。"
-msgstr ""
+msgstr "削除するデータ型タグ。 None は、htypes が削除されないことを意味します。"
 
 #: of qteasy.history.HistoryPanel.drop:9
 msgid "待删除的标的标签；None 表示不删 shares。"
-msgstr ""
+msgstr "削除するターゲットラベル。 [なし] は、共有が削除されないことを意味します。"
 
 #: of qteasy.history.HistoryPanel.drop:11
 msgid "遇到未知标签时：raise 抛出 ValueError；ignore 跳过。"
-msgstr ""
+msgstr "不明なタグに遭遇した場合: ValueError をスローするために発生します。無視してスキップします。"
 
 #: of qteasy.history.HistoryPanel.drop:14
 msgid "删除后的新面板；空输入或删空某轴时可能为空面板。"
-msgstr ""
+msgstr "削除後の新しいパネル。空の入力または軸の削除時には、空のパネルになる可能性があります。"
 
 #: of qteasy.history.HistoryPanel.drop:17
 msgid "两侧皆未指定、errors 非法，或 errors='raise' 时标签未知。"
-msgstr ""
+msgstr "どちらの側も指定されていないか、エラーが不正であるか、errors='raise' の場合はラベルが不明です。"
 
 #: of qteasy.history.HistoryPanel.rename:1
-#, fuzzy
 msgid "按映射重命名 htypes 和/或 shares 标签，返回新 HistoryPanel。"
-msgstr ""
-"htypes / share / hdates の 3 つの軸に沿ってスライスし、正しい軸ラベルを持つサブ``HistoryPanel`` を返します。"
+msgstr "htypes の名前を変更し、マッピングによってタグを共有し、新しい HistoryPanel を返します。"
 
 #: of qteasy.history.HistoryPanel.rename:3
 msgid ""
 "至少指定一侧映射；未出现在映射中的标签保持不变。不修改原对象，也不改 hdates。 与 "
 "``re_label``（原地整轴重赋）并存。目标名与保留轴上其它标签冲突，或两源映射到同一目标时抛出 ValueError。"
 msgstr ""
+"マッピングの少なくとも 1 つの側を指定します。マッピングに表示されないラベルは変更されないままになります。元のオブジェクトは変更されず、hdate "
+"も変更されません。 ``re_label``（オリジナル軸再割り当て）と共存します。 ValueError "
+"は、ターゲット名が予約軸上の他のラベルと競合する場合、または 2 つのソースが同じターゲットにマップされる場合にスローされます。"
 
 #: of qteasy.history.HistoryPanel.rename:6
 msgid "数据类型旧名 → 新名；None 表示不重命名 htypes。"
-msgstr ""
+msgstr "データ型 古い名前 → 新しい名前。 None は、htype の名前を変更しないことを意味します。"
 
 #: of qteasy.history.HistoryPanel.rename:8
 msgid "标的旧名 → 新名；None 表示不重命名 shares。"
-msgstr ""
+msgstr "ターゲットの古い名前 → 新しい名前。 [なし] は、共有の名前が変更されないことを意味します。"
 
 #: of qteasy.history.HistoryPanel.rename:11
 msgid "重命名后的新面板。"
-msgstr ""
+msgstr "名前変更後の新しいパネル。"
 
 #: of qteasy.history.HistoryPanel.rename:14
 msgid "两侧映射皆未指定，或目标名冲突。"
-msgstr ""
+msgstr "どちらの側でもマッピングが指定されていないか、ターゲット名が競合しています。"
 
 #: ../../source/api/HistoryPanel.rst:242
 msgid "横截面与标准化：rank / zscore"
@@ -2280,11 +2304,10 @@ msgid "滚动窗口"
 msgstr "ローリングウィンドウ"
 
 #: ../../source/api/HistoryPanel.rst:270
-#, fuzzy
 msgid "使用滚动窗口方法可以在 ``HistoryPanel`` 的时间维度上进行滑动计算，支持常见的滚动平均、滚动标准差等操作："
 msgstr ""
-"ローリング ウィンドウ法を使用すると、HistoryPanel "
-"の時間次元に沿ったスライド計算が可能になり、ローリング平均やローリング標準偏差などの一般的な演算がサポートされます。"
+"ローリング ウィンドウ法を使用すると、``HistoryPanel`` "
+"の時間次元でスライディング計算を実行でき、ローリング平均やローリング標準偏差などの一般的な演算がサポートされます。"
 
 #: of qteasy.history.HistoryPanel.rolling:1
 msgid "基于 HistoryPanel 构造滚动窗口统计对象。"
@@ -2789,23 +2812,25 @@ msgstr ""
 
 #: ../../source/api/HistoryPanel.rst:312
 msgid "导出到 pandas （推荐名）"
-msgstr ""
+msgstr "pandas にエクスポート (推奨される名前)"
 
 #: ../../source/api/HistoryPanel.rst:314
 msgid "与 pandas 生态衔接时，**新代码请优先使用下列推荐名**；兼容别名仍可用，行为不变："
 msgstr ""
+"pandas "
+"エコシステムに接続する場合は、新しいコードに次の推奨名を使用することを優先してください**。互換性のあるエイリアスは引き続き使用でき、動作は変わりません。"
 
 #: ../../source/api/HistoryPanel.rst:317
 msgid "推荐名"
-msgstr ""
+msgstr "推奨される名前"
 
 #: ../../source/api/HistoryPanel.rst:317
 msgid "兼容别名"
-msgstr ""
+msgstr "エイリアスとの互換性"
 
 #: ../../source/api/HistoryPanel.rst:317
 msgid "典型用途"
-msgstr ""
+msgstr "代表的な用途"
 
 #: ../../source/api/HistoryPanel.rst:319
 msgid "``to_df_dict(by=...)``"
@@ -2817,7 +2842,7 @@ msgstr "``unstack(by=...)``"
 
 #: ../../source/api/HistoryPanel.rst:319
 msgid "按 share / htype 切成多张宽表"
-msgstr ""
+msgstr "share / htype を押して複数の幅の広いテーブルに分割します"
 
 #: ../../source/api/HistoryPanel.rst:321
 msgid "``to_multi_index_dataframe(...)``"
@@ -2829,7 +2854,7 @@ msgstr "``flatten`` / ``flatten_to_dataframe``"
 
 #: ../../source/api/HistoryPanel.rst:321
 msgid "展平为 MultiIndex ``DataFrame``"
-msgstr ""
+msgstr "MultiIndex ``DataFrame`` にフラット化"
 
 #: ../../source/api/HistoryPanel.rst:323
 msgid "``to_share_frame(share)``"
@@ -2837,11 +2862,11 @@ msgstr "``to_share_frame(share)``"
 
 #: ../../source/api/HistoryPanel.rst:323
 msgid "（无）"
-msgstr ""
+msgstr "（なし）"
 
 #: ../../source/api/HistoryPanel.rst:323
 msgid "单标的 → 时间为索引的宽表"
-msgstr ""
+msgstr "単一インデックス → 時間インデックス付きワイドテーブル"
 
 #: of qteasy.history.HistoryPanel.to_df_dict:1
 msgid "将 HistoryPanel 转为字典：键为 share 或 htype，值为对应的 ``pandas.DataFrame``。"
@@ -2865,21 +2890,19 @@ msgid "**df_dict**"
 msgstr "**df_dict**"
 
 #: of qteasy.history.HistoryPanel.to_multi_index_dataframe:1
-#, fuzzy
 msgid "将 HistoryPanel 展平为 MultiIndex ``DataFrame``（推荐导出名）。"
-msgstr "HistoryPanel を DataFrame にフラット化する"
+msgstr "HistoryPanel を MultiIndex ``DataFrame`` (推奨されるエクスポート名) にフラット化します。"
 
 #: of qteasy.history.HistoryPanel.to_multi_index_dataframe:3
 msgid "实现委托 ``flatten_to_dataframe``；兼容别名还有 ``flatten``。"
-msgstr ""
+msgstr "デリゲート ``flatten_to_dataframe``；兼容别名还有 ``flatten`` を実装します。"
 
 #: of qteasy.history.HistoryPanel.to_multi_index_dataframe:5
-#, fuzzy
 msgid ""
 "平铺 HistoryPanel 的每一层时，沿行方向还是列方向平铺， 'col'或'column'表示沿列方向平铺，'row'表示沿行方向平铺"
 msgstr ""
 "HistoryPanel "
-"の各層を行方向または列方向に沿って平坦化します。「col」または「column」は列方向に沿って平坦化することを意味し、「row」は行方向に沿って平坦化することを意味します"
+"の各レイヤーをタイル化する場合、行方向に沿ってタイル化するか列方向に沿ってタイル化するか、「col」または「column」は列方向に沿ったタイルを意味し、「row」は行方向に沿ったタイルを意味します"
 
 #: of qteasy.history.HistoryPanel.to_share_frame:1
 msgid "将单一股票在 HistoryPanel 中的所有数据类型切片为一个 DataFrame。"
@@ -2910,16 +2933,15 @@ msgid "qteasy级别的历史数据处理函数"
 msgstr "qteasyレベルの履歴データ処理関数"
 
 #: ../../source/api/HistoryPanel.rst:336
-#, fuzzy
 msgid "``qteasy`` 还提供了若干独立于 ``HistoryPanel`` 类的函数，支持更灵活的历史数据处理与分析："
-msgstr "qteasy は、HistoryPanel クラスから独立したいくつかの関数も提供し、より柔軟な履歴データの処理と分析をサポートします。"
+msgstr ""
+"``qteasy`` 还提供了若干独立于 ``HistoryPanel`` クラス関数は、より柔軟な履歴データの処理と分析をサポートします。"
 
 #: of qteasy.core.get_history_data:1
 msgid "根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。"
 msgstr "指定された商品、データ型、頻度を指定して、ローカル データ ソースから履歴データを取得し、戦略で直接使用できる構造に組み立てます。"
 
 #: of qteasy.core.get_history_data:3
-#, fuzzy
 msgid ""
 "本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
 "``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
@@ -2928,10 +2950,13 @@ msgid ""
 "的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。 关于数据类型推断、频率转换和 "
 "trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」相关章节。"
 msgstr ""
-"必要なデータ型を指定するには、 "
-"`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧⟦コード10⟧⟦コード11⟧⟦コード12⟧`、この関数は、HistoryPanel、または計測器/データ型ごとにグループ化された"
-" DataFrame の辞書を返します。データ型推論、頻度変換、trade_time_only "
-"などの高度な使用方法については、ドキュメント「履歴データの取得 get_history_data」の関連セクションを参照してください。"
+"この入り口は ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
+"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
+"``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 `⟦ CODE10⟧` / "
+"``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` "
+"設定の場合、関数は HistoryPanel またはターゲット/データごとにグループ化された DataFrame "
+"のディクショナリを返します。タイプ。データ型推論、頻度変換、trade_time_only "
+"などの高度な使用法については、ドキュメント「Get_history_data」の関連する章を参照してください。"
 
 #: of qteasy.core.get_history_data:11
 msgid ""
@@ -3024,6 +3049,8 @@ msgid ""
 "``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典； ``False`` 时返回 "
 "``HistoryPanel``。"
 msgstr ""
+"``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典； ``False`` 时返回 "
+"``HistoryPanel``。"
 
 #: of qteasy.core.get_history_data:48
 msgid ""
@@ -3111,44 +3138,38 @@ msgid "研究与正式回测的边界 （扩展阅读）"
 msgstr "研究と正式なバックテストの境界 (続きを読む)"
 
 #: ../../source/api/HistoryPanel.rst:346
-#, fuzzy
 msgid ""
 "``HistoryPanel`` 上的 ``cum_return``、``portfolio``、``plot`` 等面向**探索与粗验**；正式回测 "
 "（交割、费用、信号类型、防未来函数的数据窗口等）仍由 ``Strategy`` / ``Operator`` / Backtester 负责。截面 IC"
 " / 分位组合等模块级 API 见 :doc:`qteasy.research <research>` （**非** "
 "Backtester）。推荐读者在阅读本 API 页的同时，结合："
 msgstr ""
-"``HistoryPanel``, ``cum_return``, ``portfolio``, ``plot``, etc. are geared "
-"toward **exploration and quick checks**; formal backtesting (settlement, "
-"fees, signal types, data windows that avoid look-ahead functions, etc.) is "
-"still handled by ``Strategy`` / ``Operator`` / Backtester で。読者は、この API "
-"ページと合わせて読むことをお勧めします。"
+"`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦CO DE7⟧`Strategy`` / "
+"``Operator`` / Backtester 负责。截面 IC / 分位组合等模块级 API 见 :doc:`qteasy.research "
+"<research>` (**not** Backtester)。この API ページを以下と併せて読むことをお勧めします。"
 
 #: ../../source/api/HistoryPanel.rst:348
-#, fuzzy
 msgid ""
 "教程 :doc:`使用 HistoryPanel 操作和分析历史数据 <../tutorials/2.5-historypanel-data-"
 "analysis>` 中的 **§9** （研究 → ``FactorSorter`` / ``Operator``）、**§10** "
 "（多源数据拼板）、**§11** （导出 pandas / statsmodels），以及 ``qteasy.research`` cookbook；"
 msgstr ""
-"チュートリアル :doc:`Using HistoryPanel to manipulate and analyze historical data "
-"<../tutorials/2.5-historypanel-data-analysis>` **§9** (リサーチ → "
-"``FactorSorter`` / ``Operator``)、**§10** (マルチソース データ パネリング)、**§11** (pandas "
-"/ statsmodels へのエクスポート);"
+"**§9** チュートリアル:doc:`使用 HistoryPanel 操作和分析历史数据 "
+"<../tutorials/2.5-historypanel-data-analysis>` (リサーチ → ``FactorSorter`` / "
+"``Operator``）、**§10** （多源数据拼板）、**§11** （导出 pandas / statsmodels），以及 "
+"``qteasy.research`` クックブック;"
 
 #: ../../source/api/HistoryPanel.rst:349
 msgid "可运行示例 ``examples/historypanel_research_factor_workflow.py``；"
-msgstr ""
+msgstr "実行可能な例 ``examples/historypanel_research_factor_workflow.py``;"
 
 #: ../../source/api/HistoryPanel.rst:350
-#, fuzzy
 msgid ""
 "设计说明 :doc:`HistoryPanel 与可选 FactorResearch 层 <../design/10-historypanel-"
 "factor-research-layer>` （模块级函数边界）。"
 msgstr ""
-"設計ノート:doc:`HistoryPanel and the optional FactorResearch layer "
-"<../design/10-historypanel-factor-research-layer>` "
-"(独立因子統計モジュールを追加するかどうかに関する評価結論)。"
+"設計ノート:doc:`HistoryPanel 与可选 FactorResearch 层 <../design/10-historypanel-"
+"factor-research-layer>` (モジュールレベルの関数境界)。"
 
 #~ msgid "**out**"
 #~ msgstr "**out**"

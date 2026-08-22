@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:1
@@ -41,9 +41,8 @@ msgstr ""
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:7
 msgid ""
-"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 → 异步推送成交」。默认的 "
-"**simulator** 用 live 价模拟这一切；我们设计了统一适配层，以便日后换成 QMT 等真实柜台时，Trader "
-"主体逻辑尽量不用改。"
+"亲爱的用户，在 qteasy 里，**Broker（券商）** 负责「收单 → 告诉您是否受理 → 异步推送成交」。默认的 **simulator** "
+"用 live 价模拟这一切；我们设计了统一适配层，以便日后换成 QMT 等真实柜台时，Trader 主体逻辑尽量不用改。"
 msgstr ""
 "ユーザーの皆様、qteasy では、**ブローカー** は「注文の受け取り → 注文を受け入れるかどうかの通知 → "
 "非同期で実行をプッシュする」責任を負います。デフォルトの**シミュレーター**は、ライブ価格を使用してこれらすべてをシミュレートします。将来的にQMTなどの実際の取引プラットフォームに切り替える際に、Traderのメインロジックをできるだけ変更する必要がないように、統合されたアダプテーションレイヤーを設計しました。"
@@ -70,8 +69,8 @@ msgstr "一般的なライブ コール チェーン (外部から内部へ):"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:25
 msgid ""
-"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——Trader 只跟 Facade 说「connect /"
-" submit /  poll_fills」，不必关心底层是模拟还是 QMT。"
+"**BrokerFacade（适配外壳）**：像给不同券商柜台套上的**统一翻译层**——Trader 只跟 Facade 说「connect / "
+"submit /  poll_fills」，不必关心底层是模拟还是 QMT。"
 msgstr ""
 "**BrokerFacade (アダプティブ シェル)**: さまざまな証券カウンター用の **統合変換レイヤー** "
 "のようなものです。トレーダーは、基礎となるレイヤーがアナログであるか QMT であるかを気にする必要がなく、ファサードに「接続 / 送信 / "
@@ -83,8 +82,8 @@ msgstr "重要なポイント:"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:29
 msgid ""
-"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` /"
-" `get_remote_*` 等"
+"Facade 对外提供 `connect` / `disconnect` / `submit_with_ack` / `poll_fills` / "
+"`get_remote_*` 等"
 msgstr "Facade は、接続、切断、ACK 付き送信、ポーリング入力、リモート取得などの外部接続を提供します。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:30
@@ -106,12 +105,11 @@ msgstr "2. コアインターフェイス (ユーザー/開発者指向)"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:35
 msgid ""
 "**Broker 适配层**是 Trader 与具体券商（simulator、未来的 QMT 等）之间的统一接口。无论底层是谁，Trader "
-"都用同一套「连接 → 递单 → 听受理 → 轮询成交 → "
-"必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对照表与接入清单。"
+"都用同一套「连接 → 递单 → 听受理 → 轮询成交 → 必要时查远端账本」流程。下表先给出**接口名与日常类比**，便于阅读后文对照表与接入清单。"
 msgstr ""
 "**ブローカー アダプテーション レイヤー** は、Trader と特定の仲介業者 (シミュレーター、将来の QMT など) "
-"の間の統合インターフェイスとして機能します。基礎となる層に関係なく、Trader は同じプロセスを使用します。「接続 → 注文の送信 → "
-"承認のリッスン → 実行のポーリング → "
+"の間の統合インターフェイスとして機能します。基礎となる層に関係なく、Trader は同じプロセスを使用します。「接続 → 注文の送信 → 承認のリッスン"
+" → 実行のポーリング → "
 "必要に応じてリモート台帳を確認する」。以下の表は、以下の比較表と統合リストを読むときに簡単に参照できるように、**インターフェイス名と日常的な使用方法の比較**を示しています。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:37
@@ -219,9 +217,8 @@ msgstr "2.1 インターフェースの責任の比較"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:52
 msgid ""
-"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live "
-"价模拟，后者对接柜台。下表帮助您建立预期——避免把 simulator 上的 `connect` 当成真实登录，也便于规划 QMT "
-"接入时要补的能力。"
+"同一接口在 **simulator** 与 **真实 QMT** 上行为深度不同：前者用 live 价模拟，后者对接柜台。下表帮助您建立预期——避免把 "
+"simulator 上的 `connect` 当成真实登录，也便于规划 QMT 接入时要补的能力。"
 msgstr ""
 "同じインターフェイスでも **シミュレーター** と **実際の QMT** "
 "では動作が異なります。前者はシミュレーションにライブ価格設定を使用し、後者はフロントエンドに接続します。以下の表は、期待値を確立するのに役立ちます。シミュレーター上の"
@@ -229,8 +226,8 @@ msgstr ""
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:54
 msgid ""
-"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**为当前默认模拟行为；**真实 "
-"QMT（规划中）** 为后续目标（非当前版本承诺）。"
+"**各列含义**：**接口**同 §2；**语义**为抽象职责；**simulator 上您会看到**为当前默认模拟行为；**真实 QMT（规划中）**"
+" 为后续目标（非当前版本承诺）。"
 msgstr ""
 "**各列の意味:** **インターフェイス** は §2 と同じです。 **セマンティクス** は抽象的な責任です。 **シミュレータでは、** "
 "が現在のデフォルトのシミュレーション動作であることがわかります。 **本当の QMT (計画)** は将来の目標です "
@@ -239,8 +236,8 @@ msgstr ""
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:56
 msgid "**如何使用**：排错时先看 simulator 列是否已满足「受理 + 回报」；规划 QMT 时以最后一列为目标能力勾选。"
 msgstr ""
-"**使用方法:** トラブルシューティングを行うときは、まずシミュレーターの列が「承認 + 報告」基準を満たしているかどうかを確認します。 QMT"
-" を計画する場合は、最後の列でターゲット機能を選択します。"
+"**使用方法:** トラブルシューティングを行うときは、まずシミュレーターの列が「承認 + 報告」基準を満たしているかどうかを確認します。 QMT "
+"を計画する場合は、最後の列でターゲット機能を選択します。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "语义"
@@ -276,7 +273,7 @@ msgstr "返品は受け入れられ、broker_order_id などをシミュレー�
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "柜台真实受理结果（见 :doc:`4a-xtquant-broker-adapter-contract-v1`）"
-msgstr ""
+msgstr "窓口での実際の合格結果（:doc:`4a-xtquant-broker-adapter-contract-v1`を参照）"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md
 msgid "异步回报"
@@ -337,8 +334,8 @@ msgstr "3. `submit_with_ack` と現地注文"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:75
 msgid "**与风控拒单不同**：风控在更前面，**不入订单表**（见 :doc:`3-risk-and-order-lifecycle`）。"
 msgstr ""
-"**リスク管理の注文拒否とは異なります**: リスク管理が優先され、**注文リストには含まれません** (:doc:`3-risk-and-"
-"order-lifecycle` を参照)。"
+"**リスク管理の注文拒否とは異なります**: リスク管理が優先され、**注文リストには含まれません** (:doc:`3-risk-and-order-"
+"lifecycle` を参照)。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:77
 msgid ""
@@ -347,21 +344,21 @@ msgid ""
 msgstr ""
 "`submit_with_ack` "
 "は、証券会社が注文を**承諾**したかどうかを同期的に返します。以下の表は、**受け入れ段階**におけるローカル注文と "
-"`broker_order_id` との対応のみを説明しています。トランザクションの進行状況については、:doc:`3-risk-and-"
-"order-lifecycle` のステータス表を参照してください。"
+"`broker_order_id` との対応のみを説明しています。トランザクションの進行状況については、:doc:`3-risk-and-order-"
+"lifecycle` のステータス表を参照してください。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:79
 msgid ""
-"**各列含义**：**受理结果**为 ACK 中的 accepted "
-"语义；**本地订单**为订单表状态走向；**broker_order_id** 为是否回写券商委托号。"
+"**各列含义**：**受理结果**为 ACK 中的 accepted 语义；**本地订单**为订单表状态走向；**broker_order_id** "
+"为是否回写券商委托号。"
 msgstr ""
 "**各列の意味:** **受け入れられた結果:** これは、ACK で受け入れられたセマンティクスに対応します。 **ローカル注文:** "
 "これは注文テーブルのステータスを示します。 **broker_order_id:** これは、仲介注文番号が書き戻されたかどうかを示します。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:81
 msgid ""
-"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；有 broker 号但长期不成交"
-" → 查状态表与 `poll_fills`。"
+"**如何使用**：订单 `rejected` 且 broker 号为空 → 查「accepted=False」行；有 broker 号但长期不成交 → "
+"查状态表与 `poll_fills`。"
 msgstr ""
 "**使用方法:**: "
 "注文が拒否され、ブローカー番号が空の場合は、「accepted=False」の行を確認します。ブローカー番号があるにもかかわらず、取引が長期間完了していない場合は、ステータス"
@@ -409,7 +406,8 @@ msgstr "詳細な比較については、:doc:`6-trader-snapshot-gate` を参照
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:90
 msgid "提交前订单结构与回报字段均经契约校验，格式不对时会尽早报错，避免「脏数据进账本」。"
-msgstr "送信前に、注文構造と報酬フィールドが契約に基づいて検証されます。形式が正しくない場合は、「台帳にダーティなデータが入力される」ことを避けるために、できるだけ早くエラーが報告されます。"
+msgstr ""
+"送信前に、注文構造と報酬フィールドが契約に基づいて検証されます。形式が正しくない場合は、「台帳にダーティなデータが入力される」ことを避けるために、できるだけ早くエラーが報告されます。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:92
 msgid "4. 扩展新 Broker 类型"
@@ -418,9 +416,12 @@ msgstr "4. ブローカー タイプを展開します。"
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:94
 msgid ""
 "**XtQuant / MiniQMT**：配置项 ``live_trade_broker_type='xtquant'`` 已在 2.5.2 "
-"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1`（协作方"
-" PR 评审基准）。"
+"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1`（协作方 PR"
+" 评审基准）。"
 msgstr ""
+"**XtQuant/MiniQMT**: 構成項目 ``live_trade_broker_type='xtquant'`` 已在 2.5.2 "
+"白名单中；实现细节与禁止双重下单等规则见英文契约 :doc:`4a-xtquant-broker-adapter-contract-v1` "
+"(コラボレーター PR レビュー ベースライン)。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:96
 msgid "注册工厂（示例）："
@@ -428,16 +429,15 @@ msgstr "工場を登録する(例):"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:105
 msgid "独立扩展包（推荐用于 QMT）："
-msgstr ""
+msgstr "スタンドアロン拡張パック (QMT に推奨):"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:114
 msgid ""
 "**CLI `sync`（别名 `pull-state`）**：当前为**预留**，执行会打印 `[NOT_IMPLEMENTED] "
 "...`，表示真实「从券商拉状态」尚未实现；对接 QMT 后将替换为可用实现。"
 msgstr ""
-"**CLI `sync` (エイリアス `pull-state`):** 現在**予約**、実行すると `[NOT_IMPLEMENTED] "
-"...` が出力され、実際の「仲介からのプル状態」がまだ実装されていないことが示されます。 QMT "
-"との統合後に、利用可能な実装に置き換えられます。"
+"**CLI `sync` (エイリアス `pull-state`):** 現在**予約**、実行すると `[NOT_IMPLEMENTED] ...` "
+"が出力され、実際の「仲介からのプル状態」がまだ実装されていないことが示されます。 QMT との統合後に、利用可能な実装に置き換えられます。"
 
 #: ../../source/live_trading/4-broker-adapter-and-integration.md:116
 msgid "5. 边界行为（接入时请注意）"
@@ -545,4 +545,3 @@ msgstr ""
 
 #~ msgid "柜台真实受理结果"
 #~ msgstr "実際のカウンターでの処理結果"
-

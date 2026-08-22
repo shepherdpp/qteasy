@@ -216,20 +216,26 @@ msgstr ""
 #: ../../source/manage_data/10. data_channels.md:170
 msgid "当前内置四通道为：`tushare`、`akshare`、`eastmoney`（别名 `emoney`）、`sina`。"
 msgstr ""
+"現在内蔵されている 4 つのチャネルは、`tushare`、`akshare`、`eastmoney` (別名 `emoney`)、`sina` です。"
 
 #: ../../source/manage_data/10. data_channels.md:172
 msgid "四通道能力对照（常用表）"
-msgstr ""
+msgstr "4チャンネル能力比較（よく使われる表）"
 
 #: ../../source/manage_data/10. data_channels.md:174
 msgid ""
 "下表概括**常用数据表**在各通道下的支持情况（「支持」表示当前版本已实现映射并可走 refill 链路；「不支持」表示该通道无映射，refill "
 "会跳过并提示）。AKShare 完整 108 表状态见仓库内维护清单 `tests/akshare_data_test_checklist.md`。"
 msgstr ""
+"次の表は、各チャネルの **共通データ テーブル** のサポート ステータスをまとめたものです "
+"(「サポート」は、現在のバージョンでマッピングが実装されており、リフィル "
+"リンクを使用できることを意味します。「未サポート」は、チャネルにマッピングがなく、リフィルはスキップされてプロンプトが表示されることを意味します)。 "
+"AKShare 108 テーブルの完全なステータスについては、倉庫にあるメンテナンス リスト "
+"`tests/akshare_data_test_checklist.md` を参照してください。"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "数据表"
-msgstr ""
+msgstr "データシート"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "tushare"
@@ -253,15 +259,15 @@ msgstr "trade_calendar"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（需 token/积分）"
-msgstr ""
+msgstr "サポート（トークン/ポイントが必要）"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**"
-msgstr ""
+msgstr "**サポート**"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "暂不支持"
-msgstr ""
+msgstr "まだサポートされていません"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_basic"
@@ -269,15 +275,15 @@ msgstr "stock_basic"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（行业/上市日等完整）"
-msgstr ""
+msgstr "サポート（業界別/発売日別など）"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（代码+简称索引；行业/地域等常为空）"
-msgstr ""
+msgstr "**サポート** (コード + 略語インデックス。業界/地域などは空白の場合が多い)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "部分场景不支持"
-msgstr ""
+msgstr "一部のシナリオはサポートされていません"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_basic / fund_basic"
@@ -285,15 +291,15 @@ msgstr "index_basic / fund_basic"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持"
-msgstr ""
+msgstr "サポート"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（字段少于 Tushare 的项可能为空）"
-msgstr ""
+msgstr "**サポートされています** (Tushare よりもフィールドが少ない項目は空の場合があります)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "部分"
-msgstr ""
+msgstr "一部"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_daily / weekly / monthly"
@@ -301,11 +307,11 @@ msgstr "stock_daily / weekly / monthly"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日/部分分）"
-msgstr ""
+msgstr "サポート（毎日・一部ポイント）"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日/分）"
-msgstr ""
+msgstr "サポート (日/分)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "stock_5/15/30min、hourly"
@@ -317,7 +323,7 @@ msgstr "stock_adj_factor"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（新浪因子源）"
-msgstr ""
+msgstr "**サポート** (Sina 因子ソース)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_daily / weekly / monthly"
@@ -325,7 +331,7 @@ msgstr "index_daily / weekly / monthly"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "支持（日）"
-msgstr ""
+msgstr "サポート（日本）"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "fund_daily / weekly / monthly / 1min"
@@ -341,7 +347,7 @@ msgstr "new_share / stock_company"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "**支持**（字段可能少于 Tushare）"
-msgstr ""
+msgstr "**サポートされています** (Tushare よりもフィールドが少ない場合があります)"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "realtime_bars / realtime_quotes"
@@ -349,15 +355,15 @@ msgstr "realtime_bars / realtime_quotes"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "index_1min 等指数分钟"
-msgstr ""
+msgstr "Index_1min はインデックス分と同じです"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "暂不支持（待 spike）"
-msgstr ""
+msgstr "まだサポートされていません (追加される予定)"
 
 #: ../../source/manage_data/10. data_channels.md:191
 msgid "说明："
-msgstr ""
+msgstr "例証します:"
 
 #: ../../source/manage_data/10. data_channels.md:193
 msgid ""
@@ -368,10 +374,19 @@ msgid ""
 "等。按行业/地域筛选股票（`filter_stocks` / `filter_stock_codes`）仍建议以 **Tushare 的 "
 "`stock_basic`** 为准或先确认本地行业列非空。"
 msgstr ""
+"**基本テーブルと `merge_type='update'`**: `table_usage=='basics'` テーブル "
+"(`stock_basic`、`index_basic`、`fund_basic` など) "
+"の場合、主キーが競合する場合、*ダウンロード側の空でないフィールドのみを使用して対応する列を上書きします**、ダウンロード値が空の文字列または`NULL`、ローカルの既存の値が保持されます。したがって、AKShare"
+" を使用すると、Tushare で以前に作成した `industry`、`list_date` などを洗い流すことなく、コード "
+"リストを完成させ、分行依存関係テーブルを取得できます。業界/地域 (`filter_stocks` / `filter_stock_codes`) "
+"で銘柄をスクリーニングする場合は、**Tushare の `stock_basic`** "
+"を使用するか、最初に地元の業界列が空でないことを確認することをお勧めします。"
 
 #: ../../source/manage_data/10. data_channels.md:194
 msgid "**tushare**：覆盖最全，多数表需配置 `tushare_token` 及相应积分/权限。"
 msgstr ""
+"**tushare**: 最も完全なカバレッジで、ほとんどのテーブルは `tushare_token` "
+"と対応するポイント/権限で構成する必要があります。"
 
 #: ../../source/manage_data/10. data_channels.md:195
 msgid ""
@@ -379,14 +394,20 @@ msgid ""
 "`tests/akshare_data_test_checklist.md`），其余表仍为 `blocked` 或 "
 "`not_supported`。`stock_basic` 等 basics 表仅保证 **代码与名称索引**，不替代 Tushare 完整基本面。"
 msgstr ""
+"**akshare**: トークンは必要ありません。現在 **25** の履歴/基本/イベント テーブルが実装されており "
+"(`tests/akshare_data_test_checklist.md` を参照)、残りのテーブルはまだ `blocked` または "
+"`not_supported` です。 `stock_basic` などの基本テーブルは **コードと名前のインデックス** "
+"を保証するだけであり、Tushare の完全な基本を置き換えるものではありません。"
 
 #: ../../source/manage_data/10. data_channels.md:196
 msgid "**eastmoney**：无需 token；分钟线覆盖较全，部分基础表（如 `stock_basic`）可能无法从此通道拉取。"
 msgstr ""
+"**eastmoney**: トークンは必要ありません。分単位の行は比較的完全にカバーされており、一部の基本テーブル (`stock_basic` "
+"など) はこのチャネルから取得できない場合があります。"
 
 #: ../../source/manage_data/10. data_channels.md:197
 msgid "**sina**：无需 token；以股票日线与分钟线为主，无周/月线等。"
-msgstr ""
+msgstr "**sina**: トークンは必要ありません。主に株の日足線と分足線があり、週足/月足線などはありません。"
 
 #: ../../source/manage_data/10. data_channels.md:199
 msgid "下面的代码尝试从`eastmoney`数据渠道下载`stock_daily`数据表从2025年最初两个月的日K线数据："
@@ -431,35 +452,46 @@ msgstr "したがって、ユーザーは自分の状況に基づいてデータ
 
 #: ../../source/manage_data/10. data_channels.md:281
 msgid "使用 AKShare 通道"
-msgstr ""
+msgstr "AKShare チャネルの使用"
 
 #: ../../source/manage_data/10. data_channels.md:283
 msgid "AKShare 适合**无 Tushare token**、仅需 P0 行情表的场景。使用前请安装依赖："
 msgstr ""
+"AKShare は、Tushare トークンがなく、P0 マーケット "
+"テーブルのみがあるシナリオに適しています。使用する前に依存関係をインストールしてください。"
 
 #: ../../source/manage_data/10. data_channels.md:289
 msgid "最小 refill 示例（短日期窗、指定 `channel='akshare'`）："
-msgstr ""
+msgstr "最小限のリフィルの例 (短い日付ウィンドウ、`channel='akshare'` を指定):"
 
 #: ../../source/manage_data/10. data_channels.md:302
 msgid ""
 "完整可运行脚本见仓库 "
 "[`examples/akshare_refill_minimal.py`](../../../examples/akshare_refill_minimal.py)（需联网）。"
 msgstr ""
+"完全な実行可能なスクリプトはウェアハウス "
+"[`examples/akshare_refill_minimal.py`](../../../examples/akshare_refill_minimal.py)"
+" にあります (インターネット接続が必要です)。"
 
 #: ../../source/manage_data/10. data_channels.md:304
 msgid "**限制与注意**："
-msgstr ""
+msgstr "**制限事項と注意事項**:"
 
 #: ../../source/manage_data/10. data_channels.md:306
 msgid "AKShare 接口由第三方维护，稳定性与速率不可控；失败时会按 `hist_dnld_retry_*` 配置重试。"
 msgstr ""
+"AKShare "
+"インターフェイスはサードパーティによって維持されており、安定性と速度は制御できません。失敗した場合は、`hist_dnld_retry_*` "
+"設定に従って再試行されます。"
 
 #: ../../source/manage_data/10. data_channels.md:307
 msgid ""
 "当前版本**不**承诺 108 张内置表均可从 AKShare 下载；扩表属于 S3.2 后续批次，详见 "
 "`tests/akshare_data_test_checklist.md`。"
 msgstr ""
+"現在のバージョンは、108 個の組み込みテーブルすべてを AKShare "
+"からダウンロードできることを保証するものではありません**。展開されたテーブルは S3.2 "
+"の後続のバッチに属します。詳細については、`tests/akshare_data_test_checklist.md` を参照してください。"
 
 #: ../../source/manage_data/10. data_channels.md:308
 msgid ""
@@ -467,32 +499,38 @@ msgid ""
 "等列；若库中从未写入过 Tushare 基本面，按行业选股前仍需 `refill_data_source(tables='stock_basic', "
 "channel='tushare')`。"
 msgstr ""
+"分ラインを引くときに `stock_basic` が自動的に追加される場合、AKShare はコード/名前を更新しますが、既存の `industry` "
+"および他の列を null 値で上書きしません。 Tushare "
+"のファンダメンタルズがライブラリに書き込まれたことがない場合でも、業界ごとに銘柄を選択する前に "
+"`refill_data_source(tables='stock_basic', channel='tushare')` が必要です。"
 
 #: ../../source/manage_data/10. data_channels.md:310
 msgid "通道切换与配置"
-msgstr ""
+msgstr "チャンネルの切り替えと設定"
 
 #: ../../source/manage_data/10. data_channels.md:312
 msgid ""
 "**一次性下载（脚本 / 交互）**：在 `refill_data_source(..., channel='...')` 中显式传入通道名即可，例如 "
 "Tushare 与 AKShare 对比如下："
 msgstr ""
+"**ワンタイム ダウンロード (スクリプト/インタラクション)**: `refill_data_source(..., channel='...')` "
+"にチャンネル名を明示的に渡すだけです。たとえば、Tushare と AKShare の比較は次のとおりです。"
 
 #: ../../source/manage_data/10. data_channels.md:319
 msgid "**实盘默认渠道**（写入 `qteasy.cfg` 或通过 `qt.configure()` 修改）："
-msgstr ""
+msgstr "**実際のオファーのデフォルト チャネル** (`qteasy.cfg` を書き込むか、`qt.configure()` で変更):"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "配置键"
-msgstr ""
+msgstr "設定キー"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "含义"
-msgstr ""
+msgstr "意味"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "默认值"
-msgstr ""
+msgstr "デフォルト値"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "`live_trade_data_refill_channel`"
@@ -500,7 +538,7 @@ msgstr "`live_trade_data_refill_channel`"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "Trader 日更自动 refill 使用的通道"
-msgstr ""
+msgstr "Trader 毎日のアップデートにより、使用チャンネルが自動的に補充されます"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "`eastmoney`"
@@ -512,17 +550,19 @@ msgstr "`live_price_acquire_channel`"
 
 #: ../../source/manage_data/10. data_channels.md
 msgid "实盘获取实时价格的通道"
-msgstr ""
+msgstr "実際のオファーのリアルタイム価格を取得するチャネル"
 
 #: ../../source/manage_data/10. data_channels.md:326
 msgid "示例："
-msgstr ""
+msgstr "例："
 
 #: ../../source/manage_data/10. data_channels.md:333
 msgid ""
 "修改后，实盘任务会使用新通道执行 refill / 取价；历史脚本仍可在每次 `refill_data_source` 调用中单独指定 "
 "`channel`，与全局配置无关。"
 msgstr ""
+"変更後、実際のオファータスクは新しいチャネルを使用して補充/価格のフェッチを実行します。過去のスクリプトでは、グローバル設定に関係なく、各 "
+"`refill_data_source` 呼び出しで個別に `channel` を指定できます。"
 
 #: ../../source/manage_data/10. data_channels.md:335
 msgid "实现下载流量控制"
@@ -650,6 +690,12 @@ msgid ""
 "会包含需按日期分块下载的 **`new_share`（IPO 新股）**；若不传日期，会从 1970-01-01 "
 "分块拉至今日，耗时较长。若只需代码/行业类 basics、不要 IPO 表，请显式指定表名或传入较窄的日期窗。"
 msgstr ""
+"**`start_date` / `end_date` が渡されない場合のデフォルトの動作**: 内部的には、`start_date` はテーブル "
+"マッピングで最も早い利用可能な日とみなされ (`new_share` は `19700101` など)、`end_date` は **現在の日** "
+"とみなされます。したがって、`tables='basics'` には **`new_share` (IPO 新株)** "
+"が含まれ、日付ごとにまとめてダウンロードする必要があります。日付を過ぎないと、1970 年 1 月 1 "
+"日から今日までのチャンクで取得されるため、時間がかかります。コード/業界の基本のみが必要で、IPO "
+"テーブルが必要ない場合は、テーブル名を明示的に指定するか、より狭い日付ウィンドウを渡してください。"
 
 #: ../../source/manage_data/10. data_channels.md:386
 msgid "设置是否并行下载，可以通过`parallel`参数设置是否并行下载，如果设置为False，则会串行下载，否则会并行下载。"

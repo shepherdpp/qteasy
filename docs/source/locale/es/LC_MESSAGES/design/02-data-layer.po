@@ -137,10 +137,15 @@ msgid ""
 "用户日常写**字符串信息 ID**；`DataType(...)` 对象多为专家/内置策略层。内部字段 "
 "`acquisition_type`（直读、复权、事件等）是提取算法，**不是**用户分类。"
 msgstr ""
+"Los usuarios escriben **ID de información de cadena** todos los días; Los "
+"objetos `DataType(...)` son en su mayoría expertos/capas de estrategia "
+"integradas. Los campos internos `acquisition_type` (lectura directa, "
+"restauración, evento, etc.) son algoritmos de extracción, no clasificaciones"
+" de usuarios."
 
 #: ../../source/design/02-data-layer.md:30
 msgid "4.1 三种消费形状（kind）"
-msgstr ""
+msgstr "4.1 Tres tipos de consumo (tipos)"
 
 #: ../../source/design/02-data-layer.md
 msgid "kind"
@@ -148,15 +153,15 @@ msgstr "kind"
 
 #: ../../source/design/02-data-layer.md
 msgid "形状"
-msgstr ""
+msgstr "forma"
 
 #: ../../source/design/02-data-layer.md
 msgid "例子"
-msgstr ""
+msgstr "ejemplo"
 
 #: ../../source/design/02-data-layer.md
 msgid "公开入口"
-msgstr ""
+msgstr "entrada publica"
 
 #: ../../source/design/02-data-layer.md
 msgid "`history`"
@@ -164,11 +169,11 @@ msgstr "`history`"
 
 #: ../../source/design/02-data-layer.md
 msgid "时间 × 标的"
-msgstr ""
+msgstr "tiempo × objetivo"
 
 #: ../../source/design/02-data-layer.md
 msgid "`close`、`pe`、停牌标记"
-msgstr ""
+msgstr "`close`, `pe`, marca de suspensión"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_history_data` / `get_kline`"
@@ -180,11 +185,13 @@ msgstr "`reference`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅时间"
-msgstr ""
+msgstr "solo tiempo"
 
 #: ../../source/design/02-data-layer.md
 msgid "`cn_gdp`、`north_money`；以及把单标的行情抽成基准的 `close-000300.SH`"
 msgstr ""
+"⟦CÓDIGO0⟧, ⟦CÓDIGO1⟧; y `close-000300.SH`, que toma el precio de un único "
+"objetivo como punto de referencia."
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_reference_data`"
@@ -196,7 +203,7 @@ msgstr "`static`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅标的"
-msgstr ""
+msgstr "solo el tema"
 
 #: ../../source/design/02-data-layer.md
 msgid "`industry`、`list_date`"
@@ -212,64 +219,66 @@ msgid ""
 "`usable_in` 标明推荐入口；`usable_in=none` 表示已登记但暂无一等用法（例如无法编入数值 HistoryPanel "
 "的文本列）。"
 msgstr ""
+"`close-000300.SH` es una forma de crear Referencia (un determinado objetivo "
+"se utiliza como punto de referencia del mercado en la estrategia) y no es la"
+" única fuente de datos macro. El directorio utiliza `usable_in` para indicar"
+" la entrada recomendada; `usable_in=none` indica que se ha registrado pero "
+"no tiene uso de primera clase (por ejemplo, la columna de texto del valor "
+"HistoryPanel no se puede programar)."
 
 #: ../../source/design/02-data-layer.md:40
 msgid "4.2 name、freq、asset_type 与 dtype_id"
 msgstr "4.1 nombre, frecuencia, tipo_activo y dtype_id"
 
 #: ../../source/design/02-data-layer.md:42
-#, fuzzy
 msgid ""
 "**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息；可带参数（如 `close|b`）或 "
 "unsymbolizer（如 `close-000300.SH`）。"
 msgstr ""
-"**nombre**: el nombre del tipo de datos (por ejemplo, cerrar, abrir, "
-"total_mv, pe), correspondiente a un determinado tipo de información "
-"disponible."
+"**nombre**: nombre del tipo de datos (como cerrar, abrir, total_mv, pe), "
+"correspondiente a un determinado tipo de información disponible; puede tomar"
+" parámetros (como `close|b`) o unsymbolizer (como `close-000300.SH`)."
 
 #: ../../source/design/02-data-layer.md:43
 msgid "**freq**：数据频率（如 d/w/m/q）；Static 常为 `None`（与频率无关）。"
 msgstr ""
+"**freq**: frecuencia de datos (como d/w/m/q); La estática suele ser `None` "
+"(independiente de la frecuencia)."
 
 #: ../../source/design/02-data-layer.md:44
-#, fuzzy
 msgid "**asset_type**：适用的资产类型（如 E、IDX、None、Any）。"
 msgstr ""
-"**asset_type**: el tipo de activo aplicable (por ejemplo, E, IDX, ANY), "
-"utilizado para distinguir acciones, índices, etc."
+"**asset_type**: tipo de activo aplicable (como E, IDX, Ninguno, Cualquiera)."
 
 #: ../../source/design/02-data-layer.md:45
-#, fuzzy
 msgid ""
 "**完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 "
 "`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
-"**dtype_id**: generado a partir de los tres elementos anteriores, con la "
-"regla `name_assettype_freq`, por ejemplo `close_E_d`, `total_mv_E_q`. Las "
-"estrategias utilizan esta identificación al llamar a `get_data(dtype_id)`."
+"**Dtype_id completo**: Generado a partir de los tres anteriores, la regla es"
+" `{wide_name}_{asset_type}_{freq}` (dividida desde la derecha), como "
+"`close_E_d`. Estrategia `get_data` La clave de búsqueda es la identificación"
+" completa; Se puede usar un nombre amplio en el lado de la investigación y "
+"la identificación completa se cambia cuando hay ambigüedad."
 
 #: ../../source/design/02-data-layer.md:47
-#, fuzzy
 msgid "4.3 内置 DataType 与数据表/列的映射"
-msgstr "4.2 Mapeo entre tipos de datos integrados y tablas/columnas de datos"
+msgstr "4.3 Mapeo entre DataType integrado y tablas/columnas de datos"
 
 #: ../../source/design/02-data-layer.md:49
-#, fuzzy
 msgid ""
 "系统内置大量 "
 "DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
 "ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
-"El sistema viene con un gran conjunto de tipos de datos integrados, cada uno"
-" de ellos asignado a columnas o columnas derivadas en diferentes tablas de "
-"datos. Para conocer nombres de tablas y columnas específicos y cómo "
-"obtenerlos, consulte *Descargar y administrar datos históricos financieros* "
-"y la documentación sobre “tipos de datos y tablas de datos” en los "
-"documentos de la API. Esta serie solo enfatiza: **las estrategias hacen "
-"referencia a datos solo a través de DataType (dtype_id) y no dependen "
-"directamente del esquema de la tabla**. De esta manera, cuando el esquema "
-"evolucione, solo necesitará ajustar el mapeo, sin cambiar el código de "
-"estrategia."
+"El sistema tiene una gran cantidad de DataType integrados, que se asignan a "
+"columnas o columnas derivadas de diferentes tablas de datos. Para nombres de"
+" tablas y columnas específicos, consulte \"Descarga y administración de "
+"datos históricos financieros\" y la lista por volumen de negocios; esta "
+"serie solo enfatiza: **Las estrategias y el análisis hacen referencia a los "
+"datos a través de ID de información y no se basan directamente en la "
+"estructura de la tabla**. Cuando la estructura de la tabla evoluciona, solo "
+"es necesario ajustar la relación de mapeo."
 
 #: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
@@ -278,13 +287,11 @@ msgstr ""
 "de leer tablas directamente"
 
 #: ../../source/design/02-data-layer.md:53
-#, fuzzy
 msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
 msgstr ""
 "**Consistencia**: Tanto las pruebas retrospectivas como las operaciones en "
-"vivo obtienen datos a través de la misma ruta: “declarar DataType + "
-"inyecciones de motor por ventana”, evitando dos conjuntos de lógica "
-"separados."
+"vivo utilizan la misma ruta de \"ID de información de declaración + "
+"inyección de motor por ventana\" para evitar dos conjuntos de lógica."
 
 #: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
@@ -299,10 +306,16 @@ msgid ""
 "**接口统一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 "
 "`get_static_data`，**不**进入 `get_data` 时间窗。"
 msgstr ""
+"**Interfaz unificada**: la estrategia utiliza `get_data(dtype_id)` para "
+"obtener la ventana Historial/Referencia; La estática de la sección "
+"transversal va a `get_static_data`, **no** ingresa a la ventana de tiempo "
+"`get_data`."
 
 #: ../../source/design/02-data-layer.md:57
 msgid "更多用法见 manage_data「DataType」概念章与 API 参考。"
 msgstr ""
+"Para obtener más información sobre su uso, consulte el capítulo conceptual "
+"de Manage_data \"DataType\" y la referencia de API."
 
 #~ msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
 #~ msgstr ""

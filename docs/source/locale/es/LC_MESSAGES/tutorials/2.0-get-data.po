@@ -71,6 +71,16 @@ msgid ""
 "horizontal-multifactor.md) / [事件型因子](2.8-historypanel-advanced-event-kline-"
 "pattern.md)）→ [第一个策略回测](3-start-first-strategy.md)。"
 msgstr ""
+"**La posición de este artículo en la ruta de experiencia de datos**: "
+"[Instalación y configuración](1-get-started.md) → **Obtener y administrar "
+"datos financieros (este artículo)** → [HistoryPanel Operaciones básicas del "
+"panel de datos](2.4-historypanel-basics.md) → [Jugar con datos y análisis "
+"factorial](2.5-historypanel-data-analysis.md) → (opcional [Vertical "
+"sincronización](2.6-historypanel-advanced-vertical-timeaxis.md) / [Selección"
+" de acciones transversales](2.7-historypanel-advanced-horizontal-"
+"multifactor.md) / [Factor de tipo de evento](2.8-historypanel-advanced-"
+"event-kline-pattern.md)) → [Primera prueba retrospectiva de "
+"estrategia](3-start-first-strategy.md)."
 
 #: ../../source/tutorials/2.0-get-data.md:15
 msgid "开始前的准备工作"
@@ -86,7 +96,7 @@ msgstr "Complete la instalación de `qteasy` y actualice a la última versión"
 
 #: ../../source/tutorials/2.0-get-data.md:20
 msgid "**数据通道（二选一或组合）**："
-msgstr ""
+msgstr "**Canal de datos (elija uno o una combinación)**:"
 
 #: ../../source/tutorials/2.0-get-data.md:21
 msgid ""
@@ -102,13 +112,16 @@ msgid ""
 "使用 **AKShare 或其他通道**：安装 `pip install akshare`（若选 AKShare），无需 Tushare "
 "token；部分表覆盖范围小于 Tushare，详见[数据通道文档](../manage_data/10.%20data_channels.md)"
 msgstr ""
+"Utilice **AKShare u otros canales**: instale `pip install akshare` (si elige"
+" AKShare), no se requiere ningún token de Tushare; parte de la cobertura de "
+"tablas es menor que Tushare, consulte [documentación del canal de "
+"datos](../manage_data/10.%20data_channels.md)"
 
 #: ../../source/tutorials/2.0-get-data.md:23
-#, fuzzy
 msgid "完成`mysql`数据库的配置，并将数据库配置写入`qteasy.cfg`（***可选项***）"
 msgstr ""
 "Complete la configuración de la base de datos `mysql` y escriba la "
-"configuración de la base de datos en `qteasy.cfg·` (***opcional***)"
+"configuración de la base de datos en `qteasy.cfg` (***opcional***)"
 
 #: ../../source/tutorials/2.0-get-data.md:24
 msgid "完成`ta-lib`的安装 (***可选项***)"
@@ -200,24 +213,24 @@ msgstr ""
 "año."
 
 #: ../../source/tutorials/2.0-get-data.md:57
-#, fuzzy
 msgid "`stock_basic` - 股票基础信息（文档中有时统称「basics」），包括沪深股市所有股票的基本信息"
 msgstr ""
-"`stock_basics`: información bursátil básica, incluida información básica de "
-"todas las acciones en los mercados de valores de Shanghai y Shenzhen, como "
-"código, nombre, nombre completo, fecha de cotización, categoría, etc."
+"`stock_basic`: información bursátil básica (a veces denominada "
+"colectivamente \"conceptos básicos\" en el documento), incluida información "
+"básica de todas las acciones en los mercados de valores de Shanghai y "
+"Shenzhen"
 
 #: ../../source/tutorials/2.0-get-data.md:58
-#, fuzzy
 msgid "`index_basic` - 指数基础信息，包括沪深股市所有指数的基本信息"
 msgstr ""
-"`index_basics`: información básica del índice, incluida información básica "
-"de todos los índices de los mercados bursátiles de Shanghai y Shenzhen, como"
-" código, nombre, nombre completo, etc."
+"`index_basic`: información básica del índice, incluida información básica de"
+" todos los índices en los mercados de valores de Shanghai y Shenzhen"
 
 #: ../../source/tutorials/2.0-get-data.md:60
 msgid "`refill_data_source(tables=...)` 使用**数据表名**（如 `stock_basic`），与上列一致。"
 msgstr ""
+"`refill_data_source(tables=...)` Utilice **nombre de la tabla de datos** "
+"(como `stock_basic`), de acuerdo con la lista anterior."
 
 #: ../../source/tutorials/2.0-get-data.md:62
 msgid "在配置好`tushare_token`以后，第一次导入`qteasy`时，如果系统未找到交易日历数据，会显示信息提示交易日历无法读取。"
@@ -274,22 +287,20 @@ msgid "下载交易日历和基础数据"
 msgstr "Descargue el calendario comercial y los datos básicos."
 
 #: ../../source/tutorials/2.0-get-data.md:101
-#, fuzzy
 msgid ""
 "我们可以调用`refill_data_source`函数下载交易日历和基础数据。这个函数是`qteasy`的标准数据下载接口函数，所有的历史数据类型均可以通过此接口下载。这个函数的基本参数是`tables`，传入数据表的名称即可下载相应的数据到本地存储了。使用`refill_data_source`下载交易数据时，`qteasy`会自动进行数据清洗，排除重复数据，去除错误数据，发生错误自动重试，并将下载的数据合并到本地数据表中。"
 msgstr ""
 "Podemos llamar a la función `refill_data_source` para descargar el "
 "calendario comercial y los datos básicos. Esta función es la función de "
-"interfaz de descarga de datos estándar de qteasy y se pueden descargar todo "
-"tipo de datos históricos a través de esta interfaz. Su parámetro básico es "
-"`tables`; pase el nombre de la tabla de datos para descargar los datos "
-"correspondientes al almacenamiento local. Al utilizar `refill_data_source` "
-"para descargar datos comerciales, `qteasy` limpiará automáticamente los "
-"datos, eliminará los datos duplicados, eliminará los datos erróneos, "
-"reintentará automáticamente los errores y fusionará los datos descargados en"
-" las tablas de datos locales. Actualmente, `qteasy` solo admite la descarga "
-"de datos financieros a través de `tushare`. En el futuro, se agregarán otras"
-" interfaces de datos financieros para ampliar las opciones de los usuarios."
+"interfaz de descarga de datos estándar de `qteasy`. Todos los tipos de datos"
+" históricos se pueden descargar a través de esta interfaz. El parámetro "
+"básico de esta función es `tables`. Pase el nombre de la tabla de datos para"
+" descargar los datos correspondientes al almacenamiento local. Al usar "
+"`refill_data_source` para descargar datos de transacciones, `qteasy` "
+"limpiará automáticamente los datos, excluirá los datos duplicados, eliminará"
+" los datos erróneos, volverá a intentarlo automáticamente cuando se "
+"produzcan errores y fusionará los datos descargados en la tabla de datos "
+"local."
 
 #: ../../source/tutorials/2.0-get-data.md:103
 #, python-format
@@ -298,14 +309,20 @@ msgid ""
 "`channel`，未指定时默认为 "
 "`tushare`）。不同通道支持的表范围与前置条件不同，切换方式与能力对照见[数据通道文档](../manage_data/10.%20data_channels.md)。"
 msgstr ""
+"`qteasy` admite la descarga de datos a través de múltiples canales "
+"integrados como **`tushare`, `akshare`, `eastmoney`, `sina`** (el parámetro "
+"`channel`, por defecto es `tushare` cuando no se especifica). Diferentes "
+"canales admiten diferentes rangos de tablas y condiciones previas. Para "
+"obtener una comparación de los métodos y capacidades de conmutación, "
+"consulte la [Documentación del canal de datos] "
+"(../manage_data/10.%20data_channels.md)."
 
 #: ../../source/tutorials/2.0-get-data.md:105
-#, fuzzy
 msgid "要下载前面提到的交易日历、股票和指数的基本信息，只需要运行下面的代码（默认使用 Tushare，需已配置 `tushare_token`）："
 msgstr ""
-"Para descargar el calendario comercial mencionado anteriormente, así como "
-"información básica sobre acciones e índices, solo necesita ejecutar el "
-"siguiente código:"
+"Para descargar el calendario comercial antes mencionado, información básica "
+"sobre acciones e índices, simplemente ejecute el siguiente código (usando "
+"Tushare de forma predeterminada, requiere `tushare_token` configurado):"
 
 #: ../../source/tutorials/2.0-get-data.md:110
 msgid "数据下载过程中会显示进度条显示下载进度。"
@@ -466,7 +483,6 @@ msgstr ""
 "puede extraerlos y utilizarlos en cualquier momento."
 
 #: ../../source/tutorials/2.0-get-data.md:217
-#, fuzzy
 msgid ""
 "我们可以使用`qt.get_history_data()`函数来获取股票的量价等 **History**（时间 × 标的）数据。这是 History "
 "形状的通用入口；宏观/基准请用 `get_reference_data`，行业等截面属性请用 "
@@ -474,15 +490,18 @@ msgid ""
 "ID）、股票的代码以及其他参数，就可以获取相应的数据了。如果要获取刚刚下载的K线价格，需要设置数据类型为`\"open, high, low, "
 "close, vol\"`以获取开盘价、最高价、最低价、收盘价和交易量："
 msgstr ""
-"Podemos utilizar la función `qt.get_history_data()` para obtener los datos "
-"de precio y volumen de una acción. Esta función es una interfaz de propósito"
-" general en `qteasy` y se puede utilizar para recuperar varios tipos de "
-"datos. Al especificar el tipo de datos (a través del ID del tipo de datos), "
-"el ticker bursátil y otros parámetros en los argumentos de la función, puede"
-" obtener los datos correspondientes. Si desea recuperar los precios de velas"
-" (línea K) que acaba de descargar, configure el tipo de datos en `\"open, "
-"high, low, close, vol\"` para obtener el volumen de apertura, máximo, "
-"mínimo, cierre y negociación:"
+"Podemos utilizar la función `qt.get_history_data()` para obtener datos "
+"**Historial** (tiempo × objetivo), como el volumen y el precio de las "
+"acciones. Esta es la entrada general para la forma Historia; utilice "
+"`get_reference_data` para macro/línea de base y `get_static_data` para "
+"atributos transversales como industria (consulte \"Obtener números por "
+"forma\" a continuación). Especifique el tipo de datos (a través del ID del "
+"tipo de datos), el código de stock y otros parámetros en los parámetros de "
+"la función, y podrá obtener los datos correspondientes. Si desea obtener el "
+"precio de la línea K que acaba de descargar, debe configurar el tipo de "
+"datos en `\"open, high, low, close, vol\"` para obtener el precio de "
+"apertura, el precio más alto, el precio más bajo, el precio de cierre y el "
+"volumen de operaciones:"
 
 #: ../../source/tutorials/2.0-get-data.md:228
 msgid "得到结果如下："
@@ -635,13 +654,17 @@ msgstr "![png](img/output_18_11.png)"
 
 #: ../../source/tutorials/2.0-get-data.md:328
 msgid "从 DataFrame 到 HistoryPanel（桥接后续教程）"
-msgstr ""
+msgstr "De DataFrame a HistoryPanel (uniendo tutoriales posteriores)"
 
 #: ../../source/tutorials/2.0-get-data.md:330
 msgid ""
 "上文 `get_history_data()` 默认返回按标的分组的 `DataFrame` 字典；做**多标的因子研究**时，更推荐直接拿到三维 "
 "`HistoryPanel`（标的 × 时间 × 指标）："
 msgstr ""
+"El `get_history_data()` anterior devuelve por defecto el diccionario "
+"`DataFrame` agrupado por el objetivo; Al realizar **investigación de "
+"factores multiestándar**, se recomienda obtener directamente el ⟦CÓDIGO2⟧ "
+"tridimensional (sujeto × tiempo × indicador):"
 
 #: ../../source/tutorials/2.0-get-data.md:356
 msgid ""
@@ -649,30 +672,45 @@ msgid ""
 "[使用 HistoryPanel 操作和分析历史数据](2.5-historypanel-data-analysis.md)；可运行示例见 "
 "`examples/historypanel_basic_plot.py` 与 `examples/data_playground_e2e.py`。"
 msgstr ""
+"Para operaciones de contenedores más sistemáticas, consulte [HistoryPanel "
+"Operaciones básicas del panel de datos](2.4-historypanel-basics.md); para "
+"\"jugar con datos\" y análisis factorial, consulte [Uso de HistoryPanel para"
+" operar y analizar datos históricos] (2.5-historypanel-data-analysis.md); "
+"para ver ejemplos ejecutables, consulte "
+"`examples/historypanel_basic_plot.py` y `examples/data_playground_e2e.py`."
 
 #: ../../source/tutorials/2.0-get-data.md:358
-#, fuzzy
 msgid "数据类型`DataType`的查找与按形状取数"
-msgstr "Buscando el tipo de datos `DataType`"
+msgstr "Busque el tipo de datos `DataType` y obtenga números por forma"
 
 #: ../../source/tutorials/2.0-get-data.md:360
 msgid ""
 "前面提到过，`qteasy`把可直接使用的信息封装为稳定的 **DataType 信息 "
 "ID**（用户日常写字符串；不必每次构造对象）。每种类型由名称、频率与资产类型唯一确定。"
 msgstr ""
+"Como se mencionó anteriormente, `qteasy` encapsula información directamente "
+"utilizable en un **DataType ID de información** estable (los usuarios "
+"escriben cadenas todos los días; no hay necesidad de construir objetos cada "
+"vez). Cada tipo se identifica de forma única por nombre, frecuencia y tipo "
+"de activo."
 
 #: ../../source/tutorials/2.0-get-data.md:362
 msgid "概念说明、精选常用类型与完整内置清单，见："
 msgstr ""
+"Para obtener una descripción del concepto, una selección de tipos comúnmente"
+" utilizados y una lista integrada completa, consulte:"
 
 #: ../../source/tutorials/2.0-get-data.md:364
 #, python-format
 msgid "[DataType 概念章（manage_data）](../manage_data/02.%20datatypes.md)"
 msgstr ""
+"[DataType Capítulo conceptual "
+"(manage_data)](../manage_data/02.%20datatypes.md)"
 
 #: ../../source/tutorials/2.0-get-data.md:365
 msgid "[内置 DataType 完整清单](../references/datatypes/index.md)"
 msgstr ""
+"[Lista completa de DataType] integrados (../references/datatypes/index.md)"
 
 #: ../../source/tutorials/2.0-get-data.md:366
 msgid "[DataType API](../api/data_types.rst)"
@@ -680,7 +718,7 @@ msgstr "[DataType API](../api/data_types.rst)"
 
 #: ../../source/tutorials/2.0-get-data.md:368
 msgid "用 `find_history_data` 查找"
-msgstr ""
+msgstr "Buscar con `find_history_data`"
 
 #: ../../source/tutorials/2.0-get-data.md:370
 msgid ""
@@ -688,33 +726,44 @@ msgid ""
 "与推荐入口（`get_history_data` / `get_reference_data` / `get_static_data` / "
 "`none`）——**不要**假定每一行都能用 `get_history_data` 加载。"
 msgstr ""
+"`qt.find_history_data()` Busque por nombre en inglés, descripción en chino o"
+" comodín. Los resultados se marcarán con `kind` y las entradas recomendadas "
+"(`get_history_data` / `get_reference_data` / `get_static_data` / `none`). "
+"**No** asuma que cada fila se puede cargar con `get_history_data`."
 
 #: ../../source/tutorials/2.0-get-data.md:372
 msgid "例如搜索收盘价（节选）："
-msgstr ""
+msgstr "Por ejemplo, busque el precio de cierre (extracto):"
 
 #: ../../source/tutorials/2.0-get-data.md:390
 msgid "宏观与截面属性同样能搜到，但推荐入口不同："
 msgstr ""
+"También se pueden buscar propiedades macroscópicas y transversales, pero las"
+" entradas recomendadas son diferentes:"
 
 #: ../../source/tutorials/2.0-get-data.md:397
 msgid "查到 ID 后：看所属数据表，用 `refill_data_source(tables=...)` 下载，再按推荐入口取数。"
 msgstr ""
+"Después de encontrar el ID: mire la tabla de datos correspondiente, use "
+"`refill_data_source(tables=...)` para descargar y luego haga clic en la "
+"entrada recomendada para obtener el número."
 
 #: ../../source/tutorials/2.0-get-data.md:399
 msgid "按形状取数（短例）"
-msgstr ""
+msgstr "Obtener números por forma (ejemplo breve)"
 
 #: ../../source/tutorials/2.0-get-data.md:417
 msgid ""
 "清单里若 `usable_in=none`（例如部分文本型 History），今天没有一等入口，研究时请直接读底层表，不要强行编入 "
 "HistoryPanel。"
 msgstr ""
+"Si hay `usable_in=none` en la lista (como algún Historial de tipo texto), "
+"hoy no hay ninguna entrada de primera clase. Lea la tabla subyacente "
+"directamente cuando investigue y no compile HistoryPanel a la fuerza."
 
 #: ../../source/tutorials/2.0-get-data.md:419
-#, fuzzy
 msgid "简单介绍`DataType`对象（专家层）"
-msgstr "Una breve introducción al objeto `DataType`"
+msgstr "Breve introducción al objeto `DataType` (nivel experto)"
 
 #: ../../source/tutorials/2.0-get-data.md:421
 msgid ""
@@ -722,10 +771,19 @@ msgid ""
 "History/Reference 字符串后，在 `realize()` 中用 `get_data` 取窗口即可——**不要**把 Static（如 "
 "`industry`）写进策略 `data_types`。"
 msgstr ""
+"Se prefiere utilizar **String ID** para la recuperación diaria de datos y la"
+" declaración de políticas. Cuando se requiere un control preciso, también se"
+" puede construir un objeto `DataType`; consulte la documentación de la API "
+"para obtener instrucciones completas. Después de declarar la cadena "
+"Historial/Referencia en la política, use `get_data` para obtener la ventana "
+"en `realize()` - **No** escriba Estático (como `industry`) en la política "
+"`data_types`."
 
 #: ../../source/tutorials/2.0-get-data.md:423
 msgid "最小数据集清单（供后续 HistoryPanel 教程使用）"
 msgstr ""
+"Lista mínima de conjuntos de datos (para usar en tutoriales HistoryPanel "
+"posteriores)"
 
 #: ../../source/tutorials/2.0-get-data.md:425
 msgid ""
@@ -733,14 +791,20 @@ msgid ""
 "[玩数据与因子分析](2.5-historypanel-data-analysis.md)，建议在本篇至少下载下列表与区间（与 "
 "[快速上手指南](../getting_started.md) 及 `examples/data_playground_e2e.py` 对齐）："
 msgstr ""
+"Si planea continuar aprendiendo [HistoryPanel Operaciones "
+"básicas](2.4-historypanel-basics.md) y [Jugar con datos y análisis "
+"factorial](2.5-historypanel-data-analysis.md), se recomienda descargar al "
+"menos las siguientes tablas e intervalos en este artículo (alineados con la "
+"[Guía de inicio rápido](../getting_started.md) y "
+"`examples/data_playground_e2e.py`):"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "数据表"
-msgstr ""
+msgstr "ficha de datos"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "用途"
-msgstr ""
+msgstr "usar"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "`trade_calendar`"
@@ -748,7 +812,7 @@ msgstr "`trade_calendar`"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "交易日历"
-msgstr ""
+msgstr "calendario comercial"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "`stock_basic`, `index_basic`"
@@ -756,7 +820,7 @@ msgstr "`stock_basic`, `index_basic`"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "证券检索"
-msgstr ""
+msgstr "búsqueda de valores"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "`index_daily`"
@@ -764,7 +828,7 @@ msgstr "`index_daily`"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "基准指数 `000300.SH` 日线"
-msgstr ""
+msgstr "Índice de referencia `000300.SH` Línea diaria"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "`stock_daily`"
@@ -772,11 +836,13 @@ msgstr "`stock_daily`"
 
 #: ../../source/tutorials/2.0-get-data.md
 msgid "示例个股池日线（见下）"
-msgstr ""
+msgstr "Ejemplo de línea diaria del fondo de acciones (ver más abajo)"
 
 #: ../../source/tutorials/2.0-get-data.md:434
 msgid "**推荐一次性命令**（Tushare 通道；日期可按需调整）："
 msgstr ""
+"**Comando único recomendado** (canal Tushare; la fecha se puede ajustar "
+"según sea necesario):"
 
 #: ../../source/tutorials/2.0-get-data.md:454
 msgid ""
@@ -784,6 +850,11 @@ msgid ""
 "examples/data_playground_e2e.py` 验证 [玩数据最小闭环](2.5-historypanel-data-"
 "analysis.md#数据检查快速跑通最小闭环)。"
 msgstr ""
+"Una vez completada la descarga, primero puede leer [HistoryPanel Operaciones"
+" básicas] (2.4-historypanel-basics.md) y luego ejecutar `python "
+"examples/data_playground_e2e.py` para verificar [Reproducir con datos en "
+"bucle cerrado mínimo] (2.5-historypanel-data-analysis.md#Inspección de datos"
+" para ejecutar rápidamente el bucle cerrado mínimo)."
 
 #: ../../source/tutorials/2.0-get-data.md:456
 msgid "定期下载数据到本地"
@@ -824,37 +895,50 @@ msgid ""
 "至此，我们已经初步了解了`qteasy`中对数据的管理方式，了解了数据下载的方法，学会了提取数据、显示 K 线图，以及通过 `HistoryPanel`"
 " 桥接到多标的研究。"
 msgstr ""
+"En este punto, tenemos una comprensión preliminar de los métodos de gestión "
+"de datos en `qteasy`, cómo descargar datos, cómo extraer datos, mostrar "
+"gráficos de líneas K y conectar con la investigación multiestándar a través "
+"de `HistoryPanel`."
 
 #: ../../source/tutorials/2.0-get-data.md:519
 msgid "**建议下一篇**（数据体验主路径）："
 msgstr ""
+"**Próximo artículo sugerido** (ruta principal de la experiencia con los "
+"datos):"
 
 #: ../../source/tutorials/2.0-get-data.md:521
 msgid ""
 "[HistoryPanel 数据面板基础操作](2.4-historypanel-basics.md) — 结构、切片、扩列、对齐与 DataFrame"
 " 互转"
 msgstr ""
+"[HistoryPanel Operaciones básicas del panel de datos](2.4-historypanel-"
+"basics.md) — Estructura, división, expansión de columnas, alineación y "
+"conversión de DataFrame"
 
 #: ../../source/tutorials/2.0-get-data.md:522
 msgid ""
 "[使用 HistoryPanel 操作和分析历史数据](2.5-historypanel-data-analysis.md) — "
 "从「数据检查」闭环开始，完成「玩数据 → 简单因子」"
 msgstr ""
+"[Utilice HistoryPanel para operar y analizar datos históricos] "
+"(2.5-historypanel-data-analysis.md): comience desde el circuito cerrado de "
+"\"inspección de datos\" y complete \"Jugar con datos → Factores simples\""
 
 #: ../../source/tutorials/2.0-get-data.md:524
 msgid "**若已熟悉数据研究、希望直接进入回测**："
 msgstr ""
+"**Si ya está familiarizado con la investigación de datos y desea ingresar "
+"directamente al backtesting**:"
 
 #: ../../source/tutorials/2.0-get-data.md:526
 msgid "[创建并回测第一个策略](3-start-first-strategy.md)"
-msgstr ""
+msgstr "[Cree y pruebe su primera estrategia](3-start-first-strategy.md)"
 
 #: ../../source/tutorials/2.0-get-data.md:528
-#, fuzzy
 msgid "关于`qteasy`的更多介绍，请参见 [qteasy 文档](https://qteasy.readthedocs.io)。"
 msgstr ""
 "Para obtener más información sobre `qteasy`, consulte la [qteasy "
-"documentación](https://qteasy.readthedocs.io)"
+"Documentación](https://qteasy.readthedocs.io)."
 
 #~ msgid "完成`qteasy.cfg`文件的配置，将`tushare_token`写入配置文件"
 #~ msgstr ""

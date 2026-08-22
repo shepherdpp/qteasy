@@ -20,19 +20,24 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/composition.md:6
 msgid "指数成分与权重"
-msgstr ""
+msgstr "インデックスのコンポーネントと重み"
 
 #: ../../source/references/datatypes/_generated/composition.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **1** 条。"
 msgstr ""
+"このボリュームは、**ビジネス カテゴリ** ごとに、`qteasy.datatypes.get_dtype_map()` から "
+"`docs/scripts/generate_datatype_catalog.py` によって生成され、合計 **1** アイテムが含まれます。"
 
 #: ../../source/references/datatypes/_generated/composition.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"手動で変更しないでください。組み込みタイプを更新した後、生成スクリプトを再実行してください。列の意味と推奨される読み方については、[リスト "
+"エントリ](../index.md) を参照してください。 `acquisition_type` / `table_name` "
+"は比較用リフィルのみです。"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "name"
@@ -80,7 +85,7 @@ msgstr "E"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "股票在指数中所占权重 - %"
-msgstr ""
+msgstr "指数における株価のウェイト - %"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "history"

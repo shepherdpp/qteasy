@@ -24,21 +24,23 @@ msgstr "qteasy の組み込み履歴データ型"
 
 #: ../../source/references/2-historical_data_types.md:3
 msgid "本页原为早期设计草稿，已不再作为用户文档正文。"
-msgstr ""
+msgstr "このページはもともと初期の設計草案であり、現在はユーザー ドキュメントの一部ではありません。"
 
 #: ../../source/references/2-historical_data_types.md:5
 msgid "请改读："
-msgstr ""
+msgstr "代わりにお読みください:"
 
 #: ../../source/references/2-historical_data_types.md:7
 #, python-format
 msgid ""
 "**概念与用法**：[以标准化方式从数据表中提取信息（DataType）](../manage_data/02.%20datatypes.md)"
 msgstr ""
+"**概念と使用法**: [標準化された方法でデータ テーブルから情報を抽出する "
+"(DataType)](../manage_data/02.%20datatypes.md)"
 
 #: ../../source/references/2-historical_data_types.md:8
 msgid "**完整内置清单**：[内置 DataType 完整清单](datatypes/index.md)"
-msgstr ""
+msgstr "**完全な組み込みリスト**: [組み込み DataType 完全なリスト](datatypes/index.md)"
 
 #: ../../source/references/2-historical_data_types.md:9
 msgid ""
@@ -50,7 +52,7 @@ msgstr ""
 
 #: ../../source/references/2-historical_data_types.md:11
 msgid "若您需要按名称或中文描述检索类型，推荐直接使用："
-msgstr ""
+msgstr "名前または中国語の説明でタイプを検索する必要がある場合は、次の使用をお勧めします。"
 
 #~ msgid ""
 #~ "数据类型是qteasy的一个核心概念，它代表一个交易策略中所使用的信息，例如历史交易数据、宏观经济数据等。 "

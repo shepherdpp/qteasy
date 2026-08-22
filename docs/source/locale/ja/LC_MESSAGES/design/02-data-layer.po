@@ -117,10 +117,13 @@ msgid ""
 "用户日常写**字符串信息 ID**；`DataType(...)` 对象多为专家/内置策略层。内部字段 "
 "`acquisition_type`（直读、复权、事件等）是提取算法，**不是**用户分类。"
 msgstr ""
+"ユーザーは**文字列情報ID**を毎日書き込みます。 `DataType(...)` "
+"オブジェクトは、ほとんどがエキスパート/組み込み戦略レイヤーです。内部フィールド `acquisition_type` "
+"(直接読み取り、復元、イベントなど) は抽出アルゴリズムであり、ユーザーの分類ではありません。"
 
 #: ../../source/design/02-data-layer.md:30
 msgid "4.1 三种消费形状（kind）"
-msgstr ""
+msgstr "4.1 3つの消費形態（種類）"
 
 #: ../../source/design/02-data-layer.md
 msgid "kind"
@@ -128,15 +131,15 @@ msgstr "kind"
 
 #: ../../source/design/02-data-layer.md
 msgid "形状"
-msgstr ""
+msgstr "形"
 
 #: ../../source/design/02-data-layer.md
 msgid "例子"
-msgstr ""
+msgstr "例"
 
 #: ../../source/design/02-data-layer.md
 msgid "公开入口"
-msgstr ""
+msgstr "公共の入り口"
 
 #: ../../source/design/02-data-layer.md
 msgid "`history`"
@@ -144,11 +147,11 @@ msgstr "`history`"
 
 #: ../../source/design/02-data-layer.md
 msgid "时间 × 标的"
-msgstr ""
+msgstr "時間×目標"
 
 #: ../../source/design/02-data-layer.md
 msgid "`close`、`pe`、停牌标记"
-msgstr ""
+msgstr "`close`、`pe`、停止マーク"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_history_data` / `get_kline`"
@@ -160,11 +163,11 @@ msgstr "`reference`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅时间"
-msgstr ""
+msgstr "時間だけ"
 
 #: ../../source/design/02-data-layer.md
 msgid "`cn_gdp`、`north_money`；以及把单标的行情抽成基准的 `close-000300.SH`"
-msgstr ""
+msgstr "⟦コード0⟧、⟦コード1⟧; `close-000300.SH` は単一のターゲットの価格をベンチマークとして描画します。"
 
 #: ../../source/design/02-data-layer.md
 msgid "`get_reference_data`"
@@ -176,7 +179,7 @@ msgstr "`static`"
 
 #: ../../source/design/02-data-layer.md
 msgid "仅标的"
-msgstr ""
+msgstr "主題のみ"
 
 #: ../../source/design/02-data-layer.md
 msgid "`industry`、`list_date`"
@@ -192,65 +195,63 @@ msgid ""
 "`usable_in` 标明推荐入口；`usable_in=none` 表示已登记但暂无一等用法（例如无法编入数值 HistoryPanel "
 "的文本列）。"
 msgstr ""
+"`close-000300.SH` はリファレンス (特定のターゲットが戦略の市場ベンチマークとして使用される) を作成する方法であり、マクロ "
+"データの唯一のソースではありません。ディレクトリは、推奨エントリを示すために `usable_in` を使用します。 `usable_in=none` "
+"は、登録されているものの、第一級の使用法がないことを示します (たとえば、値 HistoryPanel のテキスト列はプログラムできません)。"
 
 #: ../../source/design/02-data-layer.md:40
 msgid "4.2 name、freq、asset_type 与 dtype_id"
 msgstr "4.1 name、freq、asset_type、および dtype_id"
 
 #: ../../source/design/02-data-layer.md:42
-#, fuzzy
 msgid ""
 "**name**：数据类型名称（如 close、open、total_mv、pe），对应某类可用的信息；可带参数（如 `close|b`）或 "
 "unsymbolizer（如 `close-000300.SH`）。"
-msgstr "**name**: 特定の種類の利用可能な情報に対応するデータ型名 (close、open、total_mv、pe など)。"
+msgstr ""
+"**name**: 特定の種類の利用可能な情報に対応するデータ型名 (close、open、total_mv、pe など)。パラメーター "
+"(`close|b` など) またはアンシンボライザー (`close-000300.SH` など) を取ることができます。"
 
 #: ../../source/design/02-data-layer.md:43
 msgid "**freq**：数据频率（如 d/w/m/q）；Static 常为 `None`（与频率无关）。"
-msgstr ""
+msgstr "**freq**: データ周波数 (d/w/m/q など)。静的は通常 `None` (周波数とは無関係) です。"
 
 #: ../../source/design/02-data-layer.md:44
-#, fuzzy
 msgid "**asset_type**：适用的资产类型（如 E、IDX、None、Any）。"
-msgstr "**asset_type**: 株式、指数などを区別するために使用される、該当する資産タイプ (例: E、IDX、ANY)。"
+msgstr "**asset_type**: 該当するアセット タイプ (E、IDX、None、Any など)。"
 
 #: ../../source/design/02-data-layer.md:45
-#, fuzzy
 msgid ""
 "**完整 dtype_id**：由上述三者生成，规则为 `{wide_name}_{asset_type}_{freq}`（从右侧拆），例如 "
 "`close_E_d`。策略 `get_data` 查找键为完整 id；研究侧可用宽名，歧义时改完整 id。"
 msgstr ""
-"**dtype_id**: ルール `name_assettype_freq` を使用して、上記の 3 つの項目から生成されます (例: "
-"`close_E_d`、`total_mv_E_q`)。ストラテジーは、`get_data(dtype_id)` を呼び出すときにこの ID "
-"を使用します。"
+"**完全な dtype_id**: 上記 3 つから生成されたルールは、`close_E_d` などの "
+"`{wide_name}_{asset_type}_{freq}` (右から分割) です。戦略 `get_data` 検索キーは完全な ID "
+"です。研究側ではワイドネームを使用でき、曖昧な場合には完全な ID が変更されます。"
 
 #: ../../source/design/02-data-layer.md:47
-#, fuzzy
 msgid "4.3 内置 DataType 与数据表/列的映射"
-msgstr "4.2 組み込みの DataType とデータ テーブル/列間のマッピング"
+msgstr "4.3 組み込み DataType とデータテーブル/列間のマッピング"
 
 #: ../../source/design/02-data-layer.md:49
-#, fuzzy
 msgid ""
 "系统内置大量 "
 "DataType，分别映射到不同数据表的列或衍生列。具体表名、列名见《下载并管理金融历史数据》与按业务分册的清单；本系列仅强调：**策略与分析通过信息 "
 "ID 引用数据，不直接依赖表结构**，表结构演进时只需调整映射关系。"
 msgstr ""
-"システムには、大規模な組み込み DataType セットが付属しており、それぞれが異なるデータ "
-"テーブルの列または派生列にマップされます。特定のテーブル名、列名、およびそれらの取得方法については、*財務履歴データのダウンロードと管理* および "
-"API ドキュメントの「データ型とデータ テーブル」ドキュメントを参照してください。このシリーズでは、**戦略は DataType (dtype_id)"
-" 経由でのみデータを参照し、テーブル スキーマに直接依存しない** "
-"ことのみを強調します。こうすることで、スキーマが進化したときに、戦略コードを変更することなく、マッピングを調整するだけで済みます。"
+"システムには、さまざまなデータ テーブルの列または派生列にマップされる多数の組み込み DataType "
+"があります。具体的なテーブル名と列名については、「財務履歴データのダウンロードと管理」および業務量別のリストを参照してください。このシリーズでは、**戦略と分析は情報"
+" ID "
+"を通じてデータを参照し、テーブル構造に直接依存しない**ことのみを強調します。テーブル構造が進化した場合、調整する必要があるのはマッピング関係のみです。"
 
 #: ../../source/design/02-data-layer.md:51
 msgid "5. 小结：为什么策略只接触 DataType 而不直接读表"
 msgstr "5. まとめ: ストラテジーがテーブルを直接読み取るのではなく、DataType とのみ対話する理由"
 
 #: ../../source/design/02-data-layer.md:53
-#, fuzzy
 msgid "**一致性**：回测与实盘都通过同一套“声明信息 ID + 引擎按窗口注入”的路径取数，避免两套逻辑。"
 msgstr ""
-"**一貫性**: バックテストとライブ取引の両方が同じパス (「DataType を宣言 + ウィンドウごとにエンジン挿入」) "
-"を通じてデータをフェッチし、2 つの別個のロジック セットを回避します。"
+"**一貫性**: バックテストとライブ取引の両方で、「宣言情報 ID + ウィンドウによるエンジン インジェクション」という同じパスを使用して、2 "
+"つのロジック セットを回避します。"
 
 #: ../../source/design/02-data-layer.md:54
 msgid "**防未来函数**：引擎严格按当前时间步和 window_length 准备过去的数据窗口，策略无法访问未注入的将来数据。"
@@ -263,10 +264,12 @@ msgid ""
 "**接口统一**：策略用 `get_data(dtype_id)` 取 History/Reference 窗口；截面 Static 走 "
 "`get_static_data`，**不**进入 `get_data` 时间窗。"
 msgstr ""
+"**統一インターフェイス**: 戦略は `get_data(dtype_id)` を使用して履歴/参照ウィンドウを取得します。断面静的は "
+"`get_static_data` に進みますが、**は** `get_data` 時間枠に入りません。"
 
 #: ../../source/design/02-data-layer.md:57
 msgid "更多用法见 manage_data「DataType」概念章与 API 参考。"
-msgstr ""
+msgstr "詳しい使用方法については、manage_data \"DataType\" の概念の章と API リファレンスを参照してください。"
 
 #~ msgid "**freq**：数据频率（如 d/w/m/q），与数据表的时间粒度或重采样方式相关。"
 #~ msgstr "**freq**: データテーブルの時間粒度またはリサンプリング方法に関連するデータ周波数 (例: d/w/m/q)。"

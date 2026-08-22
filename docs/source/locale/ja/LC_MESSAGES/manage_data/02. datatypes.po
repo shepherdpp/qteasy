@@ -20,13 +20,17 @@ msgstr ""
 
 #: ../../source/manage_data/02. datatypes.md:1
 msgid "用稳定的信息 ID 取数（DataType）"
-msgstr ""
+msgstr "安定したメッセージ ID を使用して番号を取得します (DataType)"
 
 #: ../../source/manage_data/02. datatypes.md:3
 msgid ""
 "前面的章节介绍了数据源，以及如何往数据源中填充金融数据。本章回答另一件事：您真正要用的，往往不是「表里的某一列」，而是**策略和分析可直接消费的信息**。`qteasy`"
 " 用一套稳定的 **信息 ID** 来命名这些信息；存储可以换表、换渠道，ID 尽量不变。"
 msgstr ""
+"前の章では、データ ソースと財務データをデータ ソースに入力する方法を紹介しました。この章では、もう 1 "
+"つの答えが得られます。実際に使用したいのは、多くの場合、「テーブル内の列」ではなく、戦略や分析で直接利用できる情報です。 `qteasy` "
+"この情報に名前を付けるには、**情報 ID** の安定したセットを使用します。ストレージはテーブルとチャネルを変更できるため、ID "
+"は可能な限り変更しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:5
 msgid "`QTEASY`数据管理模块: ![数据获取模块结构](img/InformationExtraction.png)"
@@ -42,36 +46,43 @@ msgid ""
 "标的、仅时间、仅标的）。日常您写的是**字符串**（如 `close`、`close|b`、`close_E_d`），不必手写 "
 "`DataType(...)`。它不是数据表列名，也不是又一个下载器。"
 msgstr ""
+"**DataType** について: これは、ローカル データ テーブルから抽出して戦略や分析に直接使用できる情報タイプの安定した ID "
+"に加え、形状規則 (時間 × ターゲット、時間のみ、ターゲットのみ) です。通常は **文字列** "
+"(`close`、`close|b`、`close_E_d` など) を記述しますが、`DataType(...)` "
+"を手動で記述する必要はありません。これはデータシートのリストでも、別のダウンローダーでもありません。"
 
 #: ../../source/manage_data/02. datatypes.md:9
 msgid "**本篇覆盖**："
-msgstr ""
+msgstr "**この記事の内容**:"
 
 #: ../../source/manage_data/02. datatypes.md:11
 msgid "为什么「信息 ≠ 表里的一行」；"
-msgstr ""
+msgstr "なぜ「情報≠表の行」なのか。"
 
 #: ../../source/manage_data/02. datatypes.md:12
 msgid "三种形状：History / Reference / Static；"
-msgstr ""
+msgstr "3 つの形状: 履歴 / 参照 / 静的。"
 
 #: ../../source/manage_data/02. datatypes.md:13
 msgid "四条工作路径（写策略、研究、宏观与基准、证券属性）；"
-msgstr ""
+msgstr "4 つの作業パス (戦略の作成、リサーチ、マクロとベンチマーク、証券の属性)。"
 
 #: ../../source/manage_data/02. datatypes.md:14
 msgid "两种字符串 ID：宽匹配名与完整 id；"
-msgstr ""
+msgstr "2 種類の文字列 ID: ワイド マッチ名と完全 ID。"
 
 #: ../../source/manage_data/02. datatypes.md:15
 msgid "如何发现类型，以及按业务分类的精选表。"
-msgstr ""
+msgstr "タイプを見つける方法と、ビジネスごとに厳選されたリスト。"
 
 #: ../../source/manage_data/02. datatypes.md:17
 msgid ""
 "**完整罗列**（一千余条）见 [内置 DataType 完整清单](../references/datatypes/index.md)；API 签名见"
 " [DataType API](../api/data_types.rst)。"
 msgstr ""
+"**完全なリスト** (1,000 項目以上) [組み込み DataType "
+"完全なリスト](../references/datatypes/index.md) を参照してください。 API 署名については、[DataType "
+"API](../api/data_types.rst) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:19
 msgid ""
@@ -80,10 +91,15 @@ msgid ""
 "[获取数据](../tutorials/2.0-get-data.md) 准备本地数据）。宏观与基准走 Reference，证券属性走 "
 "Static，**不要**用 `get_history_data`「顺便」取。"
 msgstr ""
+"**エントランスの使用方法 (最初にこの段落をお読みください)**: パス 2 の `get_kline` / "
+"`get_history_data`、パス 3 の `get_reference_data`、およびパス 4 の `get_static_data` "
+"は、現在安定したパブリック エントランスです (ローカル データを準備するには、[データの取得](../tutorials/2.0-get-"
+"data.md) を押す必要があります)。マクロとベンチマークの場合は Reference を使用し、セキュリティ属性の場合は Static "
+"を使用します。 **「ちなみに」`get_history_data` は使用しないでください**。"
 
 #: ../../source/manage_data/02. datatypes.md:23
 msgid "信息 ≠ 表里的一行"
-msgstr ""
+msgstr "情報 ≠ テーブル内の行"
 
 #: ../../source/manage_data/02. datatypes.md:25
 msgid "在量化交易中，我们需要准备大量金融数据，但数据不是最终目的——我们需要从数据中提取有用的**信息**，并据此做决策。"
@@ -92,53 +108,59 @@ msgstr ""
 
 #: ../../source/manage_data/02. datatypes.md:27
 msgid "信息不等于数据，常见原因有："
-msgstr ""
+msgstr "情報はデータと同じではありません。一般的な理由は次のとおりです。"
 
 #: ../../source/manage_data/02. datatypes.md:29
 msgid "某些数据本身意义不足，需要与其他数据结合才成为可用信息；"
-msgstr ""
+msgstr "データの中には、それ自体では十分な意味を持たず、使用可能な情報にするために他のデータと組み合わせる必要があるものがあります。"
 
 #: ../../source/manage_data/02. datatypes.md:30
 msgid "同一份数据可能包含多重信息，可以从不同角度提取；"
-msgstr ""
+msgstr "同じデータには、さまざまな角度から抽出できる複数の情報が含まれている場合があります。"
 
 #: ../../source/manage_data/02. datatypes.md:31
 msgid "信息的定义是动态的：同样的原始列，经过不同加工可以有不同解读。"
-msgstr ""
+msgstr "情報の定義は動的です。同じ元の列でも、処理が異なれば解釈が変わる可能性があります。"
 
 #: ../../source/manage_data/02. datatypes.md:33
 msgid "因此，把「数据表里的某一列」直接等同于「策略要用的信息」往往过于草率：数据只是信息的载体。"
 msgstr ""
+"したがって、「データ "
+"テーブルの特定の列」を「戦略で使用される情報」と直接同一視するのは性急すぎることがよくあります。データは情報の伝達手段にすぎません。"
 
 #: ../../source/manage_data/02. datatypes.md:35
 msgid ""
 "有些信息可以直接从表中读出，例如股票的开盘价、收盘价。有些必须通过多表组合才能得到——最典型的是**复权价格**：需要价格表与复权因子表，再经计算得到。同一张行情表里，也可以读出昨收、涨跌幅等不同信息。"
 msgstr ""
+"株式の始値や終値など、一部の情報はテーブルから直接読み取ることができます。それらの中には、複数のテーブルの組み合わせによってのみ取得できるものもあります。最も典型的なものは"
+" "
+"**再重み付け価格**です。価格リストと再重み付け係数テーブルが必要で、その後計算されます。同じ相場表で、昨日の終値や価格の騰落など、さまざまな情報を読み取ることもできます。"
 
 #: ../../source/manage_data/02. datatypes.md:37
 msgid "例如，策略需要后复权收盘价时，原始数据分别在："
-msgstr ""
+msgstr "たとえば、戦略で再加重後の終値が必要な場合、元のデータは次のとおりです。"
 
 #: ../../source/manage_data/02. datatypes.md:39
-#, fuzzy
 msgid "`stock_daily`：股票日 K 线行情（开高低收等）；"
-msgstr "`stock_daily`: 始値、終値、高値、安値などの情報を含む、株価の日次ローソク足チャート。"
+msgstr "`stock_daily`: 株式日次 K ライン市場 (高値始値、安値終値など)。"
 
 #: ../../source/manage_data/02. datatypes.md:40
-#, fuzzy
 msgid "`stock_adj_factor`：复权因子。"
-msgstr "`stock_adj_factor`: この表には、株式の調整後の株価要因に関する情報が含まれています。"
+msgstr "`stock_adj_factor`: 再重み付け係数。"
 
 #: ../../source/manage_data/02. datatypes.md:42
 msgid ""
 "表中已有「数据」，但还不是策略可直接消费的「信息」。若每次用到复权价都要手写多表对齐与换算，甚至还要把日线升成小时线，策略代码会迅速变复杂且易错。"
 msgstr ""
+"テーブルにはすでに「データ」がありますが、戦略が直接利用できる「情報」はまだありません。再適正化価格を使用するたびに複数のテーブルを手動で調整して変換する必要がある場合、さらには日足ラインを時間足ラインにアップグレードする必要がある場合、戦略コードはすぐに複雑になり、エラーが発生しやすくなります。"
 
 #: ../../source/manage_data/02. datatypes.md:44
 msgid ""
 "为此，`qteasy` 把这类提取与换算封装为信息 ID：您只写 "
 "`close|b`，框架负责从表中取出、换算并对齐成统一形态，供策略、分析与可视化使用。存储层以后若换表、换渠道，只要映射还在，您的策略字符串不必改。"
 msgstr ""
+"この目的のために、`qteasy` は、このタイプの抽出と変換を情報 ID としてカプセル化します。つまり、`close|b` "
+"と記述するだけで、フレームワークがそれをテーブルから抽出、変換し、戦略、分析、視覚化で使用するための統一された形式に整列させる役割を果たします。将来、ストレージ層がテーブルまたはチャネルを変更する場合でも、マッピングがまだ存在する限り、ポリシー文字列を変更する必要はありません。"
 
 #: ../../source/manage_data/02. datatypes.md:46
 #, python-format
@@ -147,30 +169,35 @@ msgid ""
 "[数据表章节](04.%20data_tables_10.md)；能提取哪些信息见本章与 "
 "[完整清单](../references/datatypes/index.md)。"
 msgstr ""
+"**ヒント**: ストレージ層の「データテーブル」とアプリケーション層の「情報ID」は同じ概念ではありません。テーブル構造については、後続の [データ "
+"テーブルの章] (04.%20data_tables_10.md) を参照してください。どのような情報を抽出できるかについては、この章と "
+"[完全なリスト] (../references/datatypes/index.md) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:50
 msgid "三种形状：History / Reference / Static"
-msgstr ""
+msgstr "3 つの形状: 履歴 / 参照 / 静的"
 
 #: ../../source/manage_data/02. datatypes.md:52
 msgid "同一套信息 ID，按**消费时长什么样**分成三种形状。选错形状，就会把宏观序列硬塞进股票面板，或把「行业」当成每天都在变的行情。"
 msgstr ""
+"同じ情報 ID セットは、**消費時の見た目**に応じて 3 "
+"つの形状に分割されます。間違った形状を選択すると、マクロシーケンスを強制的に株式パネルに組み込んだり、「業界」を毎日変化する市場として扱ったりすることになります。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "形状"
-msgstr ""
+msgstr "形"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "长什么样"
-msgstr ""
+msgstr "それは何に見えますか"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型问题"
-msgstr ""
+msgstr "よくある質問"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型 ID"
-msgstr ""
+msgstr "代表的なID"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**History**"
@@ -178,11 +205,11 @@ msgstr "**History**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "时间 × 标的"
-msgstr ""
+msgstr "時間×目標"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这几只股票这段时间的收盘价 / PE / 是否停牌？"
-msgstr ""
+msgstr "この期間のこれらの銘柄の終値/PERは停止されていますか?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close`、`pe`、`close|b`、`is_suspended`"
@@ -194,11 +221,11 @@ msgstr "**Reference**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "仅时间（与资产池无一一对应）"
-msgstr ""
+msgstr "時間のみ（資産プールと1対1の対応なし）"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这段时间的 GDP、北向资金，或把沪深 300 当基准？"
-msgstr ""
+msgstr "この期間のGDPとノースバウンドファンド、それともCSI 300をベンチマークとして使用すべきでしょうか?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`cn_gdp`、`north_money`、`close-000300.SH`"
@@ -210,11 +237,11 @@ msgstr "**Static**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "仅标的（无时间轴）"
-msgstr ""
+msgstr "ターゲットのみ (タイムラインなし)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "这些股票属于哪个行业、何时上市？"
-msgstr ""
+msgstr "これらの銘柄はどの業界に属し、いつ上場されましたか?"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`industry`、`list_date`、`stock_name`"
@@ -225,20 +252,24 @@ msgid ""
 "您可以这样理解：History 是「面板」；Reference 是「一条跟池子无关的时间序列」；Static "
 "是「股票的户口本」，用来看属性、筛股票池，而不是在 `realize()` 里按时间窗去取「行业字符串」。"
 msgstr ""
+"このように理解できます。歴史は「パネル」です。参照は「プールとは関係のない時系列」です。静的とは、`realize()` "
+"の時間枠に従って「業界文字列」を取得する代わりに、属性を表示し、在庫プールをスクリーニングするために使用される「在庫簿」です。"
 
 #: ../../source/manage_data/02. datatypes.md:62
 msgid "History：跟标的有关，时间对齐"
-msgstr ""
+msgstr "履歴: ターゲットに関連し、時間に沿ったもの"
 
 #: ../../source/manage_data/02. datatypes.md:64
 msgid ""
 "研究时编成 `HistoryPanel`（或多只标的的 DataFrame）；策略里是时间 × 标的的窗口。标准 K 线用 `get_kline`，其它"
 " History 类型用 `get_history_data`。"
 msgstr ""
+"`HistoryPanel` (または複数のターゲットのデータフレーム) は研究中にコンパイルされます。戦略は時間 × ターゲットウィンドウです。標準 "
+"K ラインは `get_kline` を使用し、他の履歴タイプは `get_history_data` を使用します。"
 
 #: ../../source/manage_data/02. datatypes.md:80
 msgid "Reference：跟资产池无一一对应"
-msgstr ""
+msgstr "参考: アセットプールと 1 対 1 の対応はありません。"
 
 #: ../../source/manage_data/02. datatypes.md:82
 msgid ""
@@ -246,34 +277,44 @@ msgid ""
 "收盘价当成策略里的市场基准：`close-000300.SH`（连字符，不是冒号）。两种都走 Reference 入口，不要把它们当成 "
 "HistoryPanel 的「第三维标的」。"
 msgstr ""
+"マクロ、金利、資本フローはネイティブの参照です。別の公式な方法は、履歴から単一の列を抽出することです。たとえば、CSI 300 "
+"の終値が戦略の市場ベンチマークとして使用されます: `close-000300.SH` "
+"(コロンではなくハイフン)。どちらのタイプも参照入口を使用し、HistoryPanelの「3次元ターゲット」とは見なさないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:95
 msgid "Static：跟标的有关，但没有时间"
-msgstr ""
+msgstr "静的: ターゲットに関連していますが、時間がありません"
 
 #: ../../source/manage_data/02. datatypes.md:97
 msgid ""
 "行业、名称、上市日这类截面属性用于看标签、筛股票池。本阶段**不要**写「在 `realize()` 里 "
 "`get_data('industry')`」——字符串户口本塞不进时间窗。过滤用 pandas 即可；完整选股器不是本章的交付范围。"
 msgstr ""
+"業界、名前、上場日などの横断的な属性は、ラベルを表示し、在庫プールを選別するために使用されます。 "
+"**この段階では、「`get_data('industry')` の "
+"`realize()`」とは書かないでください。文字列帳簿は時間枠に収まりません。フィルタリングにはパンダを使用するだけです。完全な株式ピッカーについては、この章の範囲外です。"
 
 #: ../../source/manage_data/02. datatypes.md:113
 msgid "四条工作路径（按您要做什么）"
-msgstr ""
+msgstr "4 つの作業パス (やりたいことに応じて)"
 
 #: ../../source/manage_data/02. datatypes.md:115
 msgid "了解三种形状以后，日常不必先想「构造哪个对象」，按任务选入口即可。"
-msgstr ""
+msgstr "3つの形を理解したら、最初に「どのオブジェクトを構築するか」を考える必要はなく、課題に応じて入り口を選択するだけです。"
 
 #: ../../source/manage_data/02. datatypes.md:117
 msgid "路径 1：写策略"
-msgstr ""
+msgstr "パス 1: ライティング戦略"
 
 #: ../../source/manage_data/02. datatypes.md:119
 msgid ""
 "声明需要哪些信息 ID，框架按窗口注入；在 `realize()` 里用 `get_data` 取数组。策略里更稳妥的是写**完整 id**（如 "
 "`close_E_d`），避免同名多版本绑错表。无歧义时也可以用宽名，但一旦报错列出多个候选，就改成完整 id。"
 msgstr ""
+"どのような情報 ID が必要かを宣言すると、フレームワークはウィンドウに従ってそれを挿入します。 "
+"`get_data`を使用して、`realize()`の配列を取得します。より安全な戦略は、同じ名前の複数のバージョンが間違ったテーブルにバインドされることを避けるために、**完全な"
+" ID** (`close_E_d` など) を記述することです。曖昧さがない場合はワイド "
+"ネームを使用することもできますが、エラーが報告され、複数の候補がリストされたら、完全な ID に変更してください。"
 
 #: ../../source/manage_data/02. datatypes.md:126
 msgid ""
@@ -281,16 +322,23 @@ msgid ""
 "`get_data`。声明与窗口的细节见 [教程 3](../tutorials/3-start-first-strategy.md) 与设计文档 "
 "[策略如何声明与使用数据](../design/03-data-in-strategies.md)。"
 msgstr ""
+"参照は戦略ステートメントに含めることができます (ウィンドウは時系列であり、「銘柄ごとに 1 列」ではありません)。静的 **`data_types` "
+"/ `get_data` を入力しないでください**。宣言とウィンドウの詳細は、[チュートリアル 3](../tutorials/3-start-"
+"first-strategy.md) および設計文書 [戦略によるデータの宣言と使用方法](../design/03-data-in-"
+"strategies.md) にあります。"
 
 #: ../../source/manage_data/02. datatypes.md:128
 msgid "路径 2：研究 / 因子"
-msgstr ""
+msgstr "パス 2: 研究/要因"
 
 #: ../../source/manage_data/02. datatypes.md:130
 msgid ""
 "在 Notebook 里玩面板、算因子、画图：标准 OHLCV 用 `get_kline`；估值、财务、复权价等用 "
 "`get_history_data`。`get_kline` 只是 K 线语法糖，底层仍是 History 管线，不是第四个入口。"
 msgstr ""
+"Notebook でパネルを操作し、係数を計算し、グラフを描画します。標準の OHLCV には `get_kline` を使用します。 "
+"`get_history_data` は、評価、財務、再権利価格などに使用します。 `get_kline` は、K "
+"行の糖衣構文にすぎません。最下層は依然として履歴パイプラインであり、4 番目の入り口ではありません。"
 
 #: ../../source/manage_data/02. datatypes.md:154
 #, python-format
@@ -299,10 +347,13 @@ msgid ""
 "[2.4](../tutorials/2.4-historypanel-basics.md) / "
 "[2.5](../tutorials/2.5-historypanel-data-analysis.md)。"
 msgstr ""
+"パネルをスライス、展開、計算する方法については、次の章 [HistoryPanel](02.5.%20historypanel.md) "
+"およびチュートリアル [2.4](../tutorials/2.4-historypanel-basics.md) / "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:156
 msgid "路径 3：宏观与基准"
-msgstr ""
+msgstr "パス 3: マクロとベンチマーク"
 
 #: ../../source/manage_data/02. datatypes.md:158
 msgid ""
@@ -310,44 +361,52 @@ msgid ""
 "`get_reference_data`。这里**不传股票池**（基准已经写在 ID 里）。不要用 `get_history_data` "
 "去「顺便」取宏观。"
 msgstr ""
+"GDP、ノースバウンドファンド、SHIBOR、および`close-000300.SH`は「特定の基礎市場を参照として使用する」場合は、`get_reference_data`に進みます。"
+" **ここではストック プール**は渡されません (ベンチマークは既に ID に書き込まれています)。 「ちなみに」マクロを取得するために "
+"`get_history_data` を使用しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:160
 msgid "路径 4：证券属性与股票池"
-msgstr ""
+msgstr "パス 4: セキュリティ属性とストック プール"
 
 #: ../../source/manage_data/02. datatypes.md:162
 msgid ""
 "行业、上市日、证券名称走 `get_static_data`，得到按代码索引的表，再用 pandas 筛选。这不是回测里的时间窗，也不是 "
 "`filter_universe` 一类完整选股器。"
 msgstr ""
+"業界、上場日、証券名の `get_static_data` "
+"に移動して、コードでインデックス付けされたテーブルを取得し、パンダを使用してフィルターします。これはバックテストの時間枠ではなく、`filter_universe`"
+" のような完全な銘柄選択ツールでもありません。"
 
 #: ../../source/manage_data/02. datatypes.md:166
 msgid "两种字符串 ID"
-msgstr ""
+msgstr "2 つの文字列 ID"
 
 #: ../../source/manage_data/02. datatypes.md:168
 msgid "每种内置类型在内部由「名称 + 频率 + 资产类型」唯一确定；您日常写的字符串有两种形态，**都要会用**。"
 msgstr ""
+"各組み込みタイプは、「名前 + 頻度 + アセット タイプ」によって内部的に一意に決定されます。毎日書く文字列には 2 "
+"つの形式があり、それらを使用できなければなりません。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "形态"
-msgstr ""
+msgstr "形状"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "样子"
-msgstr ""
+msgstr "外観"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "典型场景"
-msgstr ""
+msgstr "典型的なシナリオ"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "解析直觉"
-msgstr ""
+msgstr "分析的直観"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**宽匹配名**"
-msgstr ""
+msgstr "**ワイドマッチ名**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close`、`pe`、`close|b`"
@@ -355,15 +414,17 @@ msgstr "`close`、`pe`、`close|b`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "研究、`htype_names`、检索"
-msgstr ""
+msgstr "研究、`htype_names`、検索"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "框架按频率与资产类型规则挑一条；对不上或有多条候选时会报错，而不是静默抓第一项"
 msgstr ""
+"フレームワークは、頻度と資産タイプのルールに基づいて 1 "
+"つを選択します。一致しない場合、または複数の候補がある場合は、最初の候補を黙って選択するのではなく、エラーが報告されます。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "**完整 id**"
-msgstr ""
+msgstr "**完全なID**"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close_E_d`、`close|b_E_d`、`pe_E_d`"
@@ -371,103 +432,115 @@ msgstr "`close_E_d`、`close|b_E_d`、`pe_E_d`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "策略 `get_data`、需要消歧、Operator 缓冲键"
-msgstr ""
+msgstr "ポリシー `get_data`、曖昧さ回避が必要、Operator バッファキー"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "从**右边**拆：最后一段是频率，倒数第二段是资产类型，余下全部是宽名（宽名里可以含 `|`）"
 msgstr ""
+"**右**から分割: 最後の段落は頻度、最後から 2 番目の段落はアセット タイプ、残りはすべてワイド ネームです (ワイド ネームには `|` "
+"を含めることができます)"
 
 #: ../../source/manage_data/02. datatypes.md:175
 msgid "对照："
-msgstr ""
+msgstr "対比："
 
 #: ../../source/manage_data/02. datatypes.md:177
 msgid "`close` → 研究里说「我要收盘价」，让框架按日线股票等规则匹配；"
-msgstr ""
+msgstr "`close` → 研究では「終値が欲しい」と述べ、毎日の株価やその他のルールに従ってフレームワークを一致させました。"
 
 #: ../../source/manage_data/02. datatypes.md:178
 msgid "`close_E_d` → 明确说「股票、日频收盘价」，策略里不会绑到指数的 `close`。"
-msgstr ""
+msgstr "`close_E_d` → 「株価、毎日の頻度終値」が明記されており、戦略はインデックス`close`に連動しません。"
 
 #: ../../source/manage_data/02. datatypes.md:180
 msgid "**何时必须写完整 id**"
-msgstr ""
+msgstr "**完全な ID を書き込む必要がある場合**"
 
 #: ../../source/manage_data/02. datatypes.md:182
 msgid "同一宽名对应多个资产类型或频率（例如 `pe` 既有股票也有指数）；"
-msgstr ""
+msgstr "同じワイドネームが複数の資産タイプまたは頻度に対応します (たとえば、`pe` には株式と指数の両方が含まれます)。"
 
 #: ../../source/manage_data/02. datatypes.md:183
 msgid "策略 `get_data` 需要强约束；"
-msgstr ""
+msgstr "戦略 `get_data` には強力な制約が必要です。"
 
 #: ../../source/manage_data/02. datatypes.md:184
 msgid "报错已经列出候选完整 id 时——按提示改，不要再猜。"
-msgstr ""
+msgstr "エラーが報告され、候補者の完全な ID がリストされている場合は、プロンプトに従って変更し、再度推測しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:186
 msgid "**书写符号（三套，不要混）**"
-msgstr ""
+msgstr "**記号の書き方 (3 セット、混ぜないでください)**"
 
 #: ../../source/manage_data/02. datatypes.md:188
 msgid "类型参数用竖线：`close|b`（后复权）、`close|f`（前复权）；"
-msgstr ""
+msgstr "タイプパラメータには垂直バーを使用します: `close|b` (後で再右化)、`close|f` (事前右化)。"
 
 #: ../../source/manage_data/02. datatypes.md:189
 msgid "把某标的抽成 Reference 用连字符：`close-000300.SH`；"
-msgstr ""
+msgstr "ハイフンを使用して特定のターゲットを参照に抽出します: `close-000300.SH`;"
 
 #: ../../source/manage_data/02. datatypes.md:190
 msgid "完整 id 用下划线连接资产类型与频率：`close_E_d`。"
-msgstr ""
+msgstr "完全な ID は、アセットのタイプと頻度をアンダースコアで接続します: `close_E_d`。"
 
 #: ../../source/manage_data/02. datatypes.md:192
 msgid "请不要写 `wt_id:000300.SH` 这种冒号语法。"
-msgstr ""
+msgstr "`wt_id:000300.SH` のようなコロン構文は記述しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:194
 msgid ""
 "常见取值备忘：`freq` 如 `d` / `w` / `m` / `q` / `1min`，`None` 表示与频率无关（多为 "
 "Static）；`asset_type` 如 `E` 股票、`IDX` 指数、`FD` 基金、`FT` 期货、`OPT` 期权。"
 msgstr ""
+"共通値メモ: `d` / `w` / `m` / `q` / `1min`、`None` などの `freq` は、周波数に依存しないことを意味します "
+"(主に静的)。 `E` 株式、`IDX` インデックス、`FD` ファンド、`FT` 先物、`OPT` オプションなどの`asset_type`。"
 
 #: ../../source/manage_data/02. datatypes.md:198
 msgid "如何找到需要的 ID"
-msgstr ""
+msgstr "必要なIDの確認方法"
 
 #: ../../source/manage_data/02. datatypes.md:200
 msgid "完整表有一千余条，不必背。推荐顺序："
-msgstr ""
+msgstr "完全なリストには 1,000 項目以上あるため、暗記する必要はありません。推奨される順序:"
 
 #: ../../source/manage_data/02. datatypes.md:202
 msgid "**按中文或名称检索** `find_history_data`；"
-msgstr ""
+msgstr "**中国語または名前で検索** `find_history_data`;"
 
 #: ../../source/manage_data/02. datatypes.md:203
 msgid ""
 "看描述，判断它是 History、Reference 还是 Static，再选对应入口——**不要**假定检索到的每一条都能 "
 "`get_history_data`；"
 msgstr ""
+"説明を参照して、それが履歴、参照、または静的であるかどうかを判断し、対応するエントリを選択します。**取得されたすべての項目が "
+"`get_history_data` である可能性があると想定しないでください**。"
 
 #: ../../source/manage_data/02. datatypes.md:204
 msgid ""
 "需要浏览时打开 "
 "[完整清单](../references/datatypes/index.md)（将按业务分册，并标注可用性；当前分册仍可能按内部获取方式排列，以清单页说明为准）。"
 msgstr ""
+"参照する必要がある場合は、[完全なリスト](../references/datatypes/index.md) を開きます "
+"(ビジネスに応じてボリュームに分割され、可用性がマークされます。リスト "
+"ページの説明に従って、現在のボリュームも内部の取得方法に従って配置される場合があります)。"
 
 #: ../../source/manage_data/02. datatypes.md:218
 msgid "交互环境中也可以拉完整映射表："
-msgstr ""
+msgstr "完全なマッピング テーブルは対話型環境でも取得できます。"
 
 #: ../../source/manage_data/02. datatypes.md:228
 msgid ""
 "清单由 `docs/scripts/generate_datatype_catalog.py` "
 "生成并入库；发版或变更内置映射后需重跑脚本。**请勿手改** `_generated/` 下的正文。"
 msgstr ""
+"リストは `docs/scripts/generate_datatype_catalog.py` "
+"によって生成され、データベースに組み込まれます。バージョンをリリースするか、組み込みマッピングを変更した後は、スクリプトを再実行する必要があります。 "
+"**手動で変更しないでください** `_generated/` の下のテキスト。"
 
 #: ../../source/manage_data/02. datatypes.md:232
 msgid "常用类型精选"
-msgstr ""
+msgstr "よく使われるタイプの選択"
 
 #: ../../source/manage_data/02. datatypes.md:234
 msgid ""
@@ -475,36 +548,40 @@ msgid ""
 "是您在字符串里写的宽匹配名；「典型入口」告诉您该走哪条工作路径。查表方式：先按业务找节，再拿 `name` 去 `find_history_data` "
 "或清单核对频率与资产类型。"
 msgstr ""
+"以下は、簡単に始めることができる手書きメンテナンスの **厳選** リストです。この範囲は一般的に使用されるサブセットであり、1,000 "
+"を超える項目の全範囲ではありません。列の意味: `name` は、文字列に書き込んだワイド一致の名前です。 "
+"「標準エントリ」は、どの作業パスを取るべきかを示します。表の検索方法: まず事業ごとにセクションを見つけてから、`name` から "
+"`find_history_data` を取得するか、リストから頻度と資産タイプを確認します。"
 
 #: ../../source/manage_data/02. datatypes.md:236
 msgid "完整列表见 [内置 DataType 完整清单](../references/datatypes/index.md)。"
 msgstr ""
+"完全なリストについては、[組み込み DataType 完全なリスト](../references/datatypes/index.md) "
+"を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:238
 msgid "行情与复权"
-msgstr ""
+msgstr "引用と修復"
 
 #: ../../source/manage_data/02. datatypes.md:240
 msgid "典型入口：`get_kline`（OHLCV）或 `get_history_data`。"
-msgstr ""
+msgstr "一般的なエントリ: `get_kline` (OHLCV) または `get_history_data`。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "name"
 msgstr "name"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "简述"
-msgstr "用途の簡単な説明"
+msgstr "簡単な説明"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`open` / `high` / `low` / `close`"
 msgstr "`open` / `high` / `low` / `close`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "开高低收"
-msgstr "株式分割、始値の高値と安値を調整済み"
+msgstr "高値で開き、安値で閉じる"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`vol`"
@@ -512,7 +589,7 @@ msgstr "`vol`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "成交量"
-msgstr ""
+msgstr "音量"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`amount`"
@@ -520,37 +597,35 @@ msgstr "`amount`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "成交额（以清单描述为准）"
-msgstr ""
+msgstr "取引量（リストの説明による）"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close|b` / `close|f`"
 msgstr "`close|b` / `close|f`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "后复权 / 前复权收盘价"
-msgstr "株式分割後の株式終値"
+msgstr "復旧後・復旧前の終値"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`open|b` / `high|b` / `low|b`"
 msgstr "`open|b` / `high|b` / `low|b`"
 
 #: ../../source/manage_data/02. datatypes.md
-#, fuzzy
 msgid "后复权开高低"
-msgstr "株式分割、始値の高値と安値を調整済み"
+msgstr "電源を回復した後、ハイとローを開きます"
 
 #: ../../source/manage_data/02. datatypes.md:250
 msgid "例如：研究后复权收盘价时，直接写 `close|b`，不必自己去拼价格表和复权因子。"
-msgstr ""
+msgstr "たとえば、再権利化の終値を調査する場合、価格表や再権利化要素を自分で調べなくても、`close|b` と書くだけで済みます。"
 
 #: ../../source/manage_data/02. datatypes.md:252
 msgid "估值与财务"
-msgstr ""
+msgstr "評価と財務"
 
 #: ../../source/manage_data/02. datatypes.md:254
 msgid "典型入口：`get_history_data`。"
-msgstr ""
+msgstr "一般的なエントリ: `get_history_data`。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`pe` / `pe_2`"
@@ -558,7 +633,7 @@ msgstr "`pe` / `pe_2`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "市盈率及相关（股票与指数可能各有一条，策略里建议完整 id）"
-msgstr ""
+msgstr "PER および関連 (株式と指数にはそれぞれ 1 つある場合があります。戦略では完全な ID が推奨されます)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`pb`"
@@ -566,7 +641,7 @@ msgstr "`pb`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "市净率"
-msgstr ""
+msgstr "株価純資産倍率"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`eps`"
@@ -574,7 +649,7 @@ msgstr "`eps`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "每股收益"
-msgstr ""
+msgstr "一株当たりの利益"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`total_mv`"
@@ -582,15 +657,15 @@ msgstr "`total_mv`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "总市值（注意单位版本，见清单描述）"
-msgstr ""
+msgstr "時価総額の合計 (単位バージョンに注意、上場説明を参照)"
 
 #: ../../source/manage_data/02. datatypes.md:263
 msgid "宏观、利率与资金"
-msgstr ""
+msgstr "マクロ、金利、資金"
 
 #: ../../source/manage_data/02. datatypes.md:265
 msgid "典型入口：`get_reference_data`。不要用 `get_history_data`。"
-msgstr ""
+msgstr "一般的なエントリ: `get_reference_data`。 `get_history_data` は使用しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`cn_gdp`"
@@ -598,7 +673,7 @@ msgstr "`cn_gdp`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "GDP 累计值"
-msgstr ""
+msgstr "GDP累計値"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`north_money`"
@@ -606,7 +681,7 @@ msgstr "`north_money`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "北向资金"
-msgstr ""
+msgstr "ノースバウンドファンド"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`shibor|%`"
@@ -614,7 +689,7 @@ msgstr "`shibor|%`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "SHIBOR（参数为期限，以清单为准）"
-msgstr ""
+msgstr "SHIBOR (パラメータはピリオドであり、リストに従います)"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`close-000300.SH`"
@@ -622,15 +697,17 @@ msgstr "`close-000300.SH`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "把沪深 300 收盘价当成 Reference（造法，不是原生宏观表）"
-msgstr ""
+msgstr "CSI 300 の終値を参考として扱う (元のマクロ テーブルではなく、作成されたメソッド)"
 
 #: ../../source/manage_data/02. datatypes.md:274
 msgid "交易行为与事件"
-msgstr ""
+msgstr "取引アクションとイベント"
 
 #: ../../source/manage_data/02. datatypes.md:276
 msgid "典型入口：`get_history_data`（仍是时间 × 标的）。事件类条目多，建议用中文关键词检索。"
 msgstr ""
+"一般的なエントリ: `get_history_data` (静止時間 × "
+"目標)。イベントエントリーが多いので中国語キーワードで検索することをお勧めします。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`is_suspended`"
@@ -638,7 +715,7 @@ msgstr "`is_suspended`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "停复牌类型"
-msgstr ""
+msgstr "取引停止・再開タイプ"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`up_limit`"
@@ -646,16 +723,17 @@ msgstr "`up_limit`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "涨停价"
-msgstr ""
+msgstr "価格制限"
 
 #: ../../source/manage_data/02. datatypes.md:283
-#, fuzzy
 msgid "指数成分与权重"
-msgstr "指数構成銘柄のウェイト付け"
+msgstr "インデックスのコンポーネントと重み"
 
 #: ../../source/manage_data/02. datatypes.md:285
 msgid "典型入口：研究用 `get_history_data`；也适合用来过滤/加权股票池（不是本章的选股器 API）。"
 msgstr ""
+"典型的なエントリ: `get_history_data` 研究用。株式プールのフィルタリング/重み付けにも適しています (この章の株式ピッカー API "
+"ではありません)。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`wt_idx|%`"
@@ -663,15 +741,15 @@ msgstr "`wt_idx|%`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "股票在指数中的权重（通配键以清单为准）"
-msgstr ""
+msgstr "インデックス内の株式のウェイト (ワイルドカード キーはリストに基づいています)"
 
 #: ../../source/manage_data/02. datatypes.md:291
 msgid "静态证券信息"
-msgstr ""
+msgstr "静的な有価証券情報"
 
 #: ../../source/manage_data/02. datatypes.md:293
 msgid "典型入口：`get_static_data`。不要放进策略 `get_data`。"
-msgstr ""
+msgstr "一般的なエントリ: `get_static_data`.不要放进策略 `get_data`。"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`stock_symbol` / `stock_name`"
@@ -679,7 +757,7 @@ msgstr "`stock_symbol` / `stock_name`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "代码 / 名称"
-msgstr ""
+msgstr "コード/ネーム"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`industry`"
@@ -687,7 +765,7 @@ msgstr "`industry`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "行业"
-msgstr ""
+msgstr "業界"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "`list_date`"
@@ -695,11 +773,11 @@ msgstr "`list_date`"
 
 #: ../../source/manage_data/02. datatypes.md
 msgid "上市日期（以清单为准）"
-msgstr ""
+msgstr "上場日（上場の場合あり）"
 
 #: ../../source/manage_data/02. datatypes.md:303
 msgid "边界：清单里有，不等于今天能这样用"
-msgstr ""
+msgstr "境界: リストには入っていますが、今日このように使用できるという意味ではありません。"
 
 #: ../../source/manage_data/02. datatypes.md:305
 msgid ""
@@ -709,6 +787,12 @@ msgid ""
 "`DataSource.read_table_data('block_trade')`）。检索结果请按描述与入口提示选用，不要一律 "
 "`get_history_data`。"
 msgstr ""
+"**可用性**: 完全なリストにはすべての組み込み型が保持されますが、その一部は現在ファーストクラスで使用されていません "
+"(ディレクトリ内で確認できますが、推奨されるエントリはありません)。たとえば、一括取引バイヤーのビジネス部門 `block_trade_buyer` "
+"は履歴の形式ですが、グリッドはテキストであるため、数値のみを受け取る HistoryPanel/戦略ウィンドウにコンパイルできません。リストには "
+"`usable_in=none` のマークが付いています。調査する場合は、基礎となるテーブル "
+"(`DataSource.read_table_data('block_trade')` など) "
+"を直接読んでください。説明と入口プロンプトに従って検索結果を選択してください。`get_history_data` は使用しないでください。"
 
 #: ../../source/manage_data/02. datatypes.md:306
 #, python-format
@@ -716,12 +800,18 @@ msgid ""
 "**下载与表结构**：本地没有表，任何 ID 都取不出数。下载与表结构见 [DataSource](03.%20datasource.md) 与 "
 "[数据表章节](04.%20data_tables_10.md)。"
 msgstr ""
+"**ダウンロードとテーブル構造**: ローカル テーブルは存在せず、どの ID "
+"からも番号を取得できません。ダウンロードとテーブル構造については、[DataSource](03.%20datasource.md) および [データ "
+"テーブルの章](04.%20data_tables_10.md) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:307
 msgid ""
 "**过程数据**：`proc.*`（持仓、现金等回测/实盘过程量）不是本目录里的 DataType，见设计文档 "
 "[过程数据与动态回测](../design/09-process-data-and-dynamic-backtest.md)。"
 msgstr ""
+"**プロセス データ**: `proc.*` (ポジション、キャッシュなどのバックテスト/実際のオファー プロセス ボリューム) は、このディレクトリに"
+" DataType ありません。設計ドキュメント [プロセス データと動的バックテスト] (../design/09-process-data-and-"
+"dynamic-backtest.md) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:308
 msgid ""
@@ -729,6 +819,8 @@ msgid ""
 "`acquisition_type`（直读、复权、事件等），那是框架从表里怎么抽出信息的内部算法，**不是**用户分类，选类型时不必填写。排障时可以在清单靠后列对照"
 " `table_name`。"
 msgstr ""
+"**内部取得方法**: マッピングテーブルには`acquisition_type` (直接読み取り、権利復元、イベントなど) "
+"もあります。これは、フレームワークがテーブルから情報を抽出する方法の内部アルゴリズムです。ユーザー分類ではないため、タイプ選択時に入力する必要はありません。トラブルシューティングを行うときは、リストの最後にある`table_name`を確認できます。"
 
 #: ../../source/manage_data/02. datatypes.md:309
 msgid ""
@@ -736,53 +828,65 @@ msgid ""
 "`realize()` 中计算（教程见 [玩数据与因子分析](../tutorials/2.5-historypanel-data-"
 "analysis.md)）。"
 msgstr ""
+"**カスタム タイプ**: "
+"ユーザー向けの安定した登録ポータルはまだ提供されていません。まだ組み込まれていない複合インジケーターが必要な場合は、まずアトミック "
+"フィールドを取り出して、`HistoryPanel.assign` またはストラテジー `realize()` で計算します "
+"(チュートリアルについては、[データと因子分析で遊ぶ](../tutorials/2.5-historypanel-data-analysis.md) "
+"を参照してください)。"
 
 #: ../../source/manage_data/02. datatypes.md:310
 msgid ""
 "**专家层对象**：排查单一类型或编写更底层脚本时，仍可构造 `DataType` 并调用 "
 "`get_data_from_source`。这不是日常路径，签名见 [DataType API](../api/data_types.rst)。"
 msgstr ""
+"**エキスパート レイヤー オブジェクト**: "
+"単一タイプのトラブルシューティングを行う場合、または下位レベルのスクリプトを作成する場合でも、`DataType` を構築して "
+"`get_data_from_source` を呼び出すことができます。これは毎日のパスではなく、署名は [DataType "
+"API](../api/data_types.rst) にあります。"
 
 #: ../../source/manage_data/02. datatypes.md:314
 msgid "小结与下一步"
-msgstr ""
+msgstr "まとめと次のステップ"
 
 #: ../../source/manage_data/02. datatypes.md:316
 msgid "读到这里，您应已掌握："
-msgstr ""
+msgstr "これを読んだ後は、次のことを習得しているはずです。"
 
 #: ../../source/manage_data/02. datatypes.md:318
 msgid "DataType 是**信息 ID**，不是表列名，也不是下载器；您日常写字符串。"
-msgstr ""
+msgstr "DataType は **情報 ID** であり、テーブルの列名やダウンローダーではありません。あなたは毎日文字列を書きます。"
 
 #: ../../source/manage_data/02. datatypes.md:319
 msgid "三种形状对应三种用法：History 进面板/策略窗，Reference 是与池子无关的时间序列，Static 是截面属性。"
 msgstr ""
+"3 つの形状は 3 つの用途に対応しています。履歴はパネル/戦略ウィンドウに入り、参照はプールに関係のない時系列であり、静的は横断的な属性です。"
 
 #: ../../source/manage_data/02. datatypes.md:320
 msgid ""
 "按任务选入口：策略 `get_data`、研究 `get_kline` / `get_history_data`、宏观与基准 "
 "`get_reference_data`、属性与股票池 `get_static_data`。"
 msgstr ""
+"タスク別にエントリを選択します: 戦略 `get_data`、リサーチ `get_kline` / "
+"`get_history_data`、マクロとベンチマーク `get_reference_data`、プロパティとストックプール "
+"`get_static_data`。"
 
 #: ../../source/manage_data/02. datatypes.md:321
 msgid "研究可用宽名；策略与消歧时写完整 id（`close_E_d`）。"
-msgstr ""
+msgstr "研究にはワイドネームを使用してください。戦略と曖昧さ回避のために完全な ID (`close_E_d`) を書き込みます。"
 
 #: ../../source/manage_data/02. datatypes.md:323
 msgid "**下一步阅读**："
-msgstr ""
+msgstr "**次をお読​​みください**:"
 
 #: ../../source/manage_data/02. datatypes.md:325
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "把多标的、多指标收拢到同一时间轴：[HistoryPanel](02.5.%20historypanel.md)，可视化见 [HistoryPanel "
 "可视化](02.6.%20historypanel_visual.md)；"
 msgstr ""
-"複数のターゲットとデータ タイプを同じタイムラインで同時に実行する必要がある場合 (例: OHLC と取引高が計算またはチャートに含まれる)、次の章 "
-"[HistoryPanel](2.5.%20historypanel.md) では、`get_history_data` の結果を 3D "
-"パネルに収集する方法を紹介します。グラフ作成のエントリ ポイントは、次の章 [HistoryPanel "
-"視覚化](2.6.%20historypanel_visual.md) にあります。"
+"複数のターゲットとインジケーターを同じタイムラインに照合します: "
+"[HistoryPanel](02.5.%20historypanel.md)。視覚化については、[HistoryPanel "
+"視覚化](02.6.%20historypanel_visual.md) を参照してください。"
 
 #: ../../source/manage_data/02. datatypes.md:326
 msgid ""
@@ -790,16 +894,21 @@ msgid ""
 "[2.4](../tutorials/2.4-historypanel-basics.md) → "
 "[2.5](../tutorials/2.5-historypanel-data-analysis.md)；"
 msgstr ""
+"番号を取得してパネルを操作する手順に従います: [チュートリアル 2.0](../tutorials/2.0-get-data.md) → "
+"[2.4](../tutorials/2.4-historypanel-basics.md) → "
+"[2.5](../tutorials/2.5-historypanel-data-analysis.md);"
 
 #: ../../source/manage_data/02. datatypes.md:327
 msgid ""
 "在策略里声明与取窗：[教程 3](../tutorials/3-start-first-"
 "strategy.md)、[策略如何声明与使用数据](../design/03-data-in-strategies.md)；"
 msgstr ""
+"ストラテジーでの宣言とウィンドウ処理: [チュートリアル 3](../tutorials/3-start-first-"
+"strategy.md)、[ストラテジーでデータを宣言して使用する方法](../design/03-data-in-strategies.md);"
 
 #: ../../source/manage_data/02. datatypes.md:328
 msgid "专家层对象与函数签名：[DataType API](../api/data_types.rst)。"
-msgstr ""
+msgstr "エキスパート層のオブジェクトと関数のシグネチャ: [DataType API](../api/data_types.rst)。"
 
 #~ msgid "以标准化方式从数据表中提取信息"
 #~ msgstr "標準化された方法でデータテーブルから情報を抽出する"

@@ -20,19 +20,26 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/composition.md:6
 msgid "指数成分与权重"
-msgstr ""
+msgstr "Componentes y ponderaciones del índice"
 
 #: ../../source/references/datatypes/_generated/composition.md:8
 msgid ""
 "本分册由 `docs/scripts/generate_datatype_catalog.py` 从 "
 "`qteasy.datatypes.get_dtype_map()` 按**业务类别**生成，共 **1** 条。"
 msgstr ""
+"Este volumen lo genera `docs/scripts/generate_datatype_catalog.py` a partir "
+"de `qteasy.datatypes.get_dtype_map()` por **categoría de negocio**, con un "
+"total de **1** artículos."
 
 #: ../../source/references/datatypes/_generated/composition.md:10
 msgid ""
 "请勿手改；更新内置类型后请重跑生成脚本。列含义与推荐读法见 [清单入口](../index.md)。`acquisition_type` / "
 "`table_name` 仅供对照 refill。"
 msgstr ""
+"No lo modifique a mano; Vuelva a ejecutar el script de generación después de"
+" actualizar el tipo integrado. Para conocer el significado de las columnas y"
+" las lecturas recomendadas, consulte [Entrada de lista](../index.md). "
+"`acquisition_type` / `table_name` son solo para recarga comparativa."
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "name"
@@ -80,7 +87,7 @@ msgstr "E"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "股票在指数中所占权重 - %"
-msgstr ""
+msgstr "Peso de la acción en el índice - %"
 
 #: ../../source/references/datatypes/_generated/composition.md
 msgid "history"

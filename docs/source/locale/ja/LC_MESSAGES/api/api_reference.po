@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/api_reference.rst:2
@@ -32,9 +32,9 @@ msgstr "qteasy の現在の構成変数を表示します。"
 
 #: ../../source/api/api_reference.rst of qteasy.configure.configuration
 #: qteasy.configure.configure qteasy.configure.get_config
-#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.set_config
-#: qteasy.configure.update_start_up_setting
+#: qteasy.configure.get_configurations
+#: qteasy.configure.remove_start_up_setting qteasy.configure.reset_config
+#: qteasy.configure.set_config qteasy.configure.update_start_up_setting
 msgid "参数"
 msgstr "パラメータ"
 
@@ -42,8 +42,8 @@ msgstr "パラメータ"
 #: qteasy.configure.get_configurations:3
 msgid ""
 "需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名 "
-"可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名 以下两种方式等价： 'local_data_source,"
-" local_data_file_type, local_data_file_path' ['local_data_source', "
+"可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名 以下两种方式等价： 'local_data_source, "
+"local_data_file_type, local_data_file_path' ['local_data_source', "
 "'local_data_file_type', 'local_data_file_path']"
 msgstr ""
 "表示する変数名。名前が指定されていない場合は、一致するすべての変数名がレベル、up_to "
@@ -59,11 +59,11 @@ msgstr "表示される構成変数のレベル。 config が指定されてい�
 #: of qteasy.configure.configuration:12 qteasy.configure.get_config:12
 #: qteasy.configure.get_configurations:12
 msgid ""
-"需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 "
-"会显示级别在0～2之间的所有配置变量 如果给出了config，则忽略此参数"
+"需要显示的配置变量的级别上限，需要配合level设置。 例如，当level == 0, up_to == 2时 会显示级别在0～2之间的所有配置变量 "
+"如果给出了config，则忽略此参数"
 msgstr ""
-"表示する設定変数のレベルの上限。レベルと合わせて設定する必要があります。たとえば、level == 0、up_to == 2 の場合、レベル 0 "
-"～ 2 のすべての構成変数が表示されます。 config が指定されている場合、このパラメータは無視されます"
+"表示する設定変数のレベルの上限。レベルと合わせて設定する必要があります。たとえば、level == 0、up_to == 2 の場合、レベル 0 ～ 2"
+" のすべての構成変数が表示されます。 config が指定されている場合、このパラメータは無視されます"
 
 #: of qteasy.configure.configuration:17 qteasy.configure.get_config:17
 #: qteasy.configure.get_configurations:17
@@ -77,9 +77,10 @@ msgstr "完全な説明情報を表示するかどうか。True の場合、構�
 
 #: ../../source/api/api_reference.rst of qteasy.configure.configuration
 #: qteasy.configure.configure qteasy.configure.get_config
-#: qteasy.configure.get_configurations qteasy.configure.remove_start_up_setting
-#: qteasy.configure.reset_config qteasy.configure.set_config
-#: qteasy.configure.start_up_settings qteasy.configure.update_start_up_setting
+#: qteasy.configure.get_configurations
+#: qteasy.configure.remove_start_up_setting qteasy.configure.reset_config
+#: qteasy.configure.set_config qteasy.configure.start_up_settings
+#: qteasy.configure.update_start_up_setting
 msgid "返回类型"
 msgstr "戻り値の型"
 
@@ -124,7 +125,8 @@ msgstr "デフォルトは False、True は受信した kwargs を無視し、�
 
 #: of qteasy.configure.configure:7 qteasy.configure.set_config:7
 msgid "默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数"
-msgstr "デフォルト値は False です。True の場合は内部パラメータのみを渡すことができ、False の場合は任意のパラメータを渡すことができます。"
+msgstr ""
+"デフォルト値は False です。True の場合は内部パラメータのみを渡すことができ、False の場合は任意のパラメータを渡すことができます。"
 
 #: of qteasy.configure.configure:9 qteasy.configure.set_config:9
 msgid "需要设置的所有参数"
@@ -237,10 +239,10 @@ msgid "将配置信息写入文件:"
 msgstr "構成情報をファイルに書き込みます。"
 
 #: of qteasy.configure.save_config:1
-msgid "将config保存为一个文件 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()"
+msgid ""
+"将config保存为一个文件 尚未实现的功能：如果initial_config为True，则将配置更新到初始化配置文件qteasy.cfg中()"
 msgstr ""
-"設定をファイルとして保存 未実装:initial_config が True の場合、設定を初期化設定ファイル qteasy.cfg () "
-"に更新します"
+"設定をファイルとして保存 未実装:initial_config が True の場合、設定を初期化設定ファイル qteasy.cfg () に更新します"
 
 #: of qteasy.configure.save_config:4
 msgid "一个config对象或者包含配配置变量的dict，如果为None，则保存qt.QT_CONFIG"
@@ -252,17 +254,17 @@ msgstr "ファイル名。なしの場合、ファイル名は「saved_config.cf
 
 #: of qteasy.configure.save_config:8
 msgid "默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错"
-msgstr "デフォルトは True、名前変更されたファイルを上書きします。False の場合、保存されたファイルがすでに存在する場合にエラーが報告されます。"
+msgstr ""
+"デフォルトは True、名前変更されたファイルを上書きします。False の場合、保存されたファイルがすでに存在する場合にエラーが報告されます。"
 
 #: of qteasy.configure.save_config:10
 msgid ""
-"保存配置变量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已经存在配置变量，则覆盖对应变量。 TODO: "
-"实现将配置变量写入 qteasy.cfg 初始配置文件的功能。 由于目前使用 pickle 写入对象为二进制文件，而 qteasy.cfg "
+"保存配置变量到初始配置文件 qteasy.cfg 中，如果 qteasy.cfg 中已经存在配置变量，则覆盖对应变量。 TODO: 实现将配置变量写入 "
+"qteasy.cfg 初始配置文件的功能。 由于目前使用 pickle 写入对象为二进制文件，而 qteasy.cfg "
 "是文本文件，所以需要实现新的写入方式。"
 msgstr ""
-"設定変数を初期設定ファイル qteasy.cfg に保存します。設定変数がqteasy.cfg "
-"にすでに存在する場合は、対応する変数を上書きします。 TODO: 設定変数を qteasy.cfg "
-"初期設定ファイルに書き込む機能を実装します。現在、オブジェクトは pickle を使用してバイナリ "
+"設定変数を初期設定ファイル qteasy.cfg に保存します。設定変数がqteasy.cfg にすでに存在する場合は、対応する変数を上書きします。 "
+"TODO: 設定変数を qteasy.cfg 初期設定ファイルに書き込む機能を実装します。現在、オブジェクトは pickle を使用してバイナリ "
 "ファイルとして書き込まれていますが、qteasy.cfg はテキスト ファイルであるため、新しい書き込み方法を実装する必要があります。"
 
 #: of qteasy.configure.save_config:15
@@ -274,8 +276,10 @@ msgid "qteasy的所有配置变量"
 msgstr "qteasy のすべての構成変数"
 
 #: ../../source/api/api_reference.rst:41
-msgid "下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。"
-msgstr "以下はqteasyの設定変数です。qteasy.get_config()関数で現在の設定情報を表示でき、qteasy.configure()関数で設定情報を変更することもできます。"
+msgid ""
+"下面是qteasy的配置变量，可以通过qteasy.get_config()函数查看当前的配置信息，也可以通过qteasy.configure()函数修改配置信息。"
+msgstr ""
+"以下はqteasyの設定変数です。qteasy.get_config()関数で現在の設定情報を表示でき、qteasy.configure()関数で設定情報を変更することもできます。"
 
 #: ../../source/api/api_reference.rst:45
 msgid "关于 S1.3 完成后的模拟实盘文档入口（按使用目标）："
@@ -310,8 +314,7 @@ msgstr "デバッグと事後検証: ``live_trading/5-artifacts-and-troubleshoot
 #: ../../source/api/api_reference.rst:53
 msgid "双路径实操教程：``tutorials/8-live-trade-risk-and-broker-walkthrough.md``"
 msgstr ""
-"2 つのパスの実践チュートリアル: ``tutorials/8-live-trade-risk-and-broker-"
-"walkthrough.md``"
+"2 つのパスの実践チュートリアル: ``tutorials/8-live-trade-risk-and-broker-walkthrough.md``"
 
 #: ../../source/api/api_reference.rst:55
 msgid "说明："
@@ -373,7 +376,8 @@ msgstr "``mode``"
 msgid "0"
 msgstr "0"
 
-#: ../../source/api/api_reference.rst:73 ../../source/api/api_reference.rst:480
+#: ../../source/api/api_reference.rst:73
+#: ../../source/api/api_reference.rst:480
 #: ../../source/api/api_reference.rst:501
 #: ../../source/api/api_reference.rst:632
 #: ../../source/api/api_reference.rst:642
@@ -404,7 +408,8 @@ msgstr "3: 統計的予測モデル"
 msgid "``time_zone``"
 msgstr "``time_zone``"
 
-#: ../../source/api/api_reference.rst:80 ../../source/api/api_reference.rst:166
+#: ../../source/api/api_reference.rst:80
+#: ../../source/api/api_reference.rst:166
 #: ../../source/api/api_reference.rst:207
 #: ../../source/api/api_reference.rst:211
 #: ../../source/api/api_reference.rst:215
@@ -491,7 +496,8 @@ msgstr "etc."
 msgid "``asset_pool``"
 msgstr "``asset_pool``"
 
-#: ../../source/api/api_reference.rst:97 ../../source/api/api_reference.rst:317
+#: ../../source/api/api_reference.rst:97
+#: ../../source/api/api_reference.rst:317
 msgid "``000300.SH``"
 msgstr "``000300.SH``"
 
@@ -502,20 +508,20 @@ msgstr "投資商品のプールが利用可能であり、ポートフォリオ
 #: ../../source/api/api_reference.rst:99
 msgid "``asset_type``"
 msgstr ""
-"The set of names of the historical data to be fetched, if htypes is "
-"empty, the system will try to create all possible htypes by basing on the"
-" name of the historical data and the freq/asset_type parameter. the input"
-" can be str or list: - str: 'open, high, low, close' - list: ['open', "
-"'high', 'low', 'close'] - list: ['open', 'high', 'low', 'close'] - list: "
-"['open', 'high', 'low', 'close'] 'high', 'low', 'close']"
+"The set of names of the historical data to be fetched, if htypes is empty, "
+"the system will try to create all possible htypes by basing on the name of "
+"the historical data and the freq/asset_type parameter. the input can be str "
+"or list: - str: 'open, high, low, close' - list: ['open', 'high', 'low', "
+"'close'] - list: ['open', 'high', 'low', 'close'] - list: ['open', 'high', "
+"'low', 'close'] 'high', 'low', 'close']"
 
 #: ../../source/api/api_reference.rst:101
 msgid "``IDX``"
 msgstr ""
-"Limit the types of assets contained in the acquired data to the following"
-" options or a combination of the following options. Legitimate "
-"combinations include comma-separated strings or lists of strings, e.g., "
-"'E, IDX' and ['E', 'IDX'] are both legitimate inputs."
+"Limit the types of assets contained in the acquired data to the following "
+"options or a combination of the following options. Legitimate combinations "
+"include comma-separated strings or lists of strings, e.g., 'E, IDX' and "
+"['E', 'IDX'] are both legitimate inputs."
 
 #: ../../source/api/api_reference.rst
 msgid "投资产品的资产类型，包括："
@@ -583,7 +589,8 @@ msgstr "live_trade_account が None の場合、ライブ取引に使用され�
 
 #: ../../source/api/api_reference.rst
 msgid "必须创建新的账户ID，此时本参数必须给出，并设定account_name为"
-msgstr "新しいアカウント ID を作成する必要があります。その時点で、このパラメータを指定し、account_name を次のように設定する必要があります。"
+msgstr ""
+"新しいアカウント ID を作成する必要があります。その時点で、このパラメータを指定し、account_name を次のように設定する必要があります。"
 
 #: ../../source/api/api_reference.rst
 msgid "本参数的值"
@@ -621,8 +628,8 @@ msgstr "1"
 #: ../../source/api/api_reference.rst:403
 msgid "``False``"
 msgstr ""
-"True returns the HistoryPanel object, False returns a dictionary "
-"containing the DataFrame object."
+"True returns the HistoryPanel object, False returns a dictionary containing "
+"the DataFrame object."
 
 #: ../../source/api/api_reference.rst:123
 msgid "实盘交易调试模式，True: 调试模式，False: 正常模式"
@@ -674,7 +681,8 @@ msgstr "``simulator''"
 
 #: ../../source/api/api_reference.rst
 msgid "实盘交易账户的交易代理商类型，可以设置为模拟交易代理商返回交易结果、手动输入结果或者连接到交易代理商的交易接口"
-msgstr "ライブ取引口座の取引エージェントのタイプは、結果を返す取引エージェントをシミュレートしたり、結果を手動で入力したり、取引エージェントの取引インターフェイスに接続したりするように設定できます。"
+msgstr ""
+"ライブ取引口座の取引エージェントのタイプは、結果を返す取引エージェントをシミュレートしたり、結果を手動で入力したり、取引エージェントの取引インターフェイスに接続したりするように設定できます。"
 
 #: ../../source/api/api_reference.rst
 msgid "默认使用模拟交易代理Simulator"
@@ -742,9 +750,10 @@ msgid "tushare  - 通过tushare获取实时价格(需要自行开通权限)"
 msgstr "tushare - tushare でリアルタイムの価格を取得します (独自の権限を有効にする必要があります)"
 
 #: ../../source/api/api_reference.rst
-#, fuzzy
 msgid "akshare  - 通过AKShare获取实时价格(部分表已实现，详见数据通道文档)"
-msgstr "tushare - tushare でリアルタイムの価格を取得します (独自の権限を有効にする必要があります)"
+msgstr ""
+"akshare - AKShare を通じてリアルタイムの価格を取得します (いくつかのテーブルが実装されています。詳細については、データ "
+"チャネルのドキュメントを参照してください)"
 
 #: ../../source/api/api_reference.rst:156
 msgid "``live_price_acquire_freq``"
@@ -912,8 +921,8 @@ msgstr "``16''"
 #: ../../source/api/api_reference.rst:209
 msgid "下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程"
 msgstr ""
-"履歴データをダウンロードするときに有効になるスレッドの数。シングルスレッド ダウンロードの場合は 0 または 1、マルチスレッド "
-"ダウンロードの場合は 1 より大きくなります。"
+"履歴データをダウンロードするときに有効になるスレッドの数。シングルスレッド ダウンロードの場合は 0 または 1、マルチスレッド ダウンロードの場合は "
+"1 より大きくなります。"
 
 #: ../../source/api/api_reference.rst:210
 msgid "``hist_dnld_delay``"
@@ -930,7 +939,8 @@ msgstr "``0.0``"
 
 #: ../../source/api/api_reference.rst:213
 msgid "为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒"
-msgstr "サーバー データへの過度の負荷を防ぐために、履歴データをダウンロードするときに、一定量のデータをダウンロードした後の遅延の長さを秒単位で指定します。"
+msgstr ""
+"サーバー データへの過度の負荷を防ぐために、履歴データをダウンロードするときに、一定量のデータをダウンロードした後の遅延の長さを秒単位で指定します。"
 
 #: ../../source/api/api_reference.rst:214
 msgid "``hist_dnld_delay_evy``"
@@ -943,7 +953,8 @@ msgstr "``0``"
 
 #: ../../source/api/api_reference.rst
 msgid "为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。"
-msgstr "サーバーにデータによる過剰な負荷がかかるのを防ぐため、一定量のデータがダウンロードされるごとに、履歴データのダウンロードが一定期間遅延されます。"
+msgstr ""
+"サーバーにデータによる過剰な負荷がかかるのを防ぐため、一定量のデータがダウンロードされるごとに、履歴データのダウンロードが一定期間遅延されます。"
 
 #: ../../source/api/api_reference.rst
 msgid "此参数为两次延迟之间的数据下载量"
@@ -1097,8 +1108,8 @@ msgstr "``local_data_file_path``"
 #: ../../source/api/api_reference.rst:266
 msgid "``data/``"
 msgstr ""
-"*HistoryPanel* -- if as_data_frame is set to False, a HistoryPanel object"
-" is returned"
+"*HistoryPanel* -- if as_data_frame is set to False, a HistoryPanel object is"
+" returned"
 
 #: ../../source/api/api_reference.rst:267
 msgid "确定本地历史数据文件存储路径"
@@ -1185,8 +1196,8 @@ msgstr ""
 #: ../../source/api/api_reference.rst
 msgid "路径中不得包含非法字符（如控制字符、Windows 下 ``<>\"|?*`` 等），否则抛出 ValueError。"
 msgstr ""
-"パスには無効な文字 (制御文字や Windows ``<>\"|?*`` など) "
-"が含まれていてはなりません。含まれていない場合は、ValueError が発生します。"
+"パスには無効な文字 (制御文字や Windows ``<>\"|?*`` など) が含まれていてはなりません。含まれていない場合は、ValueError"
+" が発生します。"
 
 #: ../../source/api/api_reference.rst:297
 msgid "``trade_log_file_path``"
@@ -1222,13 +1233,15 @@ msgstr ""
 "``value_curve_*`` など)。デフォルトは**3**です。"
 
 #: ../../source/api/api_reference.rst
-msgid "在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。"
+msgid ""
+"在 **进程加载 qteasy 模块后** 对当前 ``trade_log_file_path`` 目录执行一次按天清理（非每次回测写文件前）。"
 msgstr ""
 "プロセスが qteasy モジュールをロードした後、現在の ``trade_log_file_path`` ディレクトリに対して毎日 1 "
 "回クリーンアップを実行します (各バックテストがファイルを書き込む前ではありません)。"
 
 #: ../../source/api/api_reference.rst
-msgid "设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。"
+msgid ""
+"设为 ``None`` 或 **小于等于 0** 可关闭自动删除；需要时可调用 ``qt.rotate_trade_logs()`` 手动清理。"
 msgstr ""
 "手動でクリーンアップするには、``None`` or **less than or equal to 0** to disable auto-"
 "deletion; when needed, you can call ``qt.rotate_trade_logs()`` に設定します。"
@@ -1252,8 +1265,7 @@ msgstr "``benchmark_asset``"
 #: ../../source/api/api_reference.rst
 msgid "用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数"
 msgstr ""
-"バックテスト結果の評価結果のベンチマーク リターンを生成するために使用される資産タイプ。デフォルトのベンチマークは CSI 300 "
-"インデックスです。"
+"バックテスト結果の評価結果のベンチマーク リターンを生成するために使用される資産タイプ。デフォルトのベンチマークは CSI 300 インデックスです。"
 
 #: ../../source/api/api_reference.rst
 msgid "基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的"
@@ -1283,7 +1295,8 @@ msgstr "True の場合、実行結果のレポートを印刷します。"
 
 #: ../../source/api/api_reference.rst
 msgid "实时模式显示策略运行报告，回测模式显示回测结果报告，优化模式显示优化结果报告"
-msgstr "リアルタイムモードではストラテジーの運用に関するレポートが表示され、バックテストモードではバックテスト結果のレポートが表示され、最適化モードでは最適化結果のレポートが表示されます。"
+msgstr ""
+"リアルタイムモードではストラテジーの運用に関するレポートが表示され、バックテストモードではバックテスト結果のレポートが表示され、最適化モードでは最適化結果のレポートが表示されます。"
 
 #: ../../source/api/api_reference.rst:328
 msgid "``visual``"
@@ -1303,7 +1316,8 @@ msgstr "``buy_sell_points`''"
 
 #: ../../source/api/api_reference.rst:336
 msgid "为True时在回测图表中显示买卖点，使用红色和绿色箭头标示出买卖点的位置"
-msgstr "True では、バックテスト チャートに買いポイントと売りポイントが表示され、赤と緑の矢印を使用して買いポイントと売りポイントの位置が示されます。"
+msgstr ""
+"True では、バックテスト チャートに買いポイントと売りポイントが表示され、赤と緑の矢印を使用して買いポイントと売りポイントの位置が示されます。"
 
 #: ../../source/api/api_reference.rst:337
 msgid "``show_positions``"
@@ -1412,7 +1426,8 @@ msgstr "バックテストモードでのバックテストの開始日"
 
 #: ../../source/api/api_reference.rst
 msgid "留空(None)时，将在运行时根据 invest_end（或当前日期）自动推导为一年前的日期。"
-msgstr "空白 (なし) のままにすると、実行時に invest_end (または現在の日付) に基づいて 1 年前の日付として自動的に推測されます。"
+msgstr ""
+"空白 (なし) のままにすると、実行時に invest_end (または現在の日付) に基づいて 1 年前の日付として自動的に推測されます。"
 
 #: ../../source/api/api_reference.rst
 msgid "显式设置时格式为\"YYYYMMDD\"。"
@@ -1454,7 +1469,8 @@ msgstr "操作の現金入力の日付 (str または list) をバックテス�
 
 #: ../../source/api/api_reference.rst
 msgid "当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖"
-msgstr "このパラメータが None の場合、資金投入日は invest_start と同じになります。パラメータが None でない場合、このパラメータは"
+msgstr ""
+"このパラメータが None の場合、資金投入日は invest_start と同じになります。パラメータが None でない場合、このパラメータは"
 
 #: ../../source/api/api_reference.rst
 msgid "invest_start"
@@ -1546,7 +1562,8 @@ msgstr "デフォルト値 1.0、つまり 100%"
 
 #: ../../source/api/api_reference.rst
 msgid "如果设置值大于1，则表示允许超过持有现金建仓，这种情况会产生负现金"
-msgstr "値が 1 より大きく設定されている場合、保有している現金を超えるポジションを構築できることを意味し、マイナスの現金が発生する状況になります。"
+msgstr ""
+"値が 1 より大きく設定されている場合、保有している現金を超えるポジションを構築できることを意味し、マイナスの現金が発生する状況になります。"
 
 #: ../../source/api/api_reference.rst
 msgid "余额，表示产生了借贷"
@@ -1562,7 +1579,8 @@ msgstr "``-1.0''"
 
 #: ../../source/api/api_reference.rst
 msgid "回测过程中允许交易信号建立的空头仓位百分比的极限值，即允许持有的"
-msgstr "バックテスト中にトレードシグナルによって確立できるショートポジションのパーセンテージの制限値、つまり、許容される保有ポジションのパーセンテージ。"
+msgstr ""
+"バックテスト中にトレードシグナルによって確立できるショートポジションのパーセンテージの制限値、つまり、許容される保有ポジションのパーセンテージ。"
 
 #: ../../source/api/api_reference.rst
 msgid "空头仓位占当前净资产总额的最高比例限额，默认值-1.0，即最多允许借入"
@@ -1626,7 +1644,8 @@ msgstr "``lazy''"
 
 #: ../../source/api/api_reference.rst
 msgid "回测信号模式为PT（position target）时，控制检查实际持仓比例并自动生成交易"
-msgstr "バックテスト信号モードが PT (ポジションターゲット) の場合、コントロールは実際のポジションの割合をチェックし、トレードを自動的に生成します。"
+msgstr ""
+"バックテスト信号モードが PT (ポジションターゲット) の場合、コントロールは実際のポジションの割合をチェックし、トレードを自動的に生成します。"
 
 #: ../../source/api/api_reference.rst
 msgid "信号的时机，默认normal"
@@ -1634,7 +1653,8 @@ msgstr "信号のタイミング、デフォルトは通常"
 
 #: ../../source/api/api_reference.rst
 msgid "- aggressive: 在整个策略运行时间点上都会产生交易信号，不论此时PT信号是否发"
-msgstr "- アグレッシブ: PT シグナルがその時点で発行されているかどうかに関係なく、取引シグナルはストラテジーの実行時間全体を通じて生成されます。"
+msgstr ""
+"- アグレッシブ: PT シグナルがその時点で発行されているかどうかに関係なく、取引シグナルはストラテジーの実行時間全体を通じて生成されます。"
 
 #: ../../source/api/api_reference.rst
 msgid "生变化，实时监控实际持仓与计划持仓之间的差异，只要二者发生偏"
@@ -1666,7 +1686,8 @@ msgstr "このモデルでは、保有している投資商品のポジション
 
 #: ../../source/api/api_reference.rst
 msgid "例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓<=25%时，才会产生"
-msgstr "たとえば、売りしきい値が 0.05、つまり 5% の場合、ターゲット ポジションが 30% の場合、実際のポジションが 25% 以下の場合にのみ、"
+msgstr ""
+"たとえば、売りしきい値が 0.05、つまり 5% の場合、ターゲット ポジションが 30% の場合、実際のポジションが 25% 以下の場合にのみ、"
 
 #: ../../source/api/api_reference.rst
 msgid "交易信号，即此时实际持仓与目标持仓之间的差值大于5%了"
@@ -1686,7 +1707,8 @@ msgstr "このモデルでは、保有している投資商品のポジション
 
 #: ../../source/api/api_reference.rst
 msgid "例如当卖出阈值为0.05即5%时，若目标持仓30%，那么只有当实际持仓>=35%时，才会产生"
-msgstr "たとえば、売りしきい値が 0.05、つまり 5% の場合、ターゲット ポジションが 30% の場合、実際のポジションが 35% 以上の場合にのみ、"
+msgstr ""
+"たとえば、売りしきい値が 0.05、つまり 5% の場合、ターゲット ポジションが 30% の場合、実際のポジションが 35% 以上の場合にのみ、"
 
 #: ../../source/api/api_reference.rst:457
 msgid "``price_priority_OHLC``"
@@ -1820,7 +1842,8 @@ msgstr "``strategy_open_close_timing_offset``"
 
 #: ../../source/api/api_reference.rst
 msgid "策略信号的开盘/收盘运行时间偏移量，单位为分钟，当策略信号运行时机为开盘/收盘，需要提前/推迟"
-msgstr "ストラテジー シグナルのランタイムが開始/終了しており、前倒し/延期する必要がある場合の、戦略シグナルの開始/終了ランタイム オフセット (分単位)"
+msgstr ""
+"ストラテジー シグナルのランタイムが開始/終了しており、前倒し/延期する必要がある場合の、戦略シグナルの開始/終了ランタイム オフセット (分単位)"
 
 #: ../../source/api/api_reference.rst
 msgid "一个偏移量运行，避免无法交易。"
@@ -1905,7 +1928,8 @@ msgstr "``opti_sub_periods``"
 
 #: ../../source/api/api_reference.rst:539
 msgid "仅对无监督优化有效。且仅当优化类型为\"multiple\"时有效。将优化区间切分为子区间的数量"
-msgstr "教師なし最適化の場合にのみ有効です。教師なし最適化にのみ有効で、最適化タイプが「複数」の場合にのみ有効です。最適化間隔を分割するサブ間隔の数"
+msgstr ""
+"教師なし最適化の場合にのみ有効です。教師なし最適化にのみ有効で、最適化タイプが「複数」の場合にのみ有効です。最適化間隔を分割するサブ間隔の数"
 
 #: ../../source/api/api_reference.rst:540
 msgid "``opti_sub_prd_length``"
@@ -2235,7 +2259,8 @@ msgstr "``opti_max_rounds``"
 
 #: ../../source/api/api_reference.rst:660
 msgid "在使用递进步长法搜索最佳策略时有用，多轮搜索的最大轮数，轮数大于该值时停止搜索"
-msgstr "プログレッシブ長法を使用して最適なストラテジを検索する場合に便利です。マルチラウンド検索の最大ラウンド数です。ラウンド数がこの値を超えると検索が停止します。"
+msgstr ""
+"プログレッシブ長法を使用して最適なストラテジを検索する場合に便利です。マルチラウンド検索の最大ラウンド数です。ラウンド数がこの値を超えると検索が停止します。"
 
 #: ../../source/api/api_reference.rst:661
 msgid "``opti_min_volume``"
@@ -2247,7 +2272,8 @@ msgstr "``1000''"
 
 #: ../../source/api/api_reference.rst:664
 msgid "在使用递进步长法搜索最佳策略时有用，空间最小体积，当空间volume低于该值时停止搜索"
-msgstr "プログレッシブレングス法を使用し、最小のスペースボリュームで最適なストラテジを検索する場合に便利で、スペースボリュームがこの値を下回ると検索を停止します。"
+msgstr ""
+"プログレッシブレングス法を使用し、最小のスペースボリュームで最適なストラテジを検索する場合に便利で、スペースボリュームがこの値を下回ると検索を停止します。"
 
 #: ../../source/api/api_reference.rst:665
 msgid "``opti_population``"
@@ -2275,4 +2301,3 @@ msgstr "ポリシーパラメータ最適化後に出力される最適パラメ
 
 #~ msgid "akshare  - Not Implemented: 从akshare获取实时价格"
 #~ msgstr "akshare - 未実装: akshare からリアルタイム価格を取得します"
-

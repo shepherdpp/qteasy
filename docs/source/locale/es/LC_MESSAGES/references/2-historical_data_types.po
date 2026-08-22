@@ -25,20 +25,26 @@ msgstr "Tipos de datos históricos integrados en qteasy"
 #: ../../source/references/2-historical_data_types.md:3
 msgid "本页原为早期设计草稿，已不再作为用户文档正文。"
 msgstr ""
+"Esta página fue originalmente un borrador de diseño inicial y ya no forma "
+"parte de la documentación del usuario."
 
 #: ../../source/references/2-historical_data_types.md:5
 msgid "请改读："
-msgstr ""
+msgstr "Por favor lea en su lugar:"
 
 #: ../../source/references/2-historical_data_types.md:7
 #, python-format
 msgid ""
 "**概念与用法**：[以标准化方式从数据表中提取信息（DataType）](../manage_data/02.%20datatypes.md)"
 msgstr ""
+"**Concepto y uso**: [Extraer información de tablas de datos de forma "
+"estandarizada (DataType)](../manage_data/02.%20datatypes.md)"
 
 #: ../../source/references/2-historical_data_types.md:8
 msgid "**完整内置清单**：[内置 DataType 完整清单](datatypes/index.md)"
 msgstr ""
+"**Lista integrada completa**: [Lista completa integrada DataType](tipos de "
+"datos/index.md)"
 
 #: ../../source/references/2-historical_data_types.md:9
 msgid ""
@@ -51,6 +57,8 @@ msgstr ""
 #: ../../source/references/2-historical_data_types.md:11
 msgid "若您需要按名称或中文描述检索类型，推荐直接使用："
 msgstr ""
+"Si necesita buscar un tipo por nombre o descripción china, se recomienda "
+"utilizar:"
 
 #~ msgid ""
 #~ "数据类型是qteasy的一个核心概念，它代表一个交易策略中所使用的信息，例如历史交易数据、宏观经济数据等。 "

@@ -20,27 +20,29 @@ msgstr ""
 
 #: ../../source/references/datatypes/_generated/catalog_index.md:5
 msgid "内置 DataType 分册索引"
-msgstr ""
+msgstr "内蔵DataTypeボリュームインデックス"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md:7
 msgid "生成时间：2026-08-20 10:10 UTC；合计 **1322** 条内置数据类型，按业务类别分册。"
 msgstr ""
+"生成時間: 2026-08-20 10:10 UTC;合計 **1322** の組み込みデータ型があり、ビジネス "
+"カテゴリに応じてボリュームに分割されています。"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "业务类别"
-msgstr ""
+msgstr "業種"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "条数"
-msgstr ""
+msgstr "アイテム数"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "分册"
-msgstr ""
+msgstr "音量"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "行情与复权"
-msgstr ""
+msgstr "引用と修復"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "358"
@@ -52,7 +54,7 @@ msgstr "[quotes.md](quotes.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "估值与财务"
-msgstr ""
+msgstr "評価と財務"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "558"
@@ -64,7 +66,7 @@ msgstr "[valuation.md](valuation.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "宏观、利率与资金"
-msgstr ""
+msgstr "マクロ、金利、資金"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "157"
@@ -76,7 +78,7 @@ msgstr "[macro.md](macro.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "交易行为与事件"
-msgstr ""
+msgstr "取引アクションとイベント"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "132"
@@ -88,7 +90,7 @@ msgstr "[events.md](events.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "指数成分与权重"
-msgstr ""
+msgstr "インデックスのコンポーネントと重み"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "1"
@@ -100,7 +102,7 @@ msgstr "[composition.md](composition.md)"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "静态证券信息"
-msgstr ""
+msgstr "静的な有価証券情報"
 
 #: ../../source/references/datatypes/_generated/catalog_index.md
 msgid "116"
@@ -116,3 +118,5 @@ msgid ""
 "概念与用法见 [DataType 概念章](../../../manage_data/02.%20datatypes.md)；清单入口见 "
 "[datatypes 索引](../index.md)。"
 msgstr ""
+"概念と使用法については、[DataType 概念の章](../../../manage_data/02.%20datatypes.md) "
+"を参照してください。リストのエントリについては、[datatypes Index](../index.md) を参照してください。"

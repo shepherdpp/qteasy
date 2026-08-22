@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/data_source.rst:2
@@ -25,12 +25,12 @@ msgstr "履歴データの管理 - DataSource オブジェクト"
 #: ../../source/api/data_source.rst:4
 msgid ""
 "DataSource 负责对接本地历史数据存储，可以管理基于文件的存储（如 csv/hdf/feather） 或基于数据库的存储（如 "
-"MySQL/MariaDB），对上层暴露统一的表结构与读取接口；数据的 下载与更新通常通过 ``qt.refill_data_source()``"
-" 完成，而非由 DataSource 自动拉取。"
+"MySQL/MariaDB），对上层暴露统一的表结构与读取接口；数据的 下载与更新通常通过 ``qt.refill_data_source()`` "
+"完成，而非由 DataSource 自动拉取。"
 msgstr ""
-"DataSource は、ローカルの履歴データ ストレージとのインターフェイスを担当します。ファイルベースのストレージ "
-"(csv/hdf/feather など) またはデータベースベースのストレージ (MySQL/MariaDB など) "
-"を管理でき、統合されたテーブル スキーマと読み取りインターフェイスを上位層に公開します。データのダウンロードと更新は通常、DataSource "
+"DataSource は、ローカルの履歴データ ストレージとのインターフェイスを担当します。ファイルベースのストレージ (csv/hdf/feather"
+" など) またはデータベースベースのストレージ (MySQL/MariaDB など) を管理でき、統合されたテーブル "
+"スキーマと読み取りインターフェイスを上位層に公開します。データのダウンロードと更新は通常、DataSource "
 "によって自動的にプルされるのではなく、``qt.refill_data_source()`` を介して実行されます。"
 
 #: of qteasy.database.DataSource:1
@@ -39,9 +39,9 @@ msgstr "ローカルの履歴データ ストレージ (ファイルまたはデ
 
 #: of qteasy.database.DataSource:3
 msgid ""
-"DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览， 并保证生成的数据结构可以被 HistoryPanel "
-"与上层 API 正确消费；当某些表缺失时， DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` "
-"等函数完成维护。 支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」 相关章节。"
+"DataSource 负责与本地文件或数据库交互，统一管理历史数据表的读取、写入与概览， 并保证生成的数据结构可以被 HistoryPanel 与上层 "
+"API 正确消费；当某些表缺失时， DataSource 本身不会自动下载数据，而是配合 ``refill_data_source`` 等函数完成维护。"
+" 支持的文件类型与数据库种类及更多初始化细节，见文档「DataSource 与本地数据源」 相关章节。"
 msgstr ""
 "DataSource は、ローカル ファイルまたはデータベースと対話し、履歴データ "
 "テーブルの読み取り、書き込み、および概要を集中管理し、生成されたデータ構造が HistoryPanel および上位層 API "
@@ -84,8 +84,7 @@ msgstr "データテーブルの削除が許可されているかどうかを取
 #: of qteasy.database.DataSource.db_run_in_transaction:1
 msgid "在 DataSource 上执行最小事务封装（DB 真事务，file 为 no-op）。"
 msgstr ""
-"DataSource で最小限のトランザクション ラッパーを実行します (実際の DB トランザクション。ファイル "
-"ストレージには何も操作しません)。"
+"DataSource で最小限のトランザクション ラッパーを実行します (実際の DB トランザクション。ファイル ストレージには何も操作しません)。"
 
 #: ../../source/api/data_source.rst of
 #: qteasy.database.DataSource.get_table_data_coverage
@@ -164,7 +163,8 @@ msgstr "データ ソースのallow_drop_tableがFalseに設定されている�
 
 #: of qteasy.database.DataSource.export_table_data:1
 msgid "将数据表中的数据读取出来之后导出到一个文件中，便于用户使用过程中小规模转移数据或察看数据"
-msgstr "データテーブルからデータを読み取った後、それをファイルにエクスポートすると、ユーザーが少量のデータを転送したり、使用中にデータを表示したりするのに便利です。"
+msgstr ""
+"データテーブルからデータを読み取った後、それをファイルにエクスポートすると、ユーザーが少量のデータを転送したり、使用中にデータを表示したりするのに便利です。"
 
 #: of qteasy.database.DataSource.export_table_data:3
 msgid ""
@@ -322,20 +322,20 @@ msgstr "*データテーブルに関する構造化情報を含む辞書:*"
 #: of qteasy.database.DataSource.get_table_info:16
 msgid ""
 "*{* -- table name:    1, str, 数据表名称 table_exists:  2, bool，数据表是否存在 "
-"table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:"
-"    4, int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  5, "
-"str，数据表第一个主键名称 pk_count1:     6, int，数据表第一个主键记录数量 pk_min1:       7, "
-"obj，数据表主键1起始记录 pk_max1:       8, obj，数据表主键2最终记录 primary_key2:  9, "
-"str，数据表第二个主键名称 pk_count2:     10, int，数据表第二个主键记录 pk_min2:       11, "
-"obj，数据表主键2起始记录 pk_max2:       12, obj，数据表主键2最终记录"
+"table_size:    3, int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串 table_rows:    4,"
+" int/str，数据表的行数，human 为True时返回容易阅读的字符串 primary_key1:  5, str，数据表第一个主键名称 "
+"pk_count1:     6, int，数据表第一个主键记录数量 pk_min1:       7, obj，数据表主键1起始记录 pk_max1:"
+"       8, obj，数据表主键2最终记录 primary_key2:  9, str，数据表第二个主键名称 pk_count2:     10,"
+" int，数据表第二个主键记录 pk_min2:       11, obj，数据表主键2起始记录 pk_max2:       12, "
+"obj，数据表主键2最终记录"
 msgstr ""
 "*{* -- テーブル名: 1、str、テーブル名 table_exists: 2、bool、テーブルが存在するかどうか table_size: "
 "3、int/str、テーブルによって使用されるディスク容量。 human が True の場合、読みやすい文字列 table_rows: "
 "4、int/str、テーブル内の行数を返します。 human が True の場合、読みやすい文字列を返します Primary_key1: 5, "
 "str, 最初の主キーの名前 pk_count1: 6, int, 最初の主キーのレコード数 pk_min1: 7, obj, 主キー 1 "
 "の開始レコード pk_max1: 8, obj, 主キー 2 の終了レコード Primary_key2: 9, str, 2 番目の主キーの名前 "
-"pk_count2: 10, int, 2 番目の主キーのレコード数 pk_min2: 11、obj、主キー 2 の開始レコード pk_max2:"
-" 12、obj、主キー 2 の終了レコード"
+"pk_count2: 10, int, 2 番目の主キーのレコード数 pk_min2: 11、obj、主キー 2 の開始レコード pk_max2: "
+"12、obj、主キー 2 の終了レコード"
 
 #: of qteasy.database.DataSource.get_table_info:28
 msgid "*}*"
@@ -365,7 +365,8 @@ msgstr "更新するテーブルの名前"
 
 #: of qteasy.database.DataSource.insert_sys_table_data:10
 msgid "需要更新或插入的数据，数据的key必须与数据库表的字段相同，否则会抛出异常"
-msgstr "更新または挿入するデータ。データ内のキーはデータベース テーブル内のフィールドと一致する必要があります。それ以外の場合は、例外がスローされます。"
+msgstr ""
+"更新または挿入するデータ。データ内のキーはデータベース テーブル内のフィールドと一致する必要があります。それ以外の場合は、例外がスローされます。"
 
 #: of qteasy.database.DataSource.insert_sys_table_data:13
 msgid "**record_id** -- 更新的记录ID"
@@ -417,7 +418,8 @@ msgstr "すべてのレコードの読み取りや、指定された条件に基
 
 #: of qteasy.database.DataSource.read_sys_table_data:3
 msgid "返回的数据类型为pd.DataFrame，如果给出kwargs，返回根据条件筛选后的数据"
-msgstr "返されるデータ型は pd.DataFrame です。 kwargs が指定されている場合は、条件に従ってフィルタリングされたデータを返します。"
+msgstr ""
+"返されるデータ型は pd.DataFrame です。 kwargs が指定されている場合は、条件に従ってフィルタリングされたデータを返します。"
 
 #: of qteasy.database.DataSource.read_sys_table_data:5
 #: qteasy.database.DataSource.read_sys_table_record:6
@@ -430,7 +432,8 @@ msgstr "データをフィルタリングするための条件。フィルタ基
 
 #: of qteasy.database.DataSource.read_sys_table_data:10
 msgid "返回的数据为DataFrame，如果给出kwargs，返回的数据仅包括筛选后的数据"
-msgstr "返されるデータは DataFrame です。 kwargs が提供されている場合、返されるデータにはフィルターされたデータのみが含まれます。"
+msgstr ""
+"返されるデータは DataFrame です。 kwargs が提供されている場合、返されるデータにはフィルターされたデータのみが含まれます。"
 
 #: of qteasy.database.DataSource.read_sys_table_record:1
 msgid "读取系统操作表的数据，根据指定的id读取数据，返回一个dict"
@@ -465,8 +468,7 @@ msgstr ""
 #: of qteasy.database.DataSource.read_table_data:3
 msgid "在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end"
 msgstr ""
-"テーブルを読み取るときはすべての列を読み取りますが、戻り値では開始と終了の間の ts_code と trade_date "
-"によってフィルターされます。"
+"テーブルを読み取るときはすべての列を読み取りますが、戻り値では開始と終了の間の ts_code と trade_date によってフィルターされます。"
 
 #: of qteasy.database.DataSource.read_table_data:7
 msgid "ts_code筛选条件，逗号分隔字符串，为空时给出所有记录"
@@ -517,7 +519,8 @@ msgid "更新系统操作表的数据，根据指定的id更新数据，更新�
 msgstr "システム操作テーブルのデータを更新します。指定された ID でデータを更新します。更新コンテンツは kwargs によって提供されます。"
 
 #: of qteasy.database.DataSource.update_sys_table_data:3
-msgid "每次只能更新一条数据，数据以dict形式给出 可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。 id必须存在，否则抛出异常"
+msgid ""
+"每次只能更新一条数据，数据以dict形式给出 可以更新一个或多个字段，如果给出的字段不存在，则抛出异，id不可更新。 id必须存在，否则抛出异常"
 msgstr ""
 "一度に更新できるレコードは 1 つだけです。データは辞書として提供されます。 1 "
 "つ以上のフィールドを更新できます。指定されたフィールドが存在しない場合、例外が発生します。 IDは更新できません。 ID "
@@ -572,22 +575,22 @@ msgstr ""
 "データと重複する場合、重複部分を無視します"
 
 #: of qteasy.database.DataSource.update_table_data:10
-#, fuzzy
 msgid "指定如何合并下载数据和本地数据： - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据；"
 msgstr ""
-"ダウンロードされたデータとローカル データをマージする方法を指定します。 - 'update': デフォルト。ダウンロードされたデータがローカル "
-"データと重複する場合、ローカル データをダウンロードされたデータで置き換えます - 'ignore': ダウンロードされたデータがローカル "
-"データと重複する場合、重複部分を無視します"
+"ダウンロードされたデータとローカル データをマージする方法を指定します。 - 'update': デフォルト値。ダウンロードされたデータがローカル "
+"データと重複する場合、ダウンロードされたデータを使用してローカル データを置き換えます。"
 
 #: of qteasy.database.DataSource.update_table_data:12
 msgid ""
 "对 ``table_usage=='basics'`` 的表在重复主键上仅当下载字段非空时才覆盖该列（patch）， 避免稀疏通道（如 "
 "AKShare）用空行业/日期等冲掉既有 Tushare 元数据"
 msgstr ""
+"``table_usage=='basics'`` テーブルの場合、繰り返される主キーでは、ダウンロード フィールドが空でない場合にのみ列 (パッチ) "
+"を上書きし、スパース チャネル (AKShare など) が空の業界/日付などで既存の Tushare メタデータをフラッシュしないようにします。"
 
 #: of qteasy.database.DataSource.update_table_data:14
 msgid "'ignore' : 如果下载数据与本地数据重复，忽略重复部分"
-msgstr ""
+msgstr "'ignore' : ダウンロードされたデータがローカル データと重複する場合、重複部分を無視します。"
 
 #: of qteasy.database.DataSource.update_table_data:16
 msgid "通过传递一个DataFrame获取数据 如果数据获取渠道为\"df\"，则必须给出此参数"
@@ -602,8 +605,8 @@ msgid ""
 "如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中 "
 "如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定"
 msgstr ""
-"ローカル データ テーブルが存在しない場合は、新しいテーブルを作成します。ローカル データ テーブルがすでに存在する場合は、df データをローカル"
-" テーブルに追加します。追加されるデータの主キーが既存データと同じ場合の処理​​方法はon_duplicateパラメータによって決定されます"
+"ローカル データ テーブルが存在しない場合は、新しいテーブルを作成します。ローカル データ テーブルがすでに存在する場合は、df データをローカル "
+"テーブルに追加します。追加されるデータの主キーが既存データと同じ場合の処理​​方法はon_duplicateパラメータによって決定されます"
 
 #: of qteasy.database.DataSource.write_table_data:6
 msgid "一个数据表，数据表的列名应该与本地数据表定义一致"
@@ -618,9 +621,8 @@ msgid ""
 "重复数据处理方式(仅当mode==db的时候有效) -ignore: 默认方式，将全部数据写入数据库表的末尾 -update: "
 "将数据写入数据库表中，如果遇到重复的pk则修改表中的内容"
 msgstr ""
-"重複データの処理方法 (mode==db の場合のみ有効): -ignore: デフォルト;すべてのデータをデータベース "
-"テーブルの末尾に追加します -update: データをデータベース テーブルに書き込みます。重複した pk "
-"が見つかった場合は、テーブルの内容を変更します。"
+"重複データの処理方法 (mode==db の場合のみ有効): -ignore: デフォルト;すべてのデータをデータベース テーブルの末尾に追加します "
+"-update: データをデータベース テーブルに書き込みます。重複した pk が見つかった場合は、テーブルの内容を変更します。"
 
 #: of qteasy.database.DataSource.write_table_data:15
 msgid "**int**"
@@ -635,4 +637,3 @@ msgid "注意！！不应直接使用该函数将数据写入本地数据库，�
 msgstr ""
 "警告！！書き込まれたデータは検証されないため、この関数を使用してデータをローカル データベースに直接書き込まないでください。 "
 "update_table_data() を使用して、ローカル データベースにデータを更新または書き込みます。"
-

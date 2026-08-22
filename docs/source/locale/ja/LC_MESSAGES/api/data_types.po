@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-21 17:32+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
-"Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.15.0\n"
 
 #: ../../source/api/data_types.rst:2
@@ -24,48 +24,61 @@ msgstr "履歴データ型 — DataType オブジェクト"
 
 #: ../../source/api/data_types.rst:4
 msgid ""
-"日常请把 DataType 当作**信息 ID**（字符串）：宽匹配名如 ``close``、``pe``，完整 id 如 "
-"``close_E_d``。 按消费形状选用入口，而不是一律 ``get_history_data``："
+"日常请把 DataType 当作**信息 ID**（字符串）：宽匹配名如 ``close``、``pe``，完整 id 如 ``close_E_d``。"
+" 按消费形状选用入口，而不是一律 ``get_history_data``："
 msgstr ""
+"日常生活では、DataType を **情報 ID** (文字列) として扱ってください: ``close``、``pe``，完整 id 如 "
+"``close_E_d``。 按消费形状选用入口，而不是一律 ``get_history_data`` のようなワイドマッチング名:"
 
 #: ../../source/api/data_types.rst:7
 msgid "**History**（时间 × 标的）：``get_history_data`` / ``get_kline``"
-msgstr ""
+msgstr "**履歴** (時間 × 目標): ``get_history_data`` / ``get_kline``"
 
 #: ../../source/api/data_types.rst:8
 msgid ""
-"**Reference**（仅时间）：``get_reference_data``（含 "
-"``cn_gdp``、``close-000300.SH``）"
+"**Reference**（仅时间）：``get_reference_data``（含 ``cn_gdp``、``close-000300.SH``）"
 msgstr ""
+"**参考** (時間のみ): ``get_reference_data``（含 ``cn_gdp``、``close-000300.SH``)"
 
 #: ../../source/api/data_types.rst:9
 msgid "**Static**（仅标的）：``get_static_data``（如 ``industry``、``list_date``）"
-msgstr ""
+msgstr "**静的** (件名のみ): ``get_static_data``（如 ``industry``、``list_date``)"
 
 #: ../../source/api/data_types.rst:11
 msgid ""
-"概念、四条工作路径、双 ID 与精选表见 :doc:`manage_data 章节「用稳定的信息 ID 取数」 "
-"<../manage_data/02. datatypes>`； 按业务浏览的完整内置清单见 :doc:`内置 DataType 完整清单 "
+"概念、四条工作路径、双 ID 与精选表见 :doc:`manage_data 章节「用稳定的信息 ID 取数」 <../manage_data/02. "
+"datatypes>`； 按业务浏览的完整内置清单见 :doc:`内置 DataType 完整清单 "
 "<../references/datatypes/index>`。"
 msgstr ""
+"コンセプト、4 つの作業パス、デュアル ID、選択したテーブルは :doc:`manage_data 章节「用稳定的信息 ID 取数」 "
+"<../manage_data/02. datatypes>`; で利用できます。ビジネスで参照される組み込みの完全なリストは、:doc:`内置 "
+"DataType 完整清单 <../references/datatypes/index>` で入手できます。"
 
 #: ../../source/api/data_types.rst:16
 msgid "三入口（公开 API）"
-msgstr ""
+msgstr "入口は3つ（公開API）"
 
 #: of qteasy.core.get_history_data:1
 msgid "根据给定的标的、数据类型与频率，从本地数据源获取历史数据并组装为策略可直接使用的结构。"
 msgstr ""
+"指定されたターゲット、データの種類、頻度に従って、履歴データがローカル データ ソースから取得され、戦略で直接使用できる構造に組み立てられます。"
 
 #: of qteasy.core.get_history_data:3
 msgid ""
 "本入口只接受 ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
-"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过"
-" ``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` / "
+"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
+"``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 ``shares`` / "
 "``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` "
 "的设置，函数返回 HistoryPanel 或按标的/数据类型分组的 DataFrame 字典。 关于数据类型推断、频率转换和 "
 "trade_time_only 等高级用法，详见文档「历史数据获取 get_history_data」相关章节。"
 msgstr ""
+"この入り口は ``kind=history``（时间 × 标的）的数据类型。宏观/基准请用 "
+"``get_reference_data``，证券属性截面请用 ``get_static_data``；错形状会以英文错误 指向正确入口。可以通过 "
+"``htype_names`` 或 ``data_types`` 指定需要的数据种类，并结合 `⟦ CODE10⟧` / "
+"``symbols``、时间区间与 ``freq`` 控制取数范围；根据 ``as_data_frame`` 与 ``group_by`` "
+"設定の場合、関数は HistoryPanel またはターゲット/データごとにグループ化された DataFrame "
+"のディクショナリを返します。タイプ。データ型推論、頻度変換、trade_time_only "
+"などの高度な使用法については、ドキュメント「Get_history_data」の関連する章を参照してください。"
 
 #: ../../source/api/data_types.rst of qteasy.core.get_history_data
 #: qteasy.core.get_reference_data qteasy.core.get_static_data
@@ -78,106 +91,138 @@ msgid ""
 "'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` / ``asset_type`` 等参数推断可用的 "
 "htypes。"
 msgstr ""
+"取得する履歴データ名の集合。利用可能な htype は、``'open, high, low, close'``） 或列表（如 ``['open', "
+"'high', 'low', 'close']``）。若为空，系统会结合 ``freq`` / ``asset_type`` "
+"などのパラメーターに対して推測できます。"
 
 #: of qteasy.core.get_history_data:15
 msgid ""
-"历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` / ``data_types`` "
-"新接口。"
+"历史数据类型对象列表；语义与 ``htype_names`` 类似，优先使用 ``htype_names`` / ``data_types`` 新接口。"
 msgstr ""
+"履歴データ型オブジェクトのリスト。セマンティクスと ``htype_names`` 类似，优先使用 ``htype_names`` / "
+"``data_types`` 新しいインターフェイス。"
 
 #: of qteasy.core.get_history_data:18
 msgid ""
 "需要获取的历史数据类型集合，必须是合法的数据类型对象。 "
 "如果给出了本参数，htype_names会被忽略，否则根据htype_names参数创建可能的htypes"
 msgstr ""
+"取得する履歴データ型コレクションは、正当なデータ型オブジェクトである必要があります。このパラメータが指定された場合、htype_names "
+"は無視されます。それ以外の場合は、htype_names パラメータに基づいて、可能な htype が作成されます。"
 
 #: of qteasy.core.get_history_data:21
 msgid "需要获取历史数据的数据源"
-msgstr ""
+msgstr "履歴データを取得する必要があるデータ ソース"
 
 #: of qteasy.core.get_history_data:23
 msgid ""
 "证券代码集合；可为逗号分隔字符串（如 ``'000001.SZ, 000002.SZ'``）或列表 （如 ``['000001.SZ', "
 "'000002.SZ']``）。"
 msgstr ""
+"証券コードのコレクション。カンマ区切りの文字列にすることもできます (``'000001.SZ, 000002.SZ'``）或列表 （如 "
+"``['000001.SZ', '000002.SZ']`` など)。"
 
 #: of qteasy.core.get_history_data:26
-msgid "证券代码集合；可为逗号分隔字符串（如 ``'000001, 000002'``）或列表 （如 ``['000001', '000002']``）。"
+msgid ""
+"证券代码集合；可为逗号分隔字符串（如 ``'000001, 000002'``）或列表 （如 ``['000001', '000002']``）。"
 msgstr ""
+"証券コードのコレクション。カンマ区切りの文字列にすることもできます (``'000001, 000002'``）或列表 （如 ``['000001', "
+"'000002']`` など)。"
 
 #: of qteasy.core.get_history_data:29
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)"
-msgstr ""
+msgstr "YYYYMMDD HH:MM:SS 形式の日付/時刻、取得された履歴データの開始日付/時刻 (利用可能な場合)"
 
 #: of qteasy.core.get_history_data:31
 msgid "YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)"
-msgstr ""
+msgstr "YYYYMMDD HH:MM:SS 形式の日付/時刻、取得された履歴データの終了日付/時刻 (利用可能な場合)"
 
 #: of qteasy.core.get_history_data:33
 msgid ""
 "获取的历史数据的行数，如果指定了start和end，则忽略此参数，且获取的数据的时间范围为[start, end] "
 "如果未指定start和end，则获取数据表中最近的rows条数据，使用row来获取数据时，速度比使用日期慢得多"
 msgstr ""
+"取得された履歴データの行数。 start、endを指定した場合、本パラメータは無視され、取得データの時間範囲は[start, end]となります。 "
+"start と end が指定されていない場合は、データ テーブル内の最新のデータ行が取得されます。 row を使用してデータを取得する場合、速度は "
+"date を使用する場合よりも大幅に遅くなります。"
 
 #: of qteasy.core.get_history_data:36
 msgid ""
-"频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 "
-"``H``/``D``/``W``/``M`` 等小时/日/周/月周期（如 K 线）。"
+"频率；支持 ``1min``/``5min``/``15min``/``30min`` 等分钟周期，以及 ``H``/``D``/``W``/``M``"
+" 等小时/日/周/月周期（如 K 线）。"
 msgstr ""
+"頻度; ``1min``/``5min``/``15min``/``30min`⟦CODE7をサポート⟧`H``/``D``/``W``/``M`` "
+"時間/日/週/月のサイクル (K ラインなど)。"
 
 #: of qteasy.core.get_history_data:39
 msgid ""
 "资产类型过滤；可用逗号分隔字符串（如 ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。 常见取值包括 "
 "``any``、``E``、``IDX``、``FT``、``FD`` 等。"
 msgstr ""
+"資産タイプでフィルタリングします。カンマ区切りの文字列を使用できます (例: ``'E, IDX'``）或列表（如 ``['E', 'IDX']``）。"
+" 常见取值包括 ``any``、`⟦CODE) 6⟧`、``IDX``、``FT``、``FD`` お待ちください。"
 
 #: of qteasy.core.get_history_data:42
 msgid ""
 "已弃用的复权选项（``none``/``n``、``back``/``b``、``forward``/``fw``/``f``）。 新代码请在 "
 "htype 中显式使用复权列名（如 ``close|b``）。"
 msgstr ""
+"非推奨の復元オプション (``none``/``n``、``back``/``b`⟦C) ODE7⟧`forward``/``fw``/``f``）。 "
+"新代码请在 htype 中显式使用复权列名（如 ``close|b``)。"
 
 #: of qteasy.core.get_history_data:45
 msgid ""
 "``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典； ``False`` 时返回 "
 "``HistoryPanel``。"
 msgstr ""
+"``True``（默认）时返回按 ``group_by`` 分组的 ``DataFrame`` 字典； ``False`` 时返回 "
+"``HistoryPanel``。"
 
 #: of qteasy.core.get_history_data:48
 msgid ""
 "返回 DataFrame 字典时的分组键；常用 ``'shares'``/``'share'``/``'s'`` 或 "
 "``'htypes'``/``'htype'``/``'h'``。"
 msgstr ""
+"DataFrame ディクショナリを返すときのグループ化キー。一般的に使用される``'shares'``/``'share'``/``'s'`` 或 "
+"``'htypes'``/``'htype'``/``'h'``。"
 
 #: of qteasy.core.get_history_data:51
 msgid ""
-"透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。 "
-"详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` 说明。"
+"透传给底层取数/频率转换的附加参数（如 ``drop_nan``、``resample_method`` 等）。 详细可选值与语义见文档「历史数据获取 "
+"get_history_data」及 ``infer_data_types`` 说明。"
 msgstr ""
+"追加パラメータを基礎となる数値取得/周波数変換に透過的に送信します (``drop_nan``、``resample_method`` 等）。 "
+"详细可选值与语义见文档「历史数据获取 get_history_data」及 ``infer_data_types`` の説明など)。"
 
 #: ../../source/api/data_types.rst of qteasy.core.get_history_data
 #: qteasy.core.get_reference_data qteasy.core.get_static_data
 msgid "返回"
-msgstr ""
+msgstr "戻る"
 
 #: of qteasy.core.get_history_data:54
 msgid ""
-"* *HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 "
-"HistoryPanel 对象。 * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 "
-"True 时，返回按 ``group_by`` 分组的 DataFrame 字典。"
+"* *HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel "
+"对象。 * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 "
+"``group_by`` 分组的 DataFrame 字典。"
 msgstr ""
+"* *HistoryPanel* -- ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel 对象。"
+" * *dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 "
+"``group_by`` によってグループ化されたデータフレームの辞書。"
 
 #: of qteasy.core.get_history_data:54
 msgid ""
-"*HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel "
-"对象。"
+"*HistoryPanel* -- 当 ``as_data_frame`` 为 False 时，返回包含所有请求数据的 HistoryPanel 对象。"
 msgstr ""
+"*HistoryPanel* -- ``as_data_frame`` が False の場合、要求されたすべてのデータを含む HistoryPanel"
+" オブジェクトを返します。"
 
 #: of qteasy.core.get_history_data:55
 msgid ""
-"*dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 "
-"``group_by`` 分组的 DataFrame 字典。"
+"*dict of pandas.DataFrame* -- 当 ``as_data_frame`` 为 True 时，返回按 ``group_by`` "
+"分组的 DataFrame 字典。"
 msgstr ""
+"*dict of pandas.DataFrame* -- ``as_data_frame`` 为 True 时，返回按 ``group_by`` "
+"でグループ化された場合の DataFrame の辞書。"
 
 #: of qteasy.core.get_history_data:58 qteasy.core.get_reference_data:32
 #: qteasy.core.get_static_data:29 qteasy.datatypes.DataType:9
@@ -187,73 +232,75 @@ msgstr "例"
 
 #: of qteasy.core.get_reference_data:1
 msgid "从本地数据源获取 Reference（仅时间维）数据，返回 ``dict[str, Series]``。"
-msgstr ""
+msgstr "ローカル データ ソースから参照 (時間ディメンションのみ) データを取得し、``dict[str, Series]`` を返します。"
 
 #: of qteasy.core.get_reference_data:3
 msgid ""
 "同时接受原生 Reference（如 ``cn_gdp``、``north_money``）与 unsymbolizer （如 "
 "``close-000300.SH`` / ``close-000300.SH_IDX_d``）。不需要 ``shares``： "
-"宏观数据本身无标的维，基准代码已编码在 unsymbolizer ID 中。 更多使用细节见文档「数据类型 DataType」与 S1.5 "
-"消费契约。"
+"宏观数据本身无标的维，基准代码已编码在 unsymbolizer ID 中。 更多使用细节见文档「数据类型 DataType」与 S1.5 消费契约。"
 msgstr ""
+"ネイティブ参照 (``cn_gdp``、``north_money``）与 unsymbolizer （如 ``close-000300.SH`` / "
+"``close-000300.SH_IDX_d``）。不需要 ``shares`` など) も受け入れます: マクロ "
+"データ自体の次元は標準化されておらず、参照コードはunsymbolizer ID。使用法の詳細については、「データ型 DataType」および S1.5"
+" 消費契約を参照してください。"
 
 #: of qteasy.core.get_reference_data:8
 msgid "参考数据名称；逗号分隔字符串或列表。可为宽名、完整 id 或 unsymbolizer 名。"
-msgstr ""
+msgstr "参照データ名。カンマ区切りの文字列またはリスト。ワイドネーム、フルID、またはアンシンボライザー名を使用できます。"
 
 #: of qteasy.core.get_reference_data:10 qteasy.core.get_static_data:14
 msgid "显式 DataType 列表；若给出则忽略 ``names``。"
-msgstr ""
+msgstr "明示的な DataType リスト。 ``names`` を指定しても無視されます。"
 
 #: of qteasy.core.get_reference_data:12 qteasy.core.get_static_data:16
 msgid "数据源；默认使用全局 ``QT_DATA_SOURCE``。"
-msgstr ""
+msgstr "データソース。デフォルトはグローバル ``QT_DATA_SOURCE`` です。"
 
 #: of qteasy.core.get_reference_data:14
-#, fuzzy
 msgid "开始日期/时间（``YYYYMMDD`` 等可解析格式）。"
-msgstr "開始日、``YYYYMMDD`` 形式"
+msgstr "開始日時 (``YYYYMMDD`` などの解析可能な形式)。"
 
 #: of qteasy.core.get_reference_data:16
 msgid "结束日期/时间。"
-msgstr ""
+msgstr "終了日時。"
 
 #: of qteasy.core.get_reference_data:18
 msgid "目标频率；宽名消歧或与内置频率不一致时用于升/降频。"
-msgstr ""
+msgstr "ターゲット周波数;ワイドネームの曖昧さがない場合、または組み込みの周波数と一致しない場合に、周波数のアップ/ダウンに使用されます。"
 
 #: of qteasy.core.get_reference_data:20
 msgid "资产类型过滤；unsymbolizer 宽名歧义时用于消歧（如 ``IDX``）。"
-msgstr ""
+msgstr "資産タイプのフィルタリング。 unsymbolizer は、ワイドネームの曖昧さを解消するために使用されます (``IDX`` など)。"
 
 #: of qteasy.core.get_reference_data:22
 msgid "最近行数；与 ``start``/``end`` 同时给出时以日期区间为准。"
-msgstr ""
+msgstr "最近の行の数。 ``start``/``end`` と一緒に指定した場合は、日付範囲が優先されます。"
 
 #: of qteasy.core.get_reference_data:25
 msgid "键为完整 ``dtype_id``，值为 index=时间的 Series。"
-msgstr ""
+msgstr "キーは完全な ``dtype_id`` で、値はインデックス = 時間のシリーズです。"
 
 #: ../../source/api/data_types.rst of qteasy.core.get_reference_data
 msgid "返回类型"
-msgstr ""
+msgstr "戻り値の型"
 
 #: ../../source/api/data_types.rst of qteasy.core.get_reference_data
 #: qteasy.core.get_static_data
 msgid "抛出"
-msgstr ""
+msgstr "投げる"
 
 #: of qteasy.core.get_reference_data:28
 msgid "名称为 history/static，或无法解析为合法 Reference。"
-msgstr ""
+msgstr "名前は履歴/静的であるか、正当な参照に解決できません。"
 
 #: of qteasy.core.get_reference_data:29 qteasy.core.get_static_data:26
 msgid "参数类型错误。"
-msgstr ""
+msgstr "パラメータの型が間違っています。"
 
 #: of qteasy.core.get_static_data:1
 msgid "从本地数据源获取 Static（仅标的维）截面数据。"
-msgstr ""
+msgstr "ローカル データ ソースから静的 (サブジェクト ディメンションのみ) 断面データを取得します。"
 
 #: of qteasy.core.get_static_data:3
 msgid ""
@@ -261,69 +308,84 @@ msgid ""
 "``DataFrame``（多个名称）；不升频、不编入 HistoryPanel。 更多使用细节见文档「数据类型 DataType」与 S1.5 "
 "消费契约。"
 msgstr ""
+"業界、上場日、証券名などの時間に依存しない属性に使用されます。``qt_code`` 为索引的 ``Series``（单个名称）或 "
+"``DataFrame`` (複数の名前) として返されます。アップスケーリングや HistoryPanel "
+"へのプログラミングは必要ありません。使用法の詳細については、「データ タイプ DataType」および S1.5 消費契約を参照してください。"
 
 #: of qteasy.core.get_static_data:7
 msgid "静态数据类型名称；逗号分隔字符串或列表。可为宽名或完整 id （如 ``industry``、``list_date_E_None``）。"
 msgstr ""
+"静的データ型名。カンマ区切りの文字列またはリスト。ワイドネームまたは完全な ID (例: "
+"``industry``、``list_date_E_None``) を使用できます。"
 
 #: of qteasy.core.get_static_data:10
 msgid "证券代码池；逗号分隔字符串或列表。与 ``symbols`` 二选一，至少提供一个。"
-msgstr ""
+msgstr "セキュリティ シンボルのプール。カンマ区切りの文字列またはリスト。 ``symbols`` から選択し、少なくとも 1 つを指定します。"
 
 #: of qteasy.core.get_static_data:12
 msgid "``shares`` 的别名。"
-msgstr ""
+msgstr "``shares``の別名。"
 
 #: of qteasy.core.get_static_data:18
 msgid "资产类型消歧（如 ``E``）。宽名在多资产下歧义时必须给出 （例如 ``list_date`` 有 E/IDX/FD 等多个版本）。"
 msgstr ""
+"アセットタイプの明確化 (例: ``E``）。宽名在多资产下歧义时必须给出 （例如 ``list_date`` には E/IDX/FD "
+"などの複数のバージョンがあります)。"
 
 #: of qteasy.core.get_static_data:22
 msgid ""
 "* *pandas.Series* -- 仅请求一个名称时，index 为 ``qt_code``，值为该属性。 * "
 "*pandas.DataFrame* -- 请求多个名称时，index 为 ``qt_code``，列为各属性宽名。"
 msgstr ""
+"* *pandas.Series* -- 名前が 1 つだけ要求された場合、インデックスは ``qt_code``，值为该属性。 * "
+"*pandas.DataFrame* -- 请求多个名称时，index 为 ``qt_code`` となり、各属性のワイド ネームとしてリストされます。"
 
 #: of qteasy.core.get_static_data:22
 msgid "*pandas.Series* -- 仅请求一个名称时，index 为 ``qt_code``，值为该属性。"
 msgstr ""
+"*pandas.Series* -- 名前が 1 つだけ要求された場合、インデックスは ``qt_code`` で、値はこのプロパティです。"
 
 #: of qteasy.core.get_static_data:23
 msgid "*pandas.DataFrame* -- 请求多个名称时，index 为 ``qt_code``，列为各属性宽名。"
 msgstr ""
+"*pandas.DataFrame* -- 複数の名前が要求された場合、インデックスは ``qt_code`` で、列は各属性のワイド "
+"ネームになります。"
 
 #: of qteasy.core.get_static_data:25
 msgid "名称为 history/reference，缺少股票池，或无法解析为合法 Static。"
-msgstr ""
+msgstr "名前は履歴/参照です。ストック プールが見つからないか、正当な静的値に解決できません。"
 
 #: ../../source/api/data_types.rst:24
 msgid ""
 "``get_kline`` 是标准 OHLCV 的语法糖，底层仍走 History 管线；签名见 :doc:`历史数据获取和管理 "
 "<history_data>`。"
 msgstr ""
+"``get_kline`` 是标准 OHLCV 的语法糖，底层仍走 History 管线；签名见 :doc:`履歴データの取得と管理 "
+"<history_data>`。"
 
 #: ../../source/api/data_types.rst:28
 msgid "清单与检索"
-msgstr ""
+msgstr "リストと検索"
 
 #: ../../source/api/data_types.rst:30
 msgid ""
-"``find_history_data`` 返回的结构化结果含 "
-"``kind``、``usable_in``、``recommended_api``； 打印路径按行推荐入口，**不要**假定每一行都能 "
-"``get_history_data``。"
+"``find_history_data`` 返回的结构化结果含 ``kind``、``usable_in``、``recommended_api``； "
+"打印路径按行推荐入口，**不要**假定每一行都能 ``get_history_data``。"
 msgstr ""
+"``find_history_data`` 返回的结构化结果含 ``kind``、``usable_in``、``recommended_api``； "
+"打印路径按行推荐入口，**不要**假定每一行都能 ``get_history_data``。"
 
 #: of qteasy.datatypes.get_dtype_map:1
 msgid "获取所有内置以及用户定义数据类型的清单"
-msgstr ""
+msgstr "すべての組み込みおよびユーザー定義のデータ型のリストを取得する"
 
 #: of qteasy.datatypes.get_dtype_map:3
 msgid "是否包含用户定义的数据类型, 如果为True, 则返回所有数据类型，包括内置和用户定义的"
-msgstr ""
+msgstr "ユーザー定義のデータ型を含めるかどうか。True の場合、組み込みデータ型とユーザー定義型を含むすべてのデータ型が返されます。"
 
 #: of qteasy.datatypes.get_dtype_map:5
 msgid "是否刷新用户定义的数据类型缓存，如果为True，清除缓存并重新获取用户定义的数据类型"
-msgstr ""
+msgstr "ユーザー定義データ型のキャッシュを更新するかどうか。True の場合、キャッシュをクリアしてユーザー定義データ型を再取得します。"
 
 #: of qteasy.datatypes.get_dtype_map:8
 msgid ""
@@ -332,138 +394,166 @@ msgid ""
 "``kind``（``history`` / ``reference`` / ``static``）与 "
 "``usable_in``（逗号分隔的入口标记，见 ``infer_dtype_usable_in``）。"
 msgstr ""
+"**dtype_map** -- インデックスは ``(dtype, freq, asset_type)``。列包括映射表原有字段 "
+"``description`` / ``acquisition_type`` / ``kwargs``，以及派生列 ``kind``（`⟦C "
+"ODE10⟧` / ``reference`` / ``static``）与 ``usable_in``（逗号分隔的入口标记，见 "
+"``infer_dtype_usable_in``)。"
 
 #: of qteasy.datatypes.find_history_data:1
 msgid ""
-"根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 "
-"查找匹配的历史数据类型，支持以 DataFrame 形式返回更结构化的结果。"
+"根据输入的字符串，查找或匹配历史数据类型,并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文 查找匹配的历史数据类型，支持以"
+" DataFrame 形式返回更结构化的结果。"
 msgstr ""
+"入力文字列に基づいて履歴データの種類を検索または照合し、履歴データの詳細情報を表示します。ファジー検索、ワイルドカード、英語または中国語の文字を使用した履歴データ"
+" タイプの照合をサポートし、より構造化された結果を DataFrame の形式で返します。"
 
 #: of qteasy.datatypes.find_history_data:4
 msgid "一个字符串，用于查找或匹配历史数据类型"
-msgstr ""
+msgstr "履歴データ型の検索または照合に使用される文字列"
 
 #: of qteasy.datatypes.find_history_data:6
 msgid ""
-"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True - False: 仅匹配数据名称 - True:  "
-"同时匹配数据描述"
+"是否模糊匹配数据描述，如果给出的字符串中含有非Ascii字符，会自动转为True - False: 仅匹配数据名称 - True:  同时匹配数据描述"
 msgstr ""
+"データ記述をあいまい一致するかどうか。指定された文字列に非 Ascii 文字が含まれている場合は、自動的に True になります - False: "
+"データ名のみに一致します - True: データの説明にも一致します"
 
 #: of qteasy.datatypes.find_history_data:10
 msgid ""
-"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True - False: 精确匹配数据名称 - True:"
-"  模糊匹配数据名称或数据描述"
+"是否模糊匹配数据名称，如果给出的字符串中含有非Ascii字符或通配符*/?，会自动转为True - False: 精确匹配数据名称 - True:  "
+"模糊匹配数据名称或数据描述"
 msgstr ""
+"データ名をあいまい一致するかどうか。指定された文字列に非 Ascii 文字またはワイルドカード文字 */? が含まれている場合、自動的に True "
+"になります - False: データ名と完全に一致します - True: データ名またはデータの説明とあいまい一致します"
 
 #: of qteasy.datatypes.find_history_data:14
 msgid "数据频率，如果提供，则只匹配该频率的数据 可以输入单个频率，也可以输入逗号分隔的多个频率"
 msgstr ""
+"データ周波数が指定されている場合、その周波数のデータのみが照合されます。単一の周波数を入力することも、カンマで区切って複数の周波数を入力することもできます。"
 
 #: of qteasy.datatypes.find_history_data:17
 msgid "证券类型，如果提供，则只匹配该证券类型的数据 可以输入单个证券类型，也可以输入逗号分隔的多个证券类型"
 msgstr ""
+"セキュリティ タイプが指定されている場合、そのセキュリティ タイプのデータのみが照合されます。単一のセキュリティ "
+"タイプを入力することも、カンマで区切って複数のセキュリティ タイプを入力することもできます。"
 
 #: of qteasy.datatypes.find_history_data:20
 msgid "匹配度阈值，匹配度超过该阈值的项目会被判断为匹配"
-msgstr ""
+msgstr "一致するしきい値。適合度がこの閾値を超えたプロジェクトを適合と判断します。"
 
 #: of qteasy.datatypes.find_history_data:22
 msgid "数据表名称过滤条件，如果提供，则只匹配来自这些表的数据类型，可以是单个表名或逗号分隔字符串"
 msgstr ""
+"データ テーブル名フィルターが指定されている場合、これらのテーブルのデータ型のみと一致します。単一のテーブル名またはカンマ区切りの文字列を使用できます。"
 
 #: of qteasy.datatypes.find_history_data:24
 msgid ""
 "- False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息 - True:  返回包含匹配结果详细信息的 "
 "DataFrame，不强制依赖打印输出"
 msgstr ""
+"- False: 歴史的に互換性のある data_id リストを返し、一致したデータ型情報を出力します。 - True: "
+"印刷出力に依存せずに、一致結果に関する詳細情報を含む DataFrame を返します。"
 
 #: of qteasy.datatypes.find_history_data:25
 msgid "False: 返回历史兼容的 data_id 列表，并打印匹配到的数据类型信息"
-msgstr ""
+msgstr "False: 歴史的に互換性のある data_id リストを返し、一致するデータ型情報を出力します。"
 
 #: of qteasy.datatypes.find_history_data:26
 msgid "True:  返回包含匹配结果详细信息的 DataFrame，不强制依赖打印输出"
-msgstr ""
+msgstr "True: 印刷出力に依存せずに、一致する結果の詳細を含む DataFrame を返します。"
 
 #: of qteasy.datatypes.find_history_data:29
 msgid ""
-"* **data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 "
-"data_id 列表，可以用于 qt.get_history_data() 下载数据 * *pandas.DataFrame* -- 当 "
-"as_data_frame 为 True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，   至少包含下列列：       -"
-" name:        数据类型名称       - description: 数据类型中文描述       - freq:        "
-"频率       - asset_type:  资产类型       - table_name:  底层数据表名称       - column:"
-"      对应的数据字段名       - kind:        消费形状（history / reference / static）"
-"       - usable_in:   可用性标记规范串       - recommended_api: "
-"推荐入口（get_history_data / get_reference_data /         get_static_data / "
-"none）"
+"* **data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id "
+"列表，可以用于 qt.get_history_data() 下载数据 * *pandas.DataFrame* -- 当 as_data_frame 为"
+" True 时，返回一个 DataFrame，每一行对应一个匹配到的数据类型，   至少包含下列列：       - name:        "
+"数据类型名称       - description: 数据类型中文描述       - freq:        频率       - "
+"asset_type:  资产类型       - table_name:  底层数据表名称       - column:      对应的数据字段名"
+"       - kind:        消费形状（history / reference / static）       - usable_in:"
+"   可用性标记规范串       - recommended_api: 推荐入口（get_history_data / "
+"get_reference_data /         get_static_data / none）"
 msgstr ""
+"* **data_id** (*list[str]*) -- as_data_frame が False の場合、一致したデータ型の data_id "
+"リストを使用して、qt.get_history_data() でデータをダウンロードできます。 * *pandas.DataFrame* -- "
+"as_data_frame が True の場合、DataFrame が返されます。各行は一致したデータ型に対応し、少なくとも次の列が含まれます。 - "
+"name: データ型名 - description: データ型の中国語の説明 - freq: 頻度 -asset_type: 資産タイプ - "
+"table_name: 基礎となるデータテーブル名 - column: 対応するデータフィールド名 - kind: 消費形状 (履歴 / 参照 / "
+"静的) - used_in: 利用可能マーク仕様文字列 - recommend_api: 推奨エントリ (get_history_data / "
+"get_reference_data / get_static_data / none)"
 
 #: of qteasy.datatypes.find_history_data:29
 msgid ""
 "**data_id** (*list[str]*) -- 当 as_data_frame 为 False 时，匹配到的数据类型的 data_id "
 "列表，可以用于 qt.get_history_data() 下载数据"
 msgstr ""
+"**data_id** (*list[str]*) -- as_data_frame が False の場合、一致したデータ型の data_id "
+"リストを使用して、qt.get_history_data() でデータをダウンロードできます。"
 
 #: of qteasy.datatypes.find_history_data:30
 msgid ""
 "*pandas.DataFrame* -- 当 as_data_frame 为 True 时，返回一个 "
 "DataFrame，每一行对应一个匹配到的数据类型， 至少包含下列列："
 msgstr ""
+"*pandas.DataFrame* -- as_data_frame が True の場合、DataFrame "
+"が返されます。各行は一致したデータ型に対応し、少なくとも次の列が含まれます。"
 
 #: of qteasy.datatypes.find_history_data:32
 msgid "name:        数据类型名称"
-msgstr ""
+msgstr "名前: データ型名"
 
 #: of qteasy.datatypes.find_history_data:33
 msgid "description: 数据类型中文描述"
-msgstr ""
+msgstr "説明: データ型の中国語の説明"
 
 #: of qteasy.datatypes.find_history_data:34
 msgid "freq:        频率"
-msgstr ""
+msgstr "freq: 周波数"
 
 #: of qteasy.datatypes.find_history_data:35
-#, fuzzy
 msgid "asset_type:  资产类型"
-msgstr "asset_type: str"
+msgstr "asset_type: アセットタイプ"
 
 #: of qteasy.datatypes.find_history_data:36
 msgid "table_name:  底层数据表名称"
-msgstr ""
+msgstr "table_name: 基礎となるデータテーブル名"
 
 #: of qteasy.datatypes.find_history_data:37
 msgid "column:      对应的数据字段名"
-msgstr ""
+msgstr "列: 対応するデータフィールド名"
 
 #: of qteasy.datatypes.find_history_data:38
 msgid "kind:        消费形状（history / reference / static）"
-msgstr ""
+msgstr "種類：消費形状（履歴/参照/静的）"
 
 #: of qteasy.datatypes.find_history_data:39
 msgid "usable_in:   可用性标记规范串"
-msgstr ""
+msgstr "used_in: 可用性タグ指定文字列"
 
 #: of qteasy.datatypes.find_history_data:40
 msgid ""
 "recommended_api: 推荐入口（get_history_data / get_reference_data / "
 "get_static_data / none）"
 msgstr ""
+"recommend_api: 推奨エントリ (get_history_data / get_reference_data / "
+"get_static_data / none)"
 
 #: of qteasy.datatypes.find_history_data:87
 msgid "输入的 s 不是字符串，或者 freq/asset_type/table 不是字符串或列表"
-msgstr ""
+msgstr "入力 s が文字列ではないか、freq/asset_type/table が文字列またはリストではありません"
 
 #: ../../source/api/data_types.rst:37
 msgid "``find_history_data`` 亦在 :doc:`历史数据获取和管理 <history_data>` 中列出。"
-msgstr ""
+msgstr "``find_history_data`` 亦在 :doc:`履歴データの取得と管理 <history_data>` に記載されています。"
 
 #: ../../source/api/data_types.rst:40
 msgid "高级：DataType 类"
-msgstr ""
+msgstr "上級: DataType クラス"
 
 #: ../../source/api/data_types.rst:42
 msgid "专家层与内置策略可直接构造 ``DataType`` 对象；普通取数与策略声明优先使用字符串 ID。"
 msgstr ""
+"エキスパート層と組み込み戦略は、``DataType`` オブジェクトを直接構築できます。通常のアクセスおよびストラテジ宣言では、文字列 ID "
+"が優先的に使用されます。"
 
 #: of qteasy.datatypes.DataType:1
 msgid "qteasy 中用于描述单一历史数据类型（名称、频率与资产类型）的核心对象。"
@@ -471,43 +561,48 @@ msgstr "単一の履歴データ タイプ (名前、頻度、資産タイプ) �
 
 #: of qteasy.datatypes.DataType:3
 msgid ""
-"每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于 "
-"统一声明策略所需的数据、驱动 ``get_history_data_from_source()`` 等内部取数流程， "
+"每个 DataType 由 ``name``、``freq`` 和 ``asset_type`` 三要素唯一确定，可用于 统一声明策略所需的数据、驱动 "
+"``get_history_data_from_source()`` 等内部取数流程， "
 "并在需要时扩展出自定义数据类型。关于完整的数据类型表与自定义流程，见文档 「DataType 与历史数据类型管理」章节。"
 msgstr ""
 "各 ``DataType`` is uniquely defined by ``name``, ``freq``, and "
-"``asset_type``. Use it to declare strategy data needs, drive internal "
-"fetch flows such as ``get_history_data_from_source()`` を拡張し、必要に応じてカスタム "
-"タイプを拡張します。完全なタイプ テーブルとカスタマイズ ワークフローについては、「DataType と履歴データ "
-"タイプ管理」の章を参照してください。"
+"``asset_type``. Use it to declare strategy data needs, drive internal fetch "
+"flows such as ``get_history_data_from_source()`` を拡張し、必要に応じてカスタム "
+"タイプを拡張します。完全なタイプ テーブルとカスタマイズ ワークフローについては、「DataType と履歴データ タイプ管理」の章を参照してください。"
 
 #: of qteasy.datatypes.DataType:10
 msgid "下面示例展示 DataType 类名（稳定输出）。实际创建 DataType 时，需要提供 name/freq/asset_type："
 msgstr ""
-"以下の例は、``DataType`` class name (stable output). When creating a "
-"``DataType``, provide ``name``/``freq``/``asset_type`` を示しています。"
+"以下の例は、``DataType`` class name (stable output). When creating a ``DataType``,"
+" provide ``name``/``freq``/``asset_type`` を示しています。"
 
 #: of qteasy.datatypes.DataType.__init__:1
 msgid "根据用户输入的名称或完整参数实例化一个DataType对象。"
-msgstr ""
+msgstr "ユーザーが入力した名前または完全なパラメーターに基づいて、DataType オブジェクトをインスタンス化します。"
 
 #: of qteasy.datatypes.DataType.__init__:3
 msgid ""
 "``name`` 可以是宽匹配名（如 ``close``、``close|b``）或完整 id （如 "
 "``close_E_d``、``close|b_E_d``）。完整 id 从右侧拆出 freq 与 asset_type。仅输入宽名且未给出 "
-"asset_type 时，按目标频率 ``d`` 唯一化； 仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。 "
-"调用方显式给出 ``asset_type``（含 ``E,IDX`` / ``ANY``）时仍按第一匹配解析。"
+"asset_type 时，按目标频率 ``d`` 唯一化； 仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。 调用方显式给出 "
+"``asset_type``（含 ``E,IDX`` / ``ANY``）时仍按第一匹配解析。"
 msgstr ""
+"`⟦コード0⟧⟦コード1⟧⟦コード2⟧⟦コード3⟧⟦コード4⟧⟦コード5⟧⟦コード6⟧⟦コード7⟧⟦コード8⟧⟦コード9⟧`d`` 唯一化； "
+"仍对应多个资产类型则报错并列候选完整 id，不再静默取 MAP 第一项。 调用方显式给出 ``asset_type``（含 ``E,IDX`` / "
+"``ANY``) は、最初の一致に従って解析されます。"
 
 #: of qteasy.datatypes.DataType.__init__:9
 msgid "数据类型的宽匹配名或完整 id"
-msgstr ""
+msgstr "データ型のワイド マッチ名または完全な ID"
 
 #: of qteasy.datatypes.DataType.__init__:11
 msgid ""
 "数据的频率: d(日), w(周), m(月), q(季), y(年), 1/5/15/30min, h "
 "如果给出此参数，必须匹配某一个内置数据类型的频率 如果不给出此参数，将按目标频率 d 唯一化"
 msgstr ""
+"データの頻度: d (日)、w (週)、m (月)、q (四半期)、y (年)、1/5/15/30min、h "
+"このパラメーターを指定する場合、特定の組み込みデータ型の頻度と一致する必要があります。このパラメータが指定されていない場合、ターゲット周波数 d "
+"に従って一意になります。"
 
 #: of qteasy.datatypes.DataType.__init__:15
 msgid ""
@@ -515,10 +610,16 @@ msgid ""
 "表示股票和指数两种资产类型 也可以输入 'ANY' 表示所有支持的资产类型 如果给出此参数，必须匹配某一个内置数据类型的资产类型 "
 "如果不给出此参数且无法唯一化，将报错并列候选完整 id"
 msgstr ""
+"データの資産タイプ: E (株式)、IDX (インデックス)、FD (ファンド)、FT (先物)、OPT (オプション) 株式とインデックスの 2 "
+"つの資産タイプを表す「E,IDX」など、混合資産タイプを入力することもできます。 "
+"「ANY」と入力して、サポートされているすべての資産タイプを表すこともできます。このパラメーターを指定する場合は、組み込みデータ型のアセット "
+"タイプと一致する必要があります。このパラメーターが指定されず、一意にできない場合は、エラーが報告され、候補の完全な ID がリストされます。"
 
 #: of qteasy.datatypes.DataType.__init__:22
 msgid "参数不在 DATA_TYPE_MAP 中，宽名歧义，或完整 id 与显式 freq/asset_type 冲突。"
 msgstr ""
+"パラメータが DATA_TYPE_MAP に含まれていない、ワイドネームが曖昧である、または完全な ID が明示的な freq/asset_type "
+"と競合しています。"
 
 #: of qteasy.DataType.asset_type:1 qteasy.DataType.asset_type_str:1
 msgid "资产类型的字符串表示形式，如'E'或'E,IDX'"
@@ -584,22 +685,17 @@ msgstr "``close(E)`` のような周波数に依存しない ID、さまざま�
 
 #: of qteasy.DataType.unsymbolized:1
 msgid ""
-"return True if this data type is unsymbolized data type (i.e. reference "
-"data type)"
+"return True if this data type is unsymbolized data type (i.e. reference data"
+" type)"
 msgstr ""
-"return True if this data type is unsymbolized data type (i.e. reference "
-"data type)"
+"return True if this data type is unsymbolized data type (i.e. reference data"
+" type)"
 
 #~ msgid ""
-#~ "DataType 用于以「名称 + 频率 + "
-#~ "资产类型」三元组的方式描述单一历史数据类型，是 数据管线与策略声明历史数据需求时的统一语言。qteasy "
+#~ "DataType 用于以「名称 + 频率 + 资产类型」三元组的方式描述单一历史数据类型，是 数据管线与策略声明历史数据需求时的统一语言。qteasy "
 #~ "预置了大量常用 DataType， 也支持通过文档中介绍的接口定义用户自定义数据类型。"
 #~ msgstr ""
-#~ "``DataType`` describes a single historical "
-#~ "data type as a triplet of name "
-#~ "+ frequency + asset type—the common "
-#~ "language for the data pipeline and "
-#~ "for strategies to declare data needs."
-#~ " qteasy ships many built-in "
-#~ "``DataType`` インスタンスを作成し、文書化されたインターフェイスを介してユーザー定義型をサポートします。"
-
+#~ "``DataType`` describes a single historical data type as a triplet of name + "
+#~ "frequency + asset type—the common language for the data pipeline and for "
+#~ "strategies to declare data needs. qteasy ships many built-in ``DataType`` "
+#~ "インスタンスを作成し、文書化されたインターフェイスを介してユーザー定義型をサポートします。"
