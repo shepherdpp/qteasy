@@ -50,7 +50,7 @@
 
 顶层任务 **M2.2** 已将上述「独立模块」形态纳入二阶段实施范围（函数 API：`factor_ic` / `quantile_portfolio` / `long_short_return` 等），并与 HP 内核 pandas 级补齐（`shift`/`diff`/`dropna`/`expr` 等）同批规划。
 
-- 执行计划：[m2.2_hp二阶段扩展_da0c19a3.plan.md](../../../.cursor/plans/m2.2_hp二阶段扩展_da0c19a3.plan.md)
+- 执行计划收口：[`knowledge/runlog/plans-closure-historypanel-m22-2026-08.md`](../../../knowledge/runlog/plans-closure-historypanel-m22-2026-08.md)（原 `m2.2_hp二阶段扩展` plan 已自 `.cursor/plans/` 删除）
 - 进度真源：顶层展望 §7.1 **M2.2**
 - **截至 CP-A（Phase 1–3）**：HP 内核已落地 `shift` / `diff` / `pct_change`、`bfill` / `dropna`、填充类 `inplace=`、以及 `expr`；用户文档见教程 2.4/2.5 与 [HistoryPanel API](../api/HistoryPanel.rst)。
 - **截至 CP-B（Phase 4–6）**：HP 内核已落地 `drop` / `rename`、统计对称（`sum` / `median` / `var` / `quantile`）、以及 `slice`/`segment`/`isegment`/`candle` 的英文弃用警告；文档同上。
