@@ -14,13 +14,13 @@
 
 ---
 
-## 当前聚焦（2026-08-22）
+## 当前聚焦（2026-08-28）
 
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S1.5 / S4.6** 已发版 **2.6.4**；S2.1 xtQuant 协作等待期内可推进文档余量或 **M2.1** 规划
 - **数据体验**：**M2.2** HistoryPanel 二阶段 — **已收官**（2.6.3）
-- **Jackie 副线（qteasy-ai）**：**Q-AI.1 ✅ 已完成**（0.1.0）；**产品顶层金标准**已立；下一可选 **Q-AI.2** 高副作用 skills
+- **Jackie 副线（qteasy-ai）**：**Q-AI.2 / 阶段 B 进行中**（G0–G3 检查点，G4–G6 未关）；**Q-AI.3 / 阶段 C TDD 完成、实弹待跑**；**Q-AI.5 / 阶段 E** 已立项、非当前编码（建议 1.0 闸门）
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -45,4 +45,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-23 — plans 积极清理；已完成任务链 RunLog 收口。*
+*最后更新：2026-08-28 — Q-AI.3 阶段 C TDD 完成 / 实弹待跑；Q-AI.2 G4–G6 仍后置。*

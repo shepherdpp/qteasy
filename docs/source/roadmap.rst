@@ -110,3 +110,6 @@
 
 - ✅ AI 自然语言编排外壳（**独立项目** `qteasy-ai <https://github.com/shepherdpp/qteasy-ai>`_，PyPI：``qteasy-ai``；依赖 qteasy 内核 API，不随 qteasy 版本发布）
 
+  - Ask / Plan / Agent 模式、安全边界与 ``preview`` 迁移见 qteasy-ai `docs/USER_GUIDE.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/USER_GUIDE.md>`_
+  - Ask 只解释 qteasy 概念（如 PT/PS/VS），不替代回测引擎；落盘与计算仍经 qteasy API
+
