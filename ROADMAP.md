@@ -20,7 +20,7 @@
 
 - **Jackie 主线（qteasy）**：**S1.5 / S4.6** 已发版 **2.6.4**；S2.1 xtQuant 协作等待期内可推进文档余量或 **M2.1** 规划
 - **数据体验**：**M2.2** HistoryPanel 二阶段 — **已收官**（2.6.3）
-- **Jackie 副线（qteasy-ai）**：**Q-AI.2 / Q-AI.3 实弹已关单**；C 余量（Hybrid 缺槽 + Ask KB）**已清**（2026-08-29）；下一编码 **Q-AI.4**；**Q-AI.5 / 阶段 E** 已立项、非当前编码（建议 1.0 闸门）
+- **Jackie 副线（qteasy-ai）**：**Q-AI.3 开发已收口**；**Q-AI.4 D.0 已拍板**；下一编码 **D.1**；**Q-AI.5 / 阶段 E** 已立项、非当前编码（建议 1.0 闸门）
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -45,4 +45,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-29 — Q-AI.3 C 余量（Hybrid 缺槽 + Ask KB）已清。*
+*最后更新：2026-08-29 — Q-AI.3 收口；Q-AI.4 D.0 已拍板。*
