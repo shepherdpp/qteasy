@@ -112,6 +112,6 @@
 
   - Ask / Plan / Agent 模式、安全边界与 ``preview`` 迁移见 qteasy-ai `docs/USER_GUIDE.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/USER_GUIDE.md>`_
   - Ask 只解释 qteasy 概念（如 PT/PS/VS），不替代回测引擎；落盘与计算仍经 qteasy API
-  - StrategyBuilder（Q-AI.4）边界与手测见同仓 ``USER_GUIDE.md`` §6 与 `LIVE_FIRE_DRILL_QAI4.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/LIVE_FIRE_DRILL_QAI4.md>`_
-  - 下一开发阶段为官方 Skill 覆盖（Q-AI.5 / E.0），含 Planner 契约（schema 校验与合法多步组合）；不在此展开实现细节
+  - StrategyBuilder（Q-AI.4）已关单；边界见同仓 ``USER_GUIDE.md`` §6 与 `LIVE_FIRE_DRILL_QAI4.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/LIVE_FIRE_DRILL_QAI4.md>`_
+  - 下一开发阶段为官方 Skill 覆盖（Q-AI.5 / E.0），含 Planner 契约（意图门、可观测的 LLM 步骤序列、schema 与合法组合）；CLI 按已审阅 ``plan_id`` 执行（E.1）
 
