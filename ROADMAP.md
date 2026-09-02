@@ -14,13 +14,13 @@
 
 ---
 
-## 当前聚焦（2026-08-31）
+## 当前聚焦（2026-09-01）
 
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S1.5 / S4.6** 已发版 **2.6.4**；S2.1 xtQuant 协作等待期内可推进文档余量或 **M2.1** 规划
 - **数据体验**：**M2.2** HistoryPanel 二阶段 — **已收官**（2.6.3）
-- **Jackie 副线（qteasy-ai）**：**Q-AI.4 已关单**；下一编码 **E.0**（官方 Skill **+** Hybrid 意图门 / schema）与 **E.1 小修** CLI `--plan-id`；**F/G/H 已立项、不承接开放构图**
+- **Jackie 副线（qteasy-ai）**：**Q-AI.4 已关单**；**E.0 Hybrid 设计已冻（2026-09-01，未编码）**；下一编码按 Domain 实现意图门 + 官方 Skill 查遗，及 **E.1 小修** CLI `--plan-id`；**F/G/H 已立项、不承接开放构图**
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -45,4 +45,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-08-31 — Q-AI.4 实弹关单；下一编码 E.0 意图门 + E.1 CLI `--plan-id`。*
+*最后更新：2026-09-01 — E.0 Hybrid 设计冻结（Job / 方案 H / Catalog）；编码未开始。*
