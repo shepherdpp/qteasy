@@ -14,13 +14,13 @@
 
 ---
 
-## 当前聚焦（2026-09-02）
+## 当前聚焦（2026-09-07）
 
 详见展望 **§7.4 战术偏移**：
 
 - **Jackie 主线（qteasy）**：**S1.5 / S4.6** 已发版 **2.6.4**；S2.1 xtQuant 协作等待期内可推进文档余量或 **M2.1** 规划
 - **数据体验**：**M2.2** HistoryPanel 二阶段 — **已收官**（2.6.3）
-- **Jackie 副线（qteasy-ai）**：**Q-AI.5 编码已落地（2026-09-02）**；下一动作 **实弹** 后决定是否关单 / 打建议 1.0；**F/G/H 已立项、不插队**
+- **Jackie 副线（qteasy-ai）**：**Q-AI.7 编码已交付（2026-09-07）**；下一动作 **手测 QAI7 + Jackie 打 1.0.0**；开放环 / 用户 KB 检索仍 1.x；**H 不插队**
 - **协作轨（低占用）**：S2.1-XT（Spike / v0.1 Review）
 
 更新进度时改展望 **§7.1**，勿改本文档任务表。
@@ -45,4 +45,4 @@
 | [qteasy-xtquant 协作](.cursor/plans/qteasy-xtquant-collaboration/) | S2.1 逐步执行 |
 | [docs/source/roadmap.rst](docs/source/roadmap.rst) | 面向用户的功能路线图 |
 
-*最后更新：2026-09-02 — Q-AI.5 编码落地（意图门 H / `--plan-id` / screen L1 / data.read）；实弹未关单。*
+*最后更新：2026-09-07 — Q-AI.7 编码交付（Web 三栏 + 最小 TUI）；1.0.0 待 Jackie 手测签字。*
