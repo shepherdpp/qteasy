@@ -113,5 +113,5 @@
   - Ask / Plan / Agent 模式、安全边界与 ``preview`` 迁移见 qteasy-ai `docs/USER_GUIDE.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/USER_GUIDE.md>`_
   - Ask 只解释 qteasy 概念（如 PT/PS/VS），不替代回测引擎；落盘与计算仍经 qteasy API
   - StrategyBuilder（Q-AI.4）已关单；边界见同仓 ``USER_GUIDE.md`` §6 与 `LIVE_FIRE_DRILL_QAI4.md <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/LIVE_FIRE_DRILL_QAI4.md>`_
-  - 阶段 E（Q-AI.5）与阶段 F（Q-AI.6）实弹已关单；阶段 G（Q-AI.7）工作台编码已交付（Web + 最小 TUI）；**1.0** 标签待发布
+  - 阶段 E（Q-AI.5）与阶段 F（Q-AI.6）实弹已关单；阶段 G（Q-AI.7）工作台**雏形**已交（Web + 最小 TUI）；**1.0** 标签待工作台可用性与开放环操作面齐备后发布
 
