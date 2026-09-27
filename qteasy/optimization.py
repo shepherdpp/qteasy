@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+from qteasy.cancel_check import RunCancelled, should_cancel
 from qteasy.qt_operator import (
     Operator,
     SIGNAL_TYPE_ID,
@@ -698,26 +699,38 @@ class Optimizer:
         eval_func = self._deep_evaluate_parameter if deep_eval else self._evaluate_parameter
         pbar_position = 1 if not leave_progress_bar else 0
 
-        # 启用并行计算
-        with ProcessPoolExecutor() as proc_pool:
-            futures = {proc_pool.submit(eval_func, par): par for par in
-                       par_value_list}
+        # 启用并行计算。取消时不再提交新 future，并 cancel_futures。
+        cancelled = False
+        proc_pool = ProcessPoolExecutor()
+        try:
+            futures = {}
+            for par in par_value_list:
+                if should_cancel():
+                    cancelled = True
+                    break
+                futures[proc_pool.submit(eval_func, par)] = par
 
-        with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
+            with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
+                for f in as_completed(futures):
+                    if should_cancel():
+                        cancelled = True
+                        break
+                    target_value = f.result()
+                    if deep_eval:
+                        perf, metrics = target_value
+                    else:
+                        perf, metrics = target_value, None
 
-            for f in as_completed(futures):
-                target_value = f.result()
-                if deep_eval:
-                    perf, metrics = target_value
-                else:
-                    perf, metrics = target_value, None
-
-                result_pool.push(item=futures[f], perf=perf, extra=metrics)
-                i += 1
-                if perf > best_so_far:
-                    best_so_far = perf
-                pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
-                pbar.update()
+                    result_pool.push(item=futures[f], perf=perf, extra=metrics)
+                    i += 1
+                    if perf > best_so_far:
+                        best_so_far = perf
+                    pbar.set_description(desc=f'Epoch:{epoch_str}->{best_so_far:.3f}', )
+                    pbar.update()
+        finally:
+            proc_pool.shutdown(wait=not cancelled, cancel_futures=cancelled)
+        if cancelled:
+            raise RunCancelled("optimize")
 
     def _evaluate_parameters_sequential(self,
                                         total: int,
@@ -737,6 +750,8 @@ class Optimizer:
         with tqdm(total=total, leave=leave_progress_bar, position=pbar_position) as pbar:
 
             for par in par_value_list:
+                if should_cancel():
+                    raise RunCancelled("optimize")
                 self.running_backtester.clear_backtest_buffers()
                 target_value = eval_func(par)
                 if deep_eval:
