@@ -328,7 +328,7 @@ msgstr "`sell_batch_size=0.01`： 賣出資產時最小交易批量，最小允�
 
 #: ../../source/tutorials/3-start-first-strategy.md:221
 msgid ""
-"`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-tw/latest/)。"
+"`qteasy`还有其他的配置参数，参见[QTEASY文档](https://qteasy.readthedocs.io/zh-cn/latest/)。"
 msgstr ""
 "`qteasy`還有其他的設定參數，參見[QTEASY文件](https://qteasy.readthedocs.io/zh-tw/latest/)。"
 

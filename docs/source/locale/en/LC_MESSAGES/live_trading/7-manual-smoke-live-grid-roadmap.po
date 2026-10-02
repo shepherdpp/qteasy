@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 20:30+0800\n"
+"POT-Creation-Date: 2026-10-01 21:36+0800\n"
 "PO-Revision-Date: 2026-05-20 20:54+0800\n"
 "Last-Translator: \n"
 "Language-Team: en <LL@li.org>\n"
@@ -17,45 +17,43 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:2
 msgid "模拟实盘手工冒烟方案（live_grid_multi）"
-msgstr "Simulated live trading manual smoke generation solution (live_grid_multi)"
+msgstr ""
+"Simulated live trading manual smoke generation solution (live_grid_multi)"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:4
 msgid ""
-"亲爱的用户，本章是一份**手工验收清单**：在真实交易日（或您方便的时间段），用仓库"
-"示例 ``examples/live_grid_multi.py`` 跑一遍模拟实盘，逐项打勾，确认 qteasy 行为"
-"与文档一致。"
+"亲爱的用户，本章是一份**手工验收清单**：在真实交易日（或您方便的时间段），用仓库示例 ``examples/live_grid_multi.py``"
+" 跑一遍模拟实盘，逐项打勾，确认 qteasy 行为与文档一致。"
 msgstr ""
-"Dear user, this chapter is a **manual checklist**: On a real trading day (or at "
-"a time convenient to you), run a simulated live trading session using the "
-"repository example ``examples/live_grid_multi.py`, check off each item, and "
-"confirm that qteasy's behavior is consistent with the documentation."
+"Dear user, this chapter is a **manual checklist**: On a real trading day (or"
+" at a time convenient to you), run a simulated live trading session using "
+"the repository example ``examples/live_grid_multi.py`, check off each item, "
+"and confirm that qteasy's behavior is consistent with the documentation."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:6
 msgid ""
-"> **冒烟测试是什么？** > 像新船下水前的试航——不必覆盖所有策略，而是用**固定示例 "
-"+ 固定检查项**快速发现「能不能用、日志能不能看懂」。本手册侧重 **真实 "
-"``qt.run`` + 人眼验收**；非交易时段也可用仓库内无头脚本做架构回归（见下文）。"
+"> **冒烟测试是什么？** > 像新船下水前的试航——不必覆盖所有策略，而是用**固定示例 + "
+"固定检查项**快速发现「能不能用、日志能不能看懂」。本手册侧重 **真实 ``qt.run`` + "
+"人眼验收**；非交易时段也可用仓库内无头脚本做架构回归（见下文）。"
 msgstr ""
-"What is smoke testing? Like sea trials before a new ship is launched—it doesn't "
-"need to cover all strategies, but rather uses **fixed examples + fixed checks** "
-"to quickly determine \"whether it works and whether the logs are readable.\" "
-"This manual focuses on **real `qt.run` + human verification**; during non-"
-"trading hours, headless scripts in the repository can also be used for "
-"architecture regression (see below)."
+"What is smoke testing? Like sea trials before a new ship is launched—it "
+"doesn't need to cover all strategies, but rather uses **fixed examples + "
+"fixed checks** to quickly determine \"whether it works and whether the logs "
+"are readable.\" This manual focuses on **real `qt.run` + human "
+"verification**; during non-trading hours, headless scripts in the repository"
+" can also be used for architecture regression (see below)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:9
 msgid ""
-"策略基线：``examples/live_grid_multi.py``（5 分钟 VS + 多标的网格）。 维护者若需"
-"对照内部路线图，可参考仓库 ``.cursor/plans/trader架构升级路线图"
-"_0650f0d5.plan.md``（可选，非阅读必需）。"
+"策略基线：``examples/live_grid_multi.py``（5 分钟 VS + 多标的网格）。 维护者若需对照内部路线图，可参考仓库 "
+"``.cursor/plans/trader架构升级路线图_0650f0d5.plan.md``（可选，非阅读必需）。"
 msgstr ""
-"Strategy baseline: ``examples/live_grid_multi.py`` (5-minute VS + multi-mark "
-"grid). Maintainers who need to refer to the internal roadmap can refer to the "
-"repository ``.cursor/plans/trader architecture upgrade "
+"Strategy baseline: ``examples/live_grid_multi.py`` (5-minute VS + multi-mark"
+" grid). Maintainers who need to refer to the internal roadmap can refer to "
+"the repository ``.cursor/plans/trader architecture upgrade "
 "roadmap_0650f0d5.plan.md`` (optional, not required to read)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:13
@@ -64,8 +62,8 @@ msgstr "Relationship with headless scripts"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:15
 msgid ""
-"``tests/notebook_trader_headless_script.py`` 提供分阶段无头冒烟（含 5-A/5-B、5-"
-"C 等），可在 Notebook 分 cell 调用。"
+"``tests/notebook_trader_headless_script.py`` 提供分阶段无头冒烟（含 5-A/5-B、5-C 等），可在 "
+"Notebook 分 cell 调用。"
 msgstr ""
 "`tests/notebook_trader_headless_script.py` provides phased headless smoke "
 "(including 5-A/5-B, 5-C, etc.), which can be called in Notebook cells."
@@ -73,14 +71,14 @@ msgstr ""
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:16
 msgid "**本手册**侧重：您亲自启动 live、看 CLI/日志、打勾。"
 msgstr ""
-"This manual focuses on: you personally launching live, viewing the CLI/logs, "
-"and checking the boxes."
+"This manual focuses on: you personally launching live, viewing the CLI/logs,"
+" and checking the boxes."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:17
 msgid "建议节奏：**交易日**按本手册；**休市**用无头脚本补回归。"
 msgstr ""
-"Recommended schedule: **On trading days** follow this manual; **During market "
-"closures** use a headless script to perform regression analysis."
+"Recommended schedule: **On trading days** follow this manual; **During "
+"market closures** use a headless script to perform regression analysis."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:20
 msgid "一、环境与前置条件"
@@ -88,14 +86,13 @@ msgstr "I. Environment and Prerequisites"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:22
 msgid ""
-"**Python**：推荐 ``/opt/anaconda3/envs/py39/bin/python``。若您通过 pip 安装 "
-"qteasy，工作目录可以是任意包含 ``examples/live_grid_multi.py`` 的路径（不必克隆"
-"全仓库，但需能访问示例脚本）。"
+"**Python**：推荐 ``python3``。若您通过 pip 安装 qteasy，工作目录可以是任意包含 "
+"``examples/live_grid_multi.py`` 的路径（不必克隆全仓库，但需能访问示例脚本）。"
 msgstr ""
-"**Python:** `/opt/anaconda3/envs/py39/bin/python` is recommended. If you "
-"installed qteasy via pip, the working directory can be any path containing "
-"`examples/live_grid_multi.py` (you don't need to clone the entire repository, "
-"but you must be able to access the example script)."
+"**Python:** ``python3`` is recommended. If you installed qteasy via pip, the"
+" working directory can be any path containing "
+"``examples/live_grid_multi.py`` (you don't need to clone the entire "
+"repository, but you must be able to access the example script)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:23
 msgid "**新账户、无持仓**（避免旧订单干扰）："
@@ -109,23 +106,21 @@ msgstr "`-n/--new_account <username>` creates a new account; or"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:26
 msgid "已有 ``account_id`` 且 ``--restart`` 清空记录，并确认无持仓后再启。"
 msgstr ""
-"If an `account_id` already exists and `--restart` clears the record, restart "
-"only after confirming there are no open positions."
+"If an `account_id` already exists and `--restart` clears the record, restart"
+" only after confirming there are no open positions."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:28
-msgid ""
-"**数据**：分钟策略需本地有 ``stock_1min`` 等表；首次 refill 可能较久，属正常。"
+msgid "**数据**：分钟策略需本地有 ``stock_1min`` 等表；首次 refill 可能较久，属正常。"
 msgstr ""
-"**Data:** Minute-based strategies require local tables such as `stock_1min`; "
-"the initial refill may take longer, which is normal."
+"**Data:** Minute-based strategies require local tables such as `stock_1min`;"
+" the initial refill may take longer, which is normal."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:29
 msgid ""
-"**日志**：``sys_log_file_path``、``trade_log_file_path`` 可写（用 ``artifacts`` "
-"核对）。"
+"**日志**：``sys_log_file_path``、``trade_log_file_path`` 可写（用 ``artifacts`` 核对）。"
 msgstr ""
-"**Logs: `sys_log_file_path` and `trade_log_file_path` are writable (check with "
-"`artifacts`)."
+"**Logs: `sys_log_file_path` and `trade_log_file_path` are writable (check "
+"with `artifacts`)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:32
 msgid "二、启动命令模板"
@@ -144,8 +139,8 @@ msgstr "Note:"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:43
 msgid "**冷启动**：新建 ``-n`` 或 ``--restart`` 后确认持仓为空。"
 msgstr ""
-"**Cold Start**: Create a new `-n` or `--restart` and confirm that the position "
-"is empty."
+"**Cold Start**: Create a new `-n` or `--restart` and confirm that the "
+"position is empty."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:44
 msgid "勿在不明环境放大 ``trade_batch``，以免资金压力。"
@@ -155,8 +150,7 @@ msgstr ""
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:45
 msgid ""
-"**5-C 相关 CLI** 建议加 ``--debug``，以便 ``run --task "
-"diagnose_pending_orders``。"
+"**5-C 相关 CLI** 建议加 ``--debug``，以便 ``run --task diagnose_pending_orders``。"
 msgstr ""
 "**5-C Related CLI** It is recommended to add `--debug` so that `run --task "
 "diagnose_pending_orders` can be executed."
@@ -166,9 +160,7 @@ msgid "三、分阶段验收（逐项打勾）"
 msgstr "III. Phased Acceptance (Check off each item)"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:50
-msgid ""
-"下列阶段对应内部路线图 0～5-C / 阶段 11；每项含 **本阶段在验证什么**、操作与验"
-"收。"
+msgid "下列阶段对应内部路线图 0～5-C / 阶段 11；每项含 **本阶段在验证什么**、操作与验收。"
 msgstr ""
 "The following stages correspond to internal roadmaps 0-5-C / Stage 11; each "
 "item includes **what is being verified in this stage**, operation, and "
@@ -179,27 +171,23 @@ msgid "阶段 0：基线、状态机与可观测性"
 msgstr "Phase 0: Baseline, State Machine, and Observability"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:55
-msgid ""
-"**验证什么**：Trader 能正常启动、状态迁移合理、日志能还原「启动 → 日程 → 关键任"
-"务」顺序。"
+msgid "**验证什么**：Trader 能正常启动、状态迁移合理、日志能还原「启动 → 日程 → 关键任务」顺序。"
 msgstr ""
-"**What to verify:** The Trader can start normally, the state transitions are "
-"reasonable, and the logs can restore the order of \"Startup → Schedule → "
+"**What to verify:** The Trader can start normally, the state transitions are"
+" reasonable, and the logs can restore the order of \"Startup → Schedule → "
 "Critical Tasks\"."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:57
-msgid ""
-"**操作**：观察 CLI/日志中状态（``stopped`` → ``sleeping``/``running`` 等）与任务"
-"入队。"
+msgid "**操作**：观察 CLI/日志中状态（``stopped`` → ``sleeping``/``running`` 等）与任务入队。"
 msgstr ""
-"**Operation:** Observe the status (stopped → sleeping/running, etc.) in the CLI/"
-"log and the task enqueuing."
+"**Operation:** Observe the status (stopped → sleeping/running, etc.) in the "
+"CLI/log and the task enqueuing."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:58
 msgid "**验收**：无未解释死锁；能还原一次完整启动时间线。"
 msgstr ""
-"**Acceptance Test:** No unexplained deadlocks; able to reconstruct a complete "
-"startup timeline."
+"**Acceptance Test:** No unexplained deadlocks; able to reconstruct a "
+"complete startup timeline."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:61
 msgid "阶段 1：规范退出"
@@ -208,8 +196,8 @@ msgstr "Phase 1: Standardized Exit"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:63
 msgid "**验证什么**：正常 stop/退出后资源释放，断点与日志无异常截断。"
 msgstr ""
-"**What to verify:** Resources are released after a normal stop/exit, and there "
-"are no abnormal truncations in breakpoints and logs."
+"**What to verify:** Resources are released after a normal stop/exit, and "
+"there are no abnormal truncations in breakpoints and logs."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:65
 msgid "**操作**：用 Shell 正常退出，勿强杀进程。"
@@ -225,12 +213,11 @@ msgid "阶段 2：任务调度与 SKIP"
 msgstr "Phase 2: Task Scheduling and Skip"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:71
-msgid ""
-"**验证什么**：异步拉价与策略任务边界清晰；跳过任务时日志含可读的 "
-"``skip_reason``。"
+msgid "**验证什么**：异步拉价与策略任务边界清晰；跳过任务时日志含可读的 ``skip_reason``。"
 msgstr ""
-"**What to verify:** Asynchronous price increases and strategy tasks have clear "
-"boundaries; when a task is skipped, the log contains readable `skip_reason`."
+"**What to verify:** Asynchronous price increases and strategy tasks have "
+"clear boundaries; when a task is skipped, the log contains readable "
+"`skip_reason`."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:73
 msgid "**操作**：观察 ``acquire_live_price``、``run_strategy`` 等调度。"
@@ -241,7 +228,8 @@ msgstr ""
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:74
 msgid "**验收**：异常/跳过可解释、可统计。"
 msgstr ""
-"**Acceptance**: Anomalies/skips are explainable and statistically significant."
+"**Acceptance**: Anomalies/skips are explainable and statistically "
+"significant."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:77
 msgid "阶段 3：日程与 catch-up"
@@ -251,8 +239,8 @@ msgstr "Phase 3: Schedule and Catch-up"
 msgid "**验证什么**：同一配置下日程可复现；盘中启动的「补跑」行为与文档一致。"
 msgstr ""
 "**What to verify:** The schedule can be reproduced under the same "
-"configuration; the \"rerun\" behavior when started from the disk is consistent "
-"with the documentation."
+"configuration; the \"rerun\" behavior when started from the disk is "
+"consistent with the documentation."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:81
 msgid "**操作**：对比同日两次关键任务时刻，或盘中启动一次。"
@@ -290,8 +278,8 @@ msgstr "Phase 4-A: Transaction Return Path"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:95
 msgid "**验证什么**：成交经 ``poll_fills`` 等公开路径消费，整日 sim 可稳定运行。"
 msgstr ""
-"**What is being verified:** Transactions are consumed through public paths such "
-"as `poll_fills`, and the SIM can run stably all day."
+"**What is being verified:** Transactions are consumed through public paths "
+"such as `poll_fills`, and the SIM can run stably all day."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:97
 msgid "**操作**：跑满半个交易日或整日。"
@@ -307,11 +295,10 @@ msgstr "Phase 4-B: Skip Cause-Based Bucketing"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:103
 msgid ""
-"**验证什么**：日志中 ``skip_reason=`` 可人工归类（如 ``gate_failed``、"
-"``snapshot_stale``）。"
+"**验证什么**：日志中 ``skip_reason=`` 可人工归类（如 ``gate_failed``、``snapshot_stale``）。"
 msgstr ""
-"**What to verify:** The `skip_reason=` in the logs can be manually categorized "
-"(e.g., `gate_failed`, `snapshot_stale`)."
+"**What to verify:** The `skip_reason=` in the logs can be manually "
+"categorized (e.g., `gate_failed`, `snapshot_stale`)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:105
 msgid "**操作**：检索 ``skip_reason=``。"
@@ -320,7 +307,8 @@ msgstr "**Operation:** Retrieve `skip_reason=`."
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:106
 msgid "**验收**：字段齐全、含义可懂。"
 msgstr ""
-"**Acceptance**: All fields are complete and their meanings are understandable."
+"**Acceptance**: All fields are complete and their meanings are "
+"understandable."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:109
 msgid "阶段 5-A：策略快照"
@@ -329,15 +317,14 @@ msgstr "Phase 5-A: Strategy Snapshot"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:111
 msgid "**验证什么**：开启 split 后，prepare 在 run 之前；快照过期时跳过有日志。"
 msgstr ""
-"**What to verify:** When split is enabled, prepare before run; skip snapshots "
-"that expire and have logs."
+"**What to verify:** When split is enabled, prepare before run; skip "
+"snapshots that expire and have logs."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:113
 msgid ""
-"**操作**：先 ``live_trade_split_strategy_prepare=False`` 作基线；再 ``True`` 并"
-"设 ``live_trade_prepare_lead_seconds``、"
-"``live_trade_strategy_snapshot_max_age_seconds``（须在 ``qt.run`` 前 "
-"configure）。"
+"**操作**：先 ``live_trade_split_strategy_prepare=False`` 作基线；再 ``True`` 并设 "
+"``live_trade_prepare_lead_seconds``、``live_trade_strategy_snapshot_max_age_seconds``（须在"
+" ``qt.run`` 前 configure）。"
 msgstr ""
 "**Operation:** First, set `live_trade_split_strategy_prepare=False` to "
 "establish a baseline; then set `True` and configure "
@@ -348,7 +335,8 @@ msgstr ""
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:114
 msgid "**验收**：日程/日志见 prepare；``snapshot_stale`` 可解释。"
 msgstr ""
-"**Acceptance**: See prepare for schedule/log; `snapshot_stale` is explanatory."
+"**Acceptance**: See prepare for schedule/log; `snapshot_stale` is "
+"explanatory."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:117
 msgid "阶段 5-B：启动门禁"
@@ -363,13 +351,14 @@ msgstr ""
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:121
 msgid "**操作**：分档试 ``warn`` / ``block``；Shell 执行 ``gate``。"
 msgstr ""
-"**Operations**: Test `warn` / `block` in different tiers; Shell executes `gate`."
+"**Operations**: Test `warn` / `block` in different tiers; Shell executes "
+"`gate`."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:122
 msgid "**验收**：``block`` 不误杀正常交易日（先 ``warn`` 灰度）。"
 msgstr ""
-"**Acceptance Test:** `block` should not mistakenly block transactions on normal "
-"trading days (first use `warn` for grayscale testing)."
+"**Acceptance Test:** `block` should not mistakenly block transactions on "
+"normal trading days (first use `warn` for grayscale testing)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:125
 msgid "阶段 11 / 5-C：映射、轮换、诊断、对账"
@@ -378,8 +367,8 @@ msgstr "Phase 11 / 5-C: Mapping, Rotation, Diagnosis, Reconciliation"
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:127
 msgid "**验证什么**：券商号回写、risk 日志轮换、在途单诊断、收盘对账 JSON。"
 msgstr ""
-"**What is being verified:** Brokerage account write-back, risk log rotation, in-"
-"transit order diagnosis, and closing reconciliation JSON."
+"**What is being verified:** Brokerage account write-back, risk log rotation,"
+" in-transit order diagnosis, and closing reconciliation JSON."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:129
 msgid ""
@@ -392,11 +381,10 @@ msgstr ""
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:130
 msgid ""
-"**产物与轮换** — ``artifacts`` 四键可写；``rotatelogs --days 30`` 清理超期 "
-"``*.risk.log``。"
+"**产物与轮换** — ``artifacts`` 四键可写；``rotatelogs --days 30`` 清理超期 ``*.risk.log``。"
 msgstr ""
-"**Products and Rotation** — ``artifacts`` writable with four keys; ``rotatelogs "
-"--days 30`` cleans up expired ``*.risk.log``."
+"**Products and Rotation** — ``artifacts`` writable with four keys; "
+"``rotatelogs --days 30`` cleans up expired ``*.risk.log``."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:131
 msgid "**在途单诊断** — DEBUG：``run --task diagnose_pending_orders``，字段齐全。"
@@ -406,7 +394,8 @@ msgstr ""
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:132
 msgid "**post_close** — ``reconcile`` JSON 含 ``is_ok``、``failures`` 等。"
-msgstr "**post_close** — `reconcile` JSON containing `is_ok`, `failures`, etc."
+msgstr ""
+"**post_close** — `reconcile` JSON containing `is_ok`, `failures`, etc."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:135
 msgid "四、与 live_grid_multi 相关的补充"
@@ -419,8 +408,7 @@ msgstr ""
 "initialized reasonably on the first day."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:138
-msgid ""
-"**子日频 refill**：冒烟日可先缩小 refill 表，仅保留 ``stock_1min`` 等最小集。"
+msgid "**子日频 refill**：冒烟日可先缩小 refill 表，仅保留 ``stock_1min`` 等最小集。"
 msgstr ""
 "**Sub-day frequency refill**: For days with smoke, the refill table can be "
 "reduced to only the smallest set such as `stock_1min`."
@@ -437,13 +425,13 @@ msgstr "5. Notebook emitting smoke without a head (optional)"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:144
 msgid ""
-"休市时在 Notebook 中可调用 ``tests/notebook_trader_headless_script.py`` 各 "
-"``stage*`` 函数；详见脚本内注释。与手工 live **可二选一或组合**。"
+"休市时在 Notebook 中可调用 ``tests/notebook_trader_headless_script.py`` 各 ``stage*``"
+" 函数；详见脚本内注释。与手工 live **可二选一或组合**。"
 msgstr ""
-"During market closure, the `stage*` functions in `tests/"
-"notebook_trader_headless_script.py` can be called within the Notebook; see the "
-"script comments for details. This can be used in conjunction with manual live "
-"mode."
+"During market closure, the `stage*` functions in "
+"`tests/notebook_trader_headless_script.py` can be called within the "
+"Notebook; see the script comments for details. This can be used in "
+"conjunction with manual live mode."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:147
 msgid "六、当日收工简表"
@@ -451,38 +439,34 @@ msgstr "VI. Daily Work Summary Sheet"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:149
 msgid ""
-"手工冒烟结束时，可用下表快速勾选「今天测到哪一步」。各行对应上文第三部分的阶段编"
-"号；**您执行的动作摘要**请按实际填写，**打勾标准**来自该阶段验收说明。本表范围覆"
-"盖路线图 0～5-C / 阶段 11，不含 Broker/QMT 接入（见 :doc:`4-broker-adapter-and-"
-"integration`）。"
+"手工冒烟结束时，可用下表快速勾选「今天测到哪一步」。各行对应上文第三部分的阶段编号；**您执行的动作摘要**请按实际填写，**打勾标准**来自该阶段验收说明。本表范围覆盖路线图"
+" 0～5-C / 阶段 11，不含 Broker/QMT 接入（见 :doc:`4-broker-adapter-and-integration`）。"
 msgstr ""
-"When manual smoke testing is complete, you can quickly check off \"Which step "
-"of today's testing was completed\" using the table below. Each row corresponds "
-"to the stage number in Part 3 above; **A summary of your actions** should be "
-"filled in as actually performed, and the **checking criteria** are from the "
-"acceptance specifications for that stage. This table covers Roadmap 0 to 5-C / "
-"Stage 11, excluding Broker/QMT integration (see :doc:`4-broker-adapter-and-"
-"integration`)."
+"When manual smoke testing is complete, you can quickly check off \"Which "
+"step of today's testing was completed\" using the table below. Each row "
+"corresponds to the stage number in Part 3 above; **A summary of your "
+"actions** should be filled in as actually performed, and the **checking "
+"criteria** are from the acceptance specifications for that stage. This table"
+" covers Roadmap 0 to 5-C / Stage 11, excluding Broker/QMT integration (see "
+":doc:`4-broker-adapter-and-integration`)."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:151
-msgid ""
-"**各列含义**：**阶段**为路线图编号；**您执行的动作摘要**由您记录；**打勾标准**为"
-"通过该阶段的最小条件。"
+msgid "**各列含义**：**阶段**为路线图编号；**您执行的动作摘要**由您记录；**打勾标准**为通过该阶段的最小条件。"
 msgstr ""
 "**Column Meanings:** **Stage** is the roadmap number; **A summary of your "
-"actions** is recorded by you; **Checkmark Criteria** is the minimum requirement "
-"to pass this stage."
+"actions** is recorded by you; **Checkmark Criteria** is the minimum "
+"requirement to pass this stage."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:153
 msgid ""
-"**如何使用**：冒烟过程中完成某阶段后，在「动作摘要」列写一句（如「warn 模式下 "
-"gate 通过」），达标则在心中或副本上打勾；未达标则记入 §七记录模板的「结论」列。"
+"**如何使用**：冒烟过程中完成某阶段后，在「动作摘要」列写一句（如「warn 模式下 gate 通过」），达标则在心中或副本上打勾；未达标则记入 "
+"§七记录模板的「结论」列。"
 msgstr ""
 "**How to use:** After completing a certain stage during the smoke process, "
-"write a sentence in the \"Action Summary\" column (e.g., \"Gate passed in warn "
-"mode\"). If the goal is achieved, check the box in your mind or on the copy; if "
-"the goal is not achieved, record it in the \"Conclusion\" column of §7 Record "
-"Template."
+"write a sentence in the \"Action Summary\" column (e.g., \"Gate passed in "
+"warn mode\"). If the goal is achieved, check the box in your mind or on the "
+"copy; if the goal is not achieved, record it in the \"Conclusion\" column of"
+" §7 Record Template."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:159
 msgid "阶段"
@@ -562,13 +546,13 @@ msgstr "VII. Record Template (Recommended)"
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:181
 msgid ""
-"每次冒烟后记录：版本号、核心 ``live_trade_*`` 配置、``gate`` 结果、拒单抽检、"
-"``reconcile`` 摘要、结论（通过/待查/阻塞）。便于下一交易日对照。"
+"每次冒烟后记录：版本号、核心 ``live_trade_*`` 配置、``gate`` 结果、拒单抽检、``reconcile`` "
+"摘要、结论（通过/待查/阻塞）。便于下一交易日对照。"
 msgstr ""
 "After each smoke signal, record: version number, core `live_trade_*` "
-"configuration, `gate` result, rejected order sampling, `reconcile` summary, and "
-"conclusion (passed/pending/blocked). This is for comparison on the next trading "
-"day."
+"configuration, `gate` result, rejected order sampling, `reconcile` summary, "
+"and conclusion (passed/pending/blocked). This is for comparison on the next "
+"trading day."
 
 #: ../../source/live_trading/7-manual-smoke-live-grid-roadmap.rst:184
 msgid "相关文档"

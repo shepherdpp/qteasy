@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 21:02+0800\n"
+"POT-Creation-Date: 2026-10-01 21:36+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: es <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr "HistoryPanel Visualización"
 #: ../../source/manage_data/02.6. historypanel_visual.md:3
 #, python-format
 msgid ""
-"上一章 [HistoryPanel（历史数据面板）](2.5.%20historypanel.md) "
+"上一章 [HistoryPanel（历史数据面板）](02.5.%20historypanel.md) "
 "介绍了如何把多标的、多指标的历史数据对齐到同一块面板。本章说明如何**直接用面板出图**：与「先 `to_share_frame` 再手写 "
 "matplotlib」相比，**`HistoryPanel.plot()`** 根据当前 `htypes` 自动组合 K "
 "线、成交量、MACD、折线等视图，使探索数据时的上下文与策略研究阶段保持一致。"
@@ -254,11 +254,11 @@ msgstr "resumen"
 #: ../../source/manage_data/02.6. historypanel_visual.md:62
 #, python-format
 msgid ""
-"数据准备仍通过 **`get_history_data`** 等与 [上一章](2.5.%20historypanel.md) 一致；制图统一走 "
+"数据准备仍通过 **`get_history_data`** 等与 [上一章](02.5.%20historypanel.md) 一致；制图统一走 "
 "**`hp.plot()`**。"
 msgstr ""
 "La preparación de datos todavía se realiza usando **`get_history_data`**, de"
-" acuerdo con el [Capítulo anterior](2.5.%20historypanel.md); el trazado se "
+" acuerdo con el [Capítulo anterior](02.5.%20historypanel.md); el trazado se "
 "realiza utilizando **`hp.plot()`**."
 
 #: ../../source/manage_data/02.6. historypanel_visual.md:63
