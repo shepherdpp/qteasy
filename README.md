@@ -43,7 +43,7 @@
 > Note:
 > 
 > `qteasy`已经升级到2.0版本，使得交易策略能更加灵活有效地使用历史数据、同时简化了交易策略的定义过程、提高了效率。
-> 由于`qteasy`仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request---新功能需求.md&title=)给我，也可以进入[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。也欢迎各位贡献代码！
+> 由于`qteasy`仍处于测试中，软件中不免存在一些漏洞和bug，如果大家使用中出现问题，欢迎[Issue-报告bug](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=bug-report---bug报告.md&title=)或者[提交新功能需求](https://github.com/shepherdpp/qteasy/issues/new?assignees=&labels=&projects=&template=feature-request--功能需求.md&title=)给我，也可以进入[讨论区](https://github.com/shepherdpp/qteasy/discussions)参与讨论。也欢迎各位贡献代码！
 >
 > 我会尽快修复问题并回复大家的问题。
 
