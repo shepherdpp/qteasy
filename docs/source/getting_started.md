@@ -315,7 +315,7 @@ Max drawdown:                    36.85%
 若希望按完整流程走通「从配置到回测、优化、模拟/实盘」，可依下列顺序阅读教程与文档，每步均有对应章节与示例：
 
 1. **配置数据源与 Token** → [教程：入门](tutorials/1-get-started.md)、[教程：获取数据](tutorials/2.0-get-data.md)
-2. **下载数据** → [教程：获取数据](tutorials/2.0-get-data.md)、[下载并管理金融历史数据](manage_data/1.%20overview.md)
+2. **下载数据** → [教程：获取数据](tutorials/2.0-get-data.md)、[下载并管理金融历史数据](manage_data/01.%20overview.md)
 2b. **玩数据与简单因子（可选，建议策略回测前完成）** → [获取数据 / 最小数据集](tutorials/2.0-get-data.md) → [HistoryPanel 基础操作](tutorials/2.4-historypanel-basics.md) → [玩数据与因子分析](tutorials/2.5-historypanel-data-analysis.md) →（进阶）[纵向择时](tutorials/2.6-historypanel-advanced-vertical-timeaxis.md) / [横截面选股](tutorials/2.7-historypanel-advanced-horizontal-multifactor.md) / [事件型因子](tutorials/2.8-historypanel-advanced-event-kline-pattern.md)；可运行 `examples/data_playground_e2e.py`
 3. **定义策略并回测** → [教程：第一个策略](tutorials/3-start-first-strategy.md)、[教程：内置策略](tutorials/4-build-in-strategies.md)、[教程：自定义策略](tutorials/5-first-self-defined-strategy.md)、[如何运行回测](back_testing/2.%20run_backtest.md)
 4. **参数优化** → [教程：交易策略的优化](tutorials/Tutorial%2006%20-%20交易策略的优化.md)、[优化交易策略](optimization/1.%20overview.md)
