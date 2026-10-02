@@ -127,7 +127,7 @@ crossline择时策略类，利用长短均线的交叉确定多空状态
 窗口长度：270
 参数范围：[(10, 250), (10, 250), (0, 1)]
 策略不支持参考数据，不支持交易数据
-File:           ~/Library/CloudStorage/OneDrive-Personal/Projects/PycharmProjects/qteasy/qteasy/built_in.py
+File:           qteasy/built_in.py
 Type:           type
 Subclasses:     
 ```
@@ -178,7 +178,7 @@ Docstring:
 窗口长度：150
 参数范围：[(2, 150)]
 策略不支持参考数据，不支持交易数据
-File:           ~/Library/CloudStorage/OneDrive-Personal/Projects/PycharmProjects/qteasy/qteasy/built_in.py
+File:           qteasy/built_in.py
 Type:           type
 Subclasses:    
 ```

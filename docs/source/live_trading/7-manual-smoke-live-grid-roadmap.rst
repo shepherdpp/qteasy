@@ -19,7 +19,7 @@
 一、环境与前置条件
 ------------------
 
-1. **Python**：推荐 ``/opt/anaconda3/envs/py39/bin/python``。若您通过 pip 安装 qteasy，工作目录可以是任意包含 ``examples/live_grid_multi.py`` 的路径（不必克隆全仓库，但需能访问示例脚本）。
+1. **Python**：推荐 ``python3``。若您通过 pip 安装 qteasy，工作目录可以是任意包含 ``examples/live_grid_multi.py`` 的路径（不必克隆全仓库，但需能访问示例脚本）。
 2. **新账户、无持仓**（避免旧订单干扰）：
 
    - ``-n/--new_account <用户名>`` 创建新账户；或  
@@ -33,7 +33,7 @@
 
 在含示例的目录执行（按您的账户调整）::
 
-   /opt/anaconda3/envs/py39/bin/python examples/live_grid_multi.py \\
+   python3 examples/live_grid_multi.py \\
        -a <ACCOUNT_ID> -n <NEW_USER_NAME_OR_OMIT> \\
        --ui cli \\
        [--debug] [--restart]

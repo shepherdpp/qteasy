@@ -209,12 +209,12 @@ pd.__version__
 出现下列报错：
     
 ```text
-[##############--------------------------]6000/16923-35.5% <fund_share:016407.OF>37107wrtn/about 19 minleftC:\ProgramData\anaconda3\envs\qteasy-env-p311\Lib\site-packages\qteasy*database.py:5134*: UserWarning:
+[##############--------------------------]6000/16923-35.5% <fund_share:016407.OF>37107wrtn/about 19 minleft<site-packages>\qteasy*database.py:5134*: UserWarning:
 抱歉，您每分钟最多访问该接口600次，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。:
 download process interrupted at [fund_share]:<F180003.OF>-<016408.OF>
 37107 rows downloaded, will proceed with next table!
 warnings.warn(msg)
-[#######################-----------------]10000/16923-59.1% <fund_manager:012277.OF>1264483wrtn/about 15 minleftC:\ProgramData\anaconda3\envs\qteasy-env-p311\Lib\site-packages\qteasy\database.py:5134: UserWarning:
+[#######################-----------------]10000/16923-59.1% <fund_manager:012277.OF>1264483wrtn/about 15 minleft<site-packages>\qteasy\database.py:5134: UserWarning:
 抱歉，您每分钟最多访问该接口500次，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。:
 download process interrupted at [fund_manager]:<F180003.OF>-<012278.OF>
 1264483 rows downloaded, will proceed with next table!
