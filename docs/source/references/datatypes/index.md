@@ -44,7 +44,7 @@ print(df.head())
 
 > **勿手改** [`_generated/`](_generated/) 下的文件。更新内置类型或发文档前请重跑：
 >
-> `/opt/anaconda3/envs/py39/bin/python docs/scripts/generate_datatype_catalog.py`
+> `python docs/scripts/generate_datatype_catalog.py`
 
 - [分册统计与链接（catalog_index）](_generated/catalog_index.md)
 

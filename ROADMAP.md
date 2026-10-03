@@ -10,7 +10,7 @@
 2. `@docs/DEV_CONTEXT.md` — 协作背景与文档层级约定
 3. 说明本步任务 ID（如 `S2.1`、`M2.2`、`Q-AI.2`）→ 打开展望 **§7.2** 链到的次顶层 plan → 执行
 
-**qteasy-ai**：代码在 [shepherdpp/qteasy-ai](https://github.com/shepherdpp/qteasy-ai)；Q-AI 计划书仍在 **本仓** `.cursor/plans/`。建议打开 `~/Projects/qteasy-ecosystem.code-workspace`（qteasy + qteasy-ai 双根）。产品顶层金标准：[qteasy_ai_top_level_design](.cursor/plans/qteasy_ai_top_level_design.plan.md)。
+**qteasy-ai**：代码在 [shepherdpp/qteasy-ai](https://github.com/shepherdpp/qteasy-ai)；Q-AI 计划书仍在 **本仓** `.cursor/plans/`。建议以一个同时包含 qteasy 与 qteasy-ai 双根的工作区打开（如 `qteasy-ecosystem.code-workspace`）。产品顶层金标准：[qteasy_ai_top_level_design](.cursor/plans/qteasy_ai_top_level_design.plan.md)。
 
 ---
 

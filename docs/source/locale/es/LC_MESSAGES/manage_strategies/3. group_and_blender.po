@@ -1,0 +1,540 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 17:07+0800\n"
+"PO-Revision-Date: 2026-05-24 14:00+0800\n"
+"Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:1
+msgid "Group 与策略信号混合"
+msgstr "Combinación de señales de grupo y estrategia"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:3
+msgid ""
+"一个 Operator 中的多个策略，按 ``run_freq``（运行频率）与 ``run_timing``（运行时机）被划分为若干个 "
+"**Group（策略组）**：频率与时机相同的策略归入同一组，在同一时刻一起运行；每个 Group 再用 **blender（混合器表达式）** "
+"把组内多个策略的信号合并成一个。当 Operator 内不止一个 Group 时，组与组之间的合并方式由 ``group_merge_type``"
+" 决定。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:5
+msgid "交易信号的三种类型"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:7
+msgid ""
+"每个 Group 都有一个 ``signal_type``，它决定了组内信号数字的含义。``signal_type`` 只能取 "
+"``'pt'``、``'ps'``、``'vs'`` 三者之一（大小写不敏感，框架内部统一转为小写）："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "取值"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "全称"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "信号数字的含义"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``'pt'``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "position target"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "目标持仓权重"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``'ps'``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "proportional signal"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "相对总资产的买卖比例"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``'vs'``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "value / volume signal"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "固定金额或固定数量的买卖指令"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:26
+msgid "（两个策略的运行频率与时机相同，归入同一个组，因此这里只有一个组。）"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:28
+msgid "传入非法取值会直接报错："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:38
+msgid "Group 的由来"
+msgstr "Cómo se forman los grupos"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:40
+#, fuzzy
+msgid ""
+"创建 Operator 或调用 ``add_strategy()`` 时给定的 ``run_freq`` / "
+"``run_timing``，决定策略被分到哪个组：与已有某组相同则并入该组，否则新建一组。"
+msgstr ""
+"Al agregar estrategias con ``run_freq`` and ``run_timing``, se unen a un "
+"grupo existente si coinciden; de lo contrario, se crea un nuevo grupo."
+
+#: ../../source/manage_strategies/3. group_and_blender.md:41
+msgid "运行频率与时机相同的策略同组、同时运行；频率或时机不同则分属不同组，各自按自己的时间表运行。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:59
+msgid "查看 Group 与 blender"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "接口"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "返回内容"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``op.groups``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "所有策略组组成的字典，键为组名、值为 ``Group`` 对象"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``op.get_blender(group_name=None)``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "各组的混合器（前缀表达式形式）；指定组名时只返回该组"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``op.view_blender(group=None)``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "混合器的可读形式，把 ``s0`` 等下标替换成策略 ID"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``Group.member_strategy_ids``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "该组成员策略的 ID 列表"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``Group.strategy_count``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "该组的策略数量"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``Group.human_blender``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "该组混合器的可读字符串"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:83
+msgid "blender 表达式"
+msgstr "Expresiones de licuadora"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:85
+#, fuzzy
+msgid "默认 blender"
+msgstr "Expresiones de licuadora"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:87
+msgid "不指定 blender 时，``Group`` 按 ``signal_type`` 与成员数量自动生成默认表达式："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:89
+msgid "``'pt'``：所有信号**相乘**，如两个策略时为 ``s0*s1``；"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:90
+msgid "``'ps'`` / ``'vs'``：所有信号**相加**，如两个策略时为 ``s0+s1``。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:113
+msgid ""
+"可以这样理解两者的差别：把同组策略想象成几个同时发言的参谋——``pt`` 默认相乘，任一参谋给出 0 仓位就会把整体仓位压到 "
+"0，表决偏向「一票否决」；``ps`` / ``vs`` "
+"默认相加，各位参谋的买卖意见会累加起来。这只是帮助理解的比方，实际计算就是上面两个表达式的字面含义。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:115
+#, fuzzy
+msgid "自定义 blender"
+msgstr "Expresiones de licuadora"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:117
+msgid ""
+"用 ``op.set_blender(blender, group_id=None)`` 设置。``blender`` "
+"可以是字符串、字符串列表或字典；``group_id`` 为 ``None`` 时作用于全部策略组。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:131
+msgid ""
+"表达式中 ``s0``、``s1``、``s2`` … 依次对应该组内的第 1、2、3 … 个策略（按加入顺序）。可用运算符与优先级由 "
+"``blender_parser`` 定义："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "运算符"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "优先级"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "说明"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``^``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "2（最高）"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "幂"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``*`` ``/``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "1"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "乘、除"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``&`` ``and``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "逻辑与"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``~`` ``not``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "取反"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``+`` ``-``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "0"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "加、减"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``|`` ``or``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "逻辑或"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:142
+msgid "可用括号 ``(`` ``)`` 强制优先计算。常用写法："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "表达式"
+msgstr "Expresión"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "含义"
+msgstr "Significado"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``s0``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "只取第一个策略的信号"
+msgstr "Utilice sólo la señal de la primera estrategia."
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``s0*s1``"
+msgstr "``s0*s1``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "两信号逐元素相乘（``pt`` 的默认行为）"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``0.5*s0+0.5*s1``"
+msgstr "``0.5*s0+0.5*s1``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "两信号等权平均"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``(s0+s1)/2``"
+msgstr "``(s0+s1)/2``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "与 ``0.5*s0+0.5*s1`` 等价"
+msgstr "Equivalente a ``0.5*s0+0.5*s1``."
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``s0+s1``"
+msgstr "``s0*s1``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "两信号相加（``ps`` / ``vs`` 的默认行为）"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:152
+msgid ""
+"设置时框架会用 ``blender_parser`` 解析表达式，无法解析的表达式在赋值给 ``Group.blender_str`` 时会抛出 "
+"``ValueError``。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:154
+msgid "多个 Group 之间的合并：group_merge_type"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:156
+msgid ""
+"当 Operator 里存在多个 Group，且它们在同一时间点都产生信号时，``group_merge_type`` "
+"决定这些组信号如何合并。构造 Operator 时通过关键字参数传入，合法取值为 "
+"``'none'``、``'and'``、``'or'``（大小写不敏感），**默认为** ``'None'``："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:175
+msgid "三种取值的实际行为（依据 ``Operator.run_strategy()`` 的实现）："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "行为"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "合并初始值"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``'None'``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "各组信号**独立执行**，每个组各产生一条信号，互不合并"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "不适用"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``'Or'``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "各组信号**相加**后合并为一条信号"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``0``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "``'And'``"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+msgid "各组信号**相乘**后合并为一条信号"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md
+#, fuzzy
+msgid "``1``"
+msgstr "``s0``"
+
+#: ../../source/manage_strategies/3. group_and_blender.md:183
+msgid ""
+"也就是说，``'Or'`` 的合并结果是 ``0 + 组1信号 + 组2信号 + …``，``'And'`` 的合并结果是 ``1 × 组1信号 "
+"× 组2信号 × …``。对于取值为 0 / 1 的多空信号，相乘相当于「与」、相加相当于「或」，这便是两个名字的来历。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:185
+msgid ""
+"需要注意：``group_merge_type`` 不为 ``'None'`` 时，同一时间点的多个组会被合并成一条信号；此时若这些组的 "
+"``signal_type`` 不一致，框架无法判断以哪一个为准，会抛出 ``RuntimeError``。要么让所有组使用相同的 "
+"``signal_type``，要么保持 ``group_merge_type='None'``。"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:187
+msgid "运行前检查"
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:189
+msgid ""
+"``op.is_ready()``（或等价的属性写法 ``op.ready``）检查 Operator "
+"是否已具备生成交易信号的最小条件。``tell_me_why=True`` 会打印不满足的具体原因："
+msgstr ""
+
+#: ../../source/manage_strategies/3. group_and_blender.md:211
+msgid "上述缺失项（股票池、数据缓冲区、运行时间表等）由回测 / 实盘流程在运行前自动补齐，因此这里返回 ``False`` 是正常的，不代表配置有误。"
+msgstr ""
+
+#~ msgid ""
+#~ "同一 Operator 中，**run_freq** 与 **run_timing**"
+#~ " 相同的策略会被归入同一个 Group；每个 Group 内可用 "
+#~ "**blender** 表达式将多个策略的信号合并为一个。"
+#~ msgstr ""
+#~ "En una expresión ``Operator``, strategies "
+#~ "with the same **``run_freq``** and "
+#~ "**``run_timing``** belong to the same "
+#~ "Group; within each Group, a "
+#~ "**``blender``** fusiona múltiples señales de"
+#~ " estrategia en una."
+
+#~ msgid "回测/实盘时按 Group 为单位调度：同一 Group 内各策略在同一时刻运行，再用 blender 合并输出。"
+#~ msgstr ""
+#~ "En el backtest/comercio en vivo, la "
+#~ "programación es por grupo: las "
+#~ "estrategias de un grupo se ejecutan "
+#~ "al mismo tiempo y luego el "
+#~ "mezclador fusiona sus resultados."
+
+#~ msgid "查看 Operator 的 Group"
+#~ msgstr "Inspeccionar grupos Operator"
+
+#~ msgid "**groups**：各 Group 的配置与所含策略。"
+#~ msgstr "**``groups``**: Configuración y estrategias de miembros de cada Grupo."
+
+#~ msgid "**group_timing_table**：各组对应的 run_freq、run_timing 一览，便于核对运行时刻。"
+#~ msgstr ""
+#~ "**``group_timing_table``**: ``run_freq`` and "
+#~ "``run_timing`` por grupo para verificar "
+#~ "los cronogramas de ejecución."
+
+#~ msgid "Blender 将同组内多个策略的信号（按加入顺序记为 s0, s1, s2, …）合并为一个。常用形式："
+#~ msgstr ""
+#~ "Un mezclador fusiona señales de "
+#~ "estrategias en el mismo grupo (s0, "
+#~ "s1, s2,… en orden sumado). Formas "
+#~ "comunes:"
+
+#~ msgid "两策略信号等权加权。"
+#~ msgstr "Combinación de igual peso de dos señales estratégicas."
+
+#~ msgid "两信号逐元素相乘（如择时仓位相乘）。"
+#~ msgstr ""
+#~ "Producto por elementos (por ejemplo, "
+#~ "multiplicar posiciones de sincronización)."
+
+#~ msgid ""
+#~ "与 **signal_type** 的关系：PT 时 s0/s1 通常为 "
+#~ "[0,1] 的仓位；PS 时需按具体策略约定理解。所有支持的运算为标量与 s0/s1/… "
+#~ "的加减乘除及常数组合。"
+#~ msgstr ""
+#~ "Relación con **``signal_type``**: Para PT, "
+#~ "s0/s1 generalmente son posiciones en "
+#~ "[0,1]; para PS, siga la convención "
+#~ "de cada estrategia. Las operaciones "
+#~ "admitidas son escalares combinados con "
+#~ "s0/s1/… vía +, −, ×, ÷."
+
+#~ msgid "多组时的合并"
+#~ msgstr "Fusionar varios grupos"
+
+#~ msgid "当 Operator 内有多个 Group 时，**group_merge_type** 决定多组最终信号如何合并："
+#~ msgstr ""
+#~ "Cuando un ``Operator`` has multiple "
+#~ "Groups, **``group_merge_type``** controla cómo "
+#~ "se combinan las señales finales:"
+
+#~ msgid "**None**：按框架默认方式（通常为最后一组或指定组）输出。"
+#~ msgstr ""
+#~ "**``None``**: Marco predeterminado (generalmente "
+#~ "el último o un grupo designado)."
+
+#~ msgid "**And**：多组信号做“与”逻辑（如择时均为 1 才为 1）。"
+#~ msgstr ""
+#~ "**``And``**: Y lógico entre grupos (por"
+#~ " ejemplo, todas las señales de "
+#~ "sincronización deben ser 1)."
+
+#~ msgid "**Or**：多组信号做“或”逻辑。"
+#~ msgstr "**``Or``**: O lógico entre grupos."
+
+#~ msgid "示例"
+#~ msgstr "Ejemplo"
+
+#~ msgid "两个择时策略等权混合的典型写法："
+#~ msgstr "Combinación típica de igual peso de dos estrategias de sincronización:"
+
+#~ msgid "配置完成后，该 Group 在每个运行时刻会先分别计算 dma 与 macd 的信号，再按 blender 输出合并后的仓位。"
+#~ msgstr ""
+#~ "Después de la configuración, este grupo"
+#~ " calcula las señales dma y macd "
+#~ "por separado en cada paso de "
+#~ "ejecución y luego genera la posición "
+#~ "combinada a través del mezclador."
+

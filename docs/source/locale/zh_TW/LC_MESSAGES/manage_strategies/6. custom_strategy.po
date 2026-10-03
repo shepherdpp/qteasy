@@ -1,0 +1,97 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-23 14:20+0800\n"
+"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:1
+msgid "自定义策略：从定义到使用"
+msgstr "自定義策略：從定義到使用"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:3
+msgid "自定义策略需要：定义可调参数、声明所需数据（DataType）、实现 ``realize()``，再将策略实例加入 Operator。"
+msgstr "自定義策略需要：定義可調參數、聲明所需數據（DataType）、實現 ``realize()``，再將策略實例加入 Operator。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:5
+msgid "定义可调参数"
+msgstr "定義可調參數"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:7
+msgid ""
+"使用 **Parameter** 声明可调参数（par_range、name、par_type 等），在策略 ``__init__`` 中通过 "
+"**pars=[...]** 传入："
+msgstr ""
+"使用 **Parameter** 聲明可調參數（par_range、name、par_type 等），在策略 ``__init__`` 中通過 "
+"**pars=[...]** 傳入："
+
+#: ../../source/manage_strategies/7. custom_strategy.md:20
+msgid ""
+"这样在优化或手动设置时可通过 ``set_parameter(stg_id, pars={'short_period': 8, "
+"'long_period': 40})`` 调整。"
+msgstr ""
+"這樣在優化或手動設置時可通過 ``set_parameter(stg_id, pars={'short_period': 8, "
+"'long_period': 40})`` 調整。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:22
+msgid "定义所需数据"
+msgstr "定義所需數據"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:24
+msgid ""
+"在策略中声明 **DataType**、**window_length**（回溯长度）、**use_latest_data_cycle** "
+"等，以便框架在运行前准备数据并在 ``realize()`` 中通过 **get_data(dtype_id)** 获取。"
+msgstr ""
+"在策略中聲明 **DataType**、**window_length**（回溯長度）、**use_latest_data_cycle** "
+"等，以便框架在運行前準備數據並在 ``realize()`` 中通過 **get_data(dtype_id)** 獲取。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:26
+msgid "实现 realize()"
+msgstr "實現 realize()"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:28
+msgid ""
+"**realize()** 无参数，内部通过 **get_pars()** 取当前参数、**get_data(dtype_id)** 取数据。"
+msgstr ""
+"**realize()** 無參數，內部通過 **get_pars()** 取當前參數、**get_data(dtype_id)** 取數據。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:29
+msgid "**返回值**：按策略类型约定（如 PT 为 0～1 的仓位标量或向量，PS 为选股列表等）。"
+msgstr "**返回值**：按策略類型約定（如 PT 爲 0～1 的倉位標量或向量，PS 爲選股列表等）。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:31
+msgid "加入 Operator"
+msgstr "加入 Operator"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:33
+msgid ""
+"使用 **add_strategy(MyStg(), run_freq=..., run_timing=...)** 将实例加入 "
+"Operator；run_freq/run_timing 决定归入哪一 Group。"
+msgstr ""
+"使用 **add_strategy(MyStg(), run_freq=..., run_timing=...)** 將實例加入 "
+"Operator；run_freq/run_timing 決定歸入哪一 Group。"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:35
+msgid "完整小示例"
+msgstr "完整小示例"
+
+#: ../../source/manage_strategies/7. custom_strategy.md:37
+msgid "以下为一个最小可运行的双均线择时示例（逻辑示意，继承基类与 DataType 以实际 API 为准）："
+msgstr "以下爲一個最小可運行的雙均線擇時示例（邏輯示意，繼承基類與 DataType 以實際 API 爲準）："
+
+#: ../../source/manage_strategies/7. custom_strategy.md:60
+msgid "更多示例见《使用教程》第 5～7 章。"
+msgstr "更多示例見《使用教程》第 5～7 章。"

@@ -229,9 +229,9 @@ Max drawdown:                    30.41%
     peak / valley:        2016-11-22 / 2018-10-16
     recovered on:         2019-03-07
 
-trade log is stored in: /Users/jackie/Projects/qteasy_logs/trade_log_none_20260309_152544.csv
-trade summary is stored in: /Users/jackie/Projects/qteasy_logs/trade_summary_none_20260309_152544.csv
-value curve (complete values) is stored in: /Users/jackie/Projects/qteasy_logs/value_curve_none_20260309_152544.csv
+trade log is stored in: ~/qteasy_logs/trade_log_<account>_<timestamp>.csv
+trade summary is stored in: ~/qteasy_logs/trade_summary_<account>_<timestamp>.csv
+value curve (complete values) is stored in: ~/qteasy_logs/value_curve_<account>_<timestamp>.csv
 
 ==================END OF REPORT===================
 ```

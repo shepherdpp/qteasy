@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"POT-Creation-Date: 2026-10-01 21:36+0800\n"
 "PO-Revision-Date: 2026-08-21 22:00+0800\n"
 "Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
 "Language-Team: zh_TW <LL@li.org>\n"
@@ -333,6 +333,36 @@ msgid ""
 msgstr ""
 "✅ AI 自然語言編排外殼（**獨立項目** `qteasy-ai <https://github.com/shepherdpp/qteasy-"
 "ai>`_，PyPI：``qteasy-ai``；依賴 qteasy 內核 API，不隨 qteasy 版本發佈）"
+
+#: ../../source/roadmap.rst:113
+msgid ""
+"Ask / Plan / Agent 模式、安全边界与 ``preview`` 迁移见 qteasy-ai `docs/USER_GUIDE.md "
+"<https://github.com/shepherdpp/qteasy-ai/blob/main/docs/USER_GUIDE.md>`_"
+msgstr ""
+"Ask / Plan / Agent 模式、安全邊界與 ``preview`` 遷移 — 見 qteasy-ai `docs/USER_GUIDE.md"
+" <https://github.com/shepherdpp/qteasy-ai/blob/main/docs/USER_GUIDE.md>`_"
+
+#: ../../source/roadmap.rst:114
+msgid "Ask 只解释 qteasy 概念（如 PT/PS/VS），不替代回测引擎；落盘与计算仍经 qteasy API"
+msgstr "Ask 只解釋 qteasy 概念（如 PT/PS/VS），不替代回測引擎；落盤與計算仍經 qteasy API"
+
+#: ../../source/roadmap.rst:115
+msgid ""
+"StrategyBuilder（Q-AI.4）已关单；边界见同仓 ``USER_GUIDE.md`` §6 与 "
+"`LIVE_FIRE_DRILL_QAI4.md <https://github.com/shepherdpp/qteasy-"
+"ai/blob/main/docs/LIVE_FIRE_DRILL_QAI4.md>`_"
+msgstr ""
+"StrategyBuilder（Q-AI.4）已關單；邊界見同倉 ``USER_GUIDE.md`` §6 與 "
+"`LIVE_FIRE_DRILL_QAI4.md <https://github.com/shepherdpp/qteasy-"
+"ai/blob/main/docs/LIVE_FIRE_DRILL_QAI4.md>`_"
+
+#: ../../source/roadmap.rst:116
+msgid ""
+"阶段 E（Q-AI.5）与阶段 F（Q-AI.6）实弹已关单；阶段 G（Q-AI.7）工作台**雏形**已交（Web + 最小 TUI）；**1.0**"
+" 标签待工作台可用性与开放环操作面齐备后发布"
+msgstr ""
+"階段 E（Q-AI.5）與階段 F（Q-AI.6）實彈已關單；階段 G（Q-AI.7）工作台**雛形**已交（Web + 最小 TUI）；**1.0**"
+" 標籤待工作台可用性與開放環操作面齊備後發布"
 
 #~ msgid "⬜ 从 ``akshare`` 获取数据"
 #~ msgstr "⬜ 從 ``akshare`` 獲取數據"

@@ -1,0 +1,292 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Jackie PENG
+# This file is distributed under the same license as the qteasy package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: qteasy 2.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-03 17:07+0800\n"
+"PO-Revision-Date: 2026-05-24 16:00+0800\n"
+"Last-Translator: Jackie PENG (zh_tw_fill_opencc)\n"
+"Language: zh_TW\n"
+"Language-Team: zh_TW <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
+
+#: ../../source/manage_strategies/7. strategy.md:1 trace
+msgid "追踪策略运行过程"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:3 trace
+msgid ""
+"**追踪（tracing）** 是 qteasy 提供的一项调试功能：在策略的 ``realize()`` "
+"方法中插入追踪点，把运行过程中的中间变量记录下来，回测结束后以 ``DataFrame`` "
+"的形式一并查看。它解决的是「策略算出来的信号我看不懂、不知道是哪一步算错」的问题。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:5 trace
+msgid ""
+"**注意**：追踪**不是**一种运行模式，而是回测过程中的一个可选功能，由配置项 ``trace_log`` 控制（默认值 "
+"``True``）。配置项 ``mode`` 的说明文本中出现了「3 / trace 追踪模式」的写法，但 ``qt.run()`` 的实际分派是"
+" ``mode=3`` 进入统计预测、``mode=4`` 直接报 ``ValueError: Invalid run mode: "
+"4``。因此要启用追踪请使用 ``trace_log``，不要试图用 ``mode`` 进入「追踪模式」。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:7 trace
+msgid "工作原理"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:9 trace
+msgid "一次回测中，追踪数据按下面的链路产生："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:11 trace
+msgid ""
+"回测启动时，若 ``trace_log`` 为 ``True``，``Backtester`` 调用 "
+"``op.enable_tracing()``，为 Operator 中每个策略分配长度为「信号总行数」的存储空间；"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:12 trace
+msgid "每运行一个时间步，Operator 调用 ``update_trace_step(step)`` 把写指针推进到当前行；"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:13 trace
+msgid "策略在 ``realize()`` 里调用 ``self.trace(name, var)``，把变量值写入当前行；"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:14 trace
+msgid ""
+"回测结束后，``Backtester.trace_result_df`` 把各策略的追踪数据按列拼接，行索引取 Operator "
+"的信号索引（``op_signal_index``），并并入回测的交易汇总数据。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:16 trace
+msgid "换句话说，追踪表的**一行对应一条交易信号**，**一列对应一个你插桩的变量**。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:18 trace
+msgid "相关接口"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "接口"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "作用"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Strategy.enable_tracing(max_steps)``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "启用该策略的追踪，预分配 ``max_steps`` 行空间"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Strategy.disable_tracing()``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "关闭追踪并清空已记录的数据"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Strategy.update_trace_step(step)``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "把写指针推进到第 ``step`` 行（回测中由 Operator 自动调用）"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Strategy.trace(name, var)``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "在当前行记录一个变量，``name`` 为变量名、``var`` 为变量值"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Strategy.get_trace_data()``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "以 ``DataFrame`` 形式返回该策略已记录的全部追踪数据"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Operator.enable_tracing()`` / ``disable_tracing()``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "对 Operator 内所有策略统一启用 / 关闭追踪（回测中由 ``Backtester`` 自动调用）"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``Backtester.trace_result_df``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "回测结束后全部策略的追踪数据，行索引为信号索引"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "``qt.QT_CONFIG['trace_log']``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md trace
+msgid "全局配置项，是否启用追踪，默认 ``True``"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:31 trace
+msgid "可追踪的变量类型"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:33 trace
+msgid "``trace()`` 只接受 **int、float、bool、str** 四类值（含对应的 numpy 标量类型）。传入其他类型会直接报错："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:39 trace
+msgid "``enable_tracing()`` 的 ``max_steps`` 必须是正数："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:45 trace
+msgid "在 realize() 中插桩"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:47 trace
+msgid "下面是一段插桩写法示例。``self.trace()`` 的三行分别记录了一个浮点数、一个布尔值和一条字符串备注："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:77 trace
+msgid ""
+"**本章待补**：上述策略在**完整回测**中取出追踪表的端到端示例（含 ``Backtester.trace_result_df`` "
+"的真实输出）尚未补齐——撰写本章时本机数据源中缺少该示例所需的 ``close_E_d`` "
+"历史数据，无法跑通并截取真实结果，为避免给出臆造输出而留空。补齐时需要一份可用的本地数据源。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:79 trace
+msgid "追踪数据的结构（可运行示例）"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:81 trace
+msgid "追踪表的列名格式为 ``{策略ID}_{变量名}``，一行对应一个追踪步骤。下面这段示例不需要数据源，可独立运行："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:108 trace
+msgid "调用 ``disable_tracing()`` 会关闭追踪并清空数据，之后 ``get_trace_data()`` 返回空表："
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:121 trace
+msgid "已知限制"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:123 trace
+msgid ""
+"**``FactorSorter`` 与 ``GeneralStg`` 暂未适配**：这两个基类的 ``realize()`` "
+"通常返回向量（一次覆盖多只股票），而 ``trace()`` 只能记录单个标量。源码中对此留有 TODO，当前版本不要依赖这两个基类的追踪输出。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:124 trace
+msgid ""
+"**追踪只在启用时生效**：``trace()`` 在未启用追踪时是静默的空操作，不会写入任何数据，也不会报错。调试时若发现追踪表是空的，先确认 "
+"``trace_log`` 配置项是否为 ``True``。"
+msgstr ""
+
+#: ../../source/manage_strategies/7. strategy.md:125 trace
+msgid "**追踪会带来额外开销**：每个追踪变量都要预分配一整列并逐步写入，变量多、信号行数多时会增加内存与运行时间。"
+msgstr ""
+
+#~ msgid "Operator：创建与基本配置"
+#~ msgstr "Operator：創建與基本配置"
+
+#~ msgid "Operator 是 qteasy 中策略的容器与调度器，负责在回测或实盘中按既定频率与时间点运行策略并输出统一格式的信号。"
+#~ msgstr "Operator 是 qteasy 中策略的容器與調度器，負責在回測或實盤中按既定頻率與時間點運行策略並輸出統一格式的信號。"
+
+#~ msgid "创建 Operator"
+#~ msgstr "創建 Operator"
+
+#~ msgid ""
+#~ "使用 ``qt.Operator()`` 创建，可传入策略列表及 "
+#~ "``signal_type``、``run_freq``、``run_timing`` 等："
+#~ msgstr ""
+#~ "使用 ``qt.Operator()`` 創建，可傳入策略列表及 "
+#~ "``signal_type``、``run_freq``、``run_timing`` 等："
+
+#~ msgid "添加策略"
+#~ msgstr "添加策略"
+
+#~ msgid ""
+#~ "**add_strategy(stg, run_freq=None, "
+#~ "run_timing=None)**：添加单个策略，可指定该策略的 "
+#~ "``run_freq``/``run_timing``，与已有相同则归入同一 Group，否则新建 Group。"
+#~ msgstr ""
+#~ "**add_strategy(stg, run_freq=None, "
+#~ "run_timing=None)**：添加單個策略，可指定該策略的 "
+#~ "``run_freq``/``run_timing``，與已有相同則歸入同一 Group，否則新建 Group。"
+
+#~ msgid ""
+#~ "**add_strategies(stg_list, run_freq=None, "
+#~ "run_timing=None)**：批量添加，同样按 ``run_freq``/``run_timing`` "
+#~ "归组。"
+#~ msgstr ""
+#~ "**add_strategies(stg_list, run_freq=None, "
+#~ "run_timing=None)**：批量添加，同樣按 ``run_freq``/``run_timing`` "
+#~ "歸組。"
+
+#~ msgid "常用属性及含义"
+#~ msgstr "常用屬性及含義"
+
+#~ msgid "属性"
+#~ msgstr "屬性"
+
+#~ msgid "含义"
+#~ msgstr "含義"
+
+#~ msgid "**signal_type**"
+#~ msgstr "**signal_type**"
+
+#~ msgid "信号类型：`PT` 择时（目标仓位）、`PS` 择股（选股列表）、`VS` 向量信号等。"
+#~ msgstr "信號類型：`PT` 擇時（目標倉位）、`PS` 擇股（選股列表）、`VS` 向量信號等。"
+
+#~ msgid "**run_freq**"
+#~ msgstr "**run_freq**"
+
+#~ msgid "运行频率，如 `'d'` 日、`'1min'` 分钟等，与 DataType 的 freq 对应。"
+#~ msgstr "運行頻率，如 `'d'` 日、`'1min'` 分鐘等，與 DataType 的 freq 對應。"
+
+#~ msgid "**run_timing**"
+#~ msgstr "**run_timing**"
+
+#~ msgid "运行时刻，如 `'open'` 开盘、`'close'` 收盘等。"
+#~ msgstr "運行時刻，如 `'open'` 開盤、`'close'` 收盤等。"
+
+#~ msgid "**groups**"
+#~ msgstr "**groups**"
+
+#~ msgid "各 Group 信息（相同 run_freq/run_timing 的策略为一组）。"
+#~ msgstr "各 Group 資訊（相同 run_freq/run_timing 的策略爲一組）。"
+
+#~ msgid "设置策略参数"
+#~ msgstr "設置策略參數"
+
+#~ msgid ""
+#~ "使用 **set_parameter(stg_id, pars=None, run_freq=None,"
+#~ " run_timing=None, ...)** 为指定策略设置可调参数或归组："
+#~ msgstr ""
+#~ "使用 **set_parameter(stg_id, pars=None, run_freq=None,"
+#~ " run_timing=None, ...)** 爲指定策略設置可調參數或歸組："
+
+#~ msgid "运行前检查"
+#~ msgstr "運行前檢查"
+
+#~ msgid "**is_ready()**：检查 Operator 是否已配置好策略与数据要求，可用于回测/优化前自检。"
+#~ msgstr "**is_ready()**：檢查 Operator 是否已配置好策略與數據要求，可用於回測/優化前自檢。"
+

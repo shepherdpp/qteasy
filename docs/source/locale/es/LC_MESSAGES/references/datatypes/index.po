@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"POT-Creation-Date: 2026-10-01 21:36+0800\n"
 "PO-Revision-Date: 2026-05-24 10:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language-Team: es <LL@li.org>\n"
@@ -194,12 +194,8 @@ msgstr ""
 "documentos:"
 
 #: ../../source/references/datatypes/index.md:47
-msgid ""
-"`/opt/anaconda3/envs/py39/bin/python "
-"docs/scripts/generate_datatype_catalog.py`"
-msgstr ""
-"`/opt/anaconda3/envs/py39/bin/python "
-"docs/scripts/generate_datatype_catalog.py`"
+msgid "`python docs/scripts/generate_datatype_catalog.py`"
+msgstr "`python docs/scripts/generate_datatype_catalog.py`"
 
 #: ../../source/references/datatypes/index.md:49
 msgid "[分册统计与链接（catalog_index）](_generated/catalog_index.md)"

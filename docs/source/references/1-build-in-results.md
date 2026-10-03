@@ -117,7 +117,7 @@ res = qt.run(op)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -177,7 +177,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -240,7 +240,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -303,7 +303,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -369,7 +369,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local filesHrom 19950531 to 20210413
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -436,7 +436,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -498,7 +498,7 @@ res = qt.run(op, mode=1, print_backtest_log=False)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -581,7 +581,7 @@ res = qt.run(op, mode=1, printlog=True)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -645,7 +645,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -708,7 +708,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -771,7 +771,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -834,7 +834,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -897,7 +897,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -960,7 +960,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1023,7 +1023,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1086,7 +1086,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1150,7 +1150,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1213,7 +1213,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1278,7 +1278,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1341,7 +1341,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1404,7 +1404,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1467,7 +1467,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1530,7 +1530,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1593,7 +1593,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1656,7 +1656,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1719,7 +1719,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1782,7 +1782,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1846,7 +1846,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1911,7 +1911,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -1974,7 +1974,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2038,7 +2038,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2101,7 +2101,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2164,7 +2164,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2227,7 +2227,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2290,7 +2290,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2353,7 +2353,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2416,7 +2416,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2479,7 +2479,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
@@ -2542,7 +2542,7 @@ res = qt.run(op, mode=1)
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
 
-    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+    qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
       warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
 
 
