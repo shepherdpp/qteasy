@@ -18,6 +18,7 @@ from typing import Any, Union, Optional
 from numpy import bool_, dtype, ndarray
 from pandas import DataFrame
 
+from qteasy.cancel_check import RunCancelled, should_cancel
 from qteasy.finance import CashPlan
 
 from qteasy.utilfuncs import (
@@ -613,6 +614,7 @@ def backtest_batch_steps(
         moq_sell: float,
         cash_delivery_period: int,
         stock_delivery_period: int,
+        cancel_check=None,
 ) -> None:
     """批量处理多次交易的回测计算
 
@@ -697,6 +699,8 @@ def backtest_batch_steps(
 
     # 开始循环处理op_signal中的每一条交易信号，获取其signal_type，执行下列步骤：
     for i in range(signal_count):
+        if should_cancel(cancel_check):
+            raise RunCancelled("backtest")
         # 如果当期有现金投资，则更新持有现金和可用现金
         cash_investment = cash_investment_array[i]
         if cash_investment > 0:
@@ -1173,6 +1177,8 @@ class Backtester:
 
         st = time.time()
         for stype, s_index, signal in self.op.run_strategies(steps=range(len(self.op.group_timing_table))):
+            if should_cancel():
+                raise RunCancelled("backtest")
             stypes[signal_index] = SIGNAL_TYPE_ID[stype]
             s_indices[signal_index] = s_index
             signals[signal_index, :] = signal
@@ -1254,6 +1260,8 @@ class Backtester:
         bt_step = 0
         # 循环执行下面步骤，直至完整生成回测结果清单
         for i in range(len(self.op.group_timing_table)):
+            if should_cancel():
+                raise RunCancelled("backtest")
 
             # 1，调用operator.run_strategy()生成当前交易信号，注意同一时刻可能会有多组信号生成
             # print(f'running / backtest step {i+1}/{bt_step + 1}...')

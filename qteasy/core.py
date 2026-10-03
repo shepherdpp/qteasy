@@ -646,7 +646,8 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                        refresh_trade_calendar=False, refill_dependent_tables=True,
                        symbols=None, start_date=None, end_date=None, list_arg_filter=None, reversed_par_seq=False,
                        parallel=True, process_count=None, chunk_size=100, download_batch_size=0,
-                       download_batch_interval=0, merge_type='update', log=False) -> None:
+                       download_batch_interval=0, merge_type='update', log=False,
+                       cancel_check=None) -> None:
     """ 从网络数据提供商的API通道批量下载数据，清洗后填充数据到本地数据源中
 
     Parameters
@@ -827,8 +828,13 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
 
     table_filled = 0
     total_rows_written = 0
+    from qteasy.cancel_check import should_cancel
 
+    cancelled = False
     for table in table_list:
+        if should_cancel(cancel_check):
+            cancelled = True
+            break
         # 2.1, 解析下载数据的参数
         arg_list = list(parse_data_fetch_args(
                 table=table,
@@ -862,6 +868,9 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                         download_batch_size=download_batch_size,
                         download_batch_interval=download_batch_interval,
                 ):
+                    if should_cancel(cancel_check):
+                        cancelled = True
+                        break
                     completed += 1
                     kwargs = tuple(res['kwargs'].values())
                     data = res['data'].dropna(axis=1, how='all')  # 删除全为空的列以便满足未来concat函数的要求，避免FutureWarning
@@ -898,6 +907,15 @@ def refill_data_source(tables, *, channel=None, data_source=None, dtypes=None, f
                 pbar.update()
                 table_filled += 1
                 total_rows_written += total_written
+        if cancelled:
+            break
+
+    if cancelled:
+        print(
+            f'\nData refill cancelled. {total_rows_written} rows written into '
+            f'{table_filled}/{len(table_list)} table(s).'
+        )
+        return None
 
     print(f'\nData refill completed! {total_rows_written} rows written into {table_filled}/{len(table_list)} table(s)!')
 
@@ -2041,14 +2059,21 @@ def run(op: Operator, **kwargs) -> Union[dict, list]:
 
     # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，
     # 覆盖QT_CONFIG的设置，但是仅本次运行有效
+    from qteasy.cancel_check import bind_cancel_check, reset_cancel_check
+
+    cancel_check = kwargs.pop("cancel_check", None)
     config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
-
-    return op.run(
-            config=config,
-            datasource=qteasy.QT_DATA_SOURCE,
-            logger=qteasy.logger_core,
-    )
+    token = bind_cancel_check(cancel_check) if cancel_check is not None else None
+    try:
+        return op.run(
+                config=config,
+                datasource=qteasy.QT_DATA_SOURCE,
+                logger=qteasy.logger_core,
+        )
+    finally:
+        if token is not None:
+            reset_cancel_check(token)
 
 
 def get_kline(
