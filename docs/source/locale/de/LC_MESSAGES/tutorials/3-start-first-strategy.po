@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"POT-Creation-Date: 2026-10-03 17:07+0800\n"
 "PO-Revision-Date: 2026-05-23 22:00+0800\n"
 "Last-Translator: Jackie PENG (de_translate_from_en)\n"
 "Language: de\n"
@@ -1074,10 +1074,10 @@ msgid "每一组记录的八行分别记录下面的内容："
 msgstr "Die acht Zeilen in jeder Datensatzgruppe erfassen jeweils Folgendes:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:430
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "**0, trade signal 交易信号**: "
-"记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20trade%20signals.md)）"
+"记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20group_and_blender.md)）"
 msgstr ""
 "**0, Handelssignal Handelssignale**: Zeichnet die nach diesem Lauf "
 "generierten Handelssignale auf (Handelssignale sind eine Reihe von "
@@ -1151,8 +1151,8 @@ msgstr ""
 "Informationen aus einer anderen Perspektive liefern:"
 
 #: ../../source/tutorials/3-start-first-strategy.md:442
-#, python-format
-msgid "**表头区域**：表头区域第一列记录每一次运行的日期和时间，第二列记录每一次运行的策略组名称（详情参见[策略组](../manage_strategies/4.%20group_and_blender.md)），第三列标注每一行的名称，"
+#, fuzzy, python-format
+msgid "**表头区域**：表头区域第一列记录每一次运行的日期和时间，第二列记录每一次运行的策略组名称（详情参见[策略组](../manage_strategies/3.%20group_and_blender.md)），第三列标注每一行的名称，"
 msgstr ""
 "**Kopfzeilenbereich**: Die erste Spalte im Kopfzeilenbereich zeichnet das"
 " Datum und die Uhrzeit jedes Laufs auf, die zweite Spalte zeichnet den "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: qteasy 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 17:32+0800\n"
+"POT-Creation-Date: 2026-10-03 17:07+0800\n"
 "PO-Revision-Date: 2026-05-24 16:00+0800\n"
 "Last-Translator: Jackie PENG (pivot_translate_from_en)\n"
 "Language: ja\n"
@@ -808,10 +808,10 @@ msgid "每一组记录的八行分别记录下面的内容："
 msgstr "レコードの各グループの 8 行は、それぞれ次の内容をキャプチャします。"
 
 #: ../../source/tutorials/3-start-first-strategy.md:430
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "**0, trade signal 交易信号**: "
-"记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20trade%20signals.md)）"
+"记录这次运行后产生的交易信号（交易信号是一组数字，经信号解析后变成交易订单，详见[交易信号](../manage_strategies/3.%20group_and_blender.md)）"
 msgstr ""
 "**0、トレード シグナル トレード シグナル**: この実行後に生成されたトレード シグナルを記録します (トレード "
 "シグナルは一連の数値であり、シグナル解析後はトレード注文になります。詳細については、[トレード "
@@ -866,8 +866,8 @@ msgstr ""
 " つのグループに分割でき、それぞれが異なる観点からの情報を提供します。"
 
 #: ../../source/tutorials/3-start-first-strategy.md:442
-#, python-format
-msgid "**表头区域**：表头区域第一列记录每一次运行的日期和时间，第二列记录每一次运行的策略组名称（详情参见[策略组](../manage_strategies/4.%20group_and_blender.md)），第三列标注每一行的名称，"
+#, fuzzy, python-format
+msgid "**表头区域**：表头区域第一列记录每一次运行的日期和时间，第二列记录每一次运行的策略组名称（详情参见[策略组](../manage_strategies/3.%20group_and_blender.md)），第三列标注每一行的名称，"
 msgstr ""
 "**ヘッダー領域**: ヘッダー領域の最初の列には各実行の日付と時刻が記録され、2 番目の列には各実行の戦略グループ名が記録され "
 "(詳細については、[戦略グループ](../manage_strategies/4.%20group_and_blender.md) を参照)、3 "
